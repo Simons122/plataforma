@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Helper Functions
+    // -----------------
+    
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if the user is an admin
+    // IMPORTANT: After registering your admin account, go to Firestore Console 
+    // and manually change your 'role' field from 'professional' to 'admin'
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/professionals/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // 2. Collection Rules
+    // -----------------
+
+    // PROFESSIONALS (Users)
+    match /professionals/{userId} {
+      // Public can read basic profile (to book appointments)
+      allow read: if true;
+      
+      // Users can create their own profile on signup
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Only the professional themselves or an Admin can edit details (payment status, etc.)
+      allow update: if isOwner(userId) || isAdmin();
+    }
+
+    // SERVICES (Sub-collection of professionals)
+    match /professionals/{userId}/services/{serviceId} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // SCHEDULE / AVAILABILITY
+    match /professionals/{userId}/availability/{docId} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // SETTINGS (Schedule, preferences, etc.)
+    match /professionals/{userId}/settings/{docId} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // BOOKINGS
+    match /professionals/{userId}/bookings/{bookingId} {
+      // Clients create bookings (public write, for now)
+      // Ideally, clients should be auth'd too, but for simple booking link:
+      allow create: if true;
+      
+      // Professional can read their bookings. 
+      // Client read access would require client auth or a token system.
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Professional can update status (confirm/reject)
+      allow update: if isOwner(userId) || isAdmin();
+    }
+  }
+}

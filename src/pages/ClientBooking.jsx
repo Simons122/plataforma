@@ -1,0 +1,651 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { doc, getDoc, collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { Clock, Check, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { format, addMinutes, setHours, setMinutes, isBefore, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
+import { pt } from 'date-fns/locale';
+
+const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+export default function ClientBooking() {
+    const { slug } = useParams();
+    const [step, setStep] = useState(1);
+    const [pro, setPro] = useState(null);
+    const [services, setServices] = useState([]);
+    const [schedule, setSchedule] = useState(null);
+    const [bookings, setBookings] = useState([]);
+    const [selectedService, setSelectedService] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedTime, setSelectedTime] = useState(null);
+    const [clientData, setClientData] = useState({ name: '', email: '', phone: '' });
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (slug) fetchData();
+    }, [slug]);
+
+    const fetchData = async () => {
+        try {
+            // Find Pro by Slug
+            const q = query(collection(db, "professionals"), where("slug", "==", slug));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const proDoc = querySnapshot.docs[0];
+                const proId = proDoc.id;
+                setPro({ id: proId, ...proDoc.data() });
+
+                // Fetch Services
+                const servicesSnap = await getDocs(collection(db, `professionals/${proId}/services`));
+                setServices(servicesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+                // Fetch Schedule
+                const scheduleSnap = await getDoc(doc(db, `professionals/${proId}/settings`, 'schedule'));
+                if (scheduleSnap.exists()) {
+                    setSchedule(scheduleSnap.data());
+                }
+
+                // Fetch Bookings (next 30 days)
+                const bookingsSnap = await getDocs(collection(db, `professionals/${proId}/bookings`));
+                setBookings(bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Generate available time slots for selected date
+    const generateSlots = () => {
+        if (!schedule || !selectedService) return [];
+
+        const dayKey = DAY_MAP[selectedDate.getDay()];
+        const daySchedule = schedule[dayKey];
+
+        if (!daySchedule || !daySchedule.enabled) return [];
+
+        const slots = [];
+        const [startH, startM] = daySchedule.start.split(':').map(Number);
+        const [endH, endM] = daySchedule.end.split(':').map(Number);
+
+        let current = setMinutes(setHours(selectedDate, startH), startM);
+        const endTime = setMinutes(setHours(selectedDate, endH), endM);
+        const duration = selectedService.duration || 30;
+
+        // Check if a slot is already booked
+        const isSlotBooked = (slotTime) => {
+            return bookings.some(booking => {
+                const bookingDate = parseISO(booking.date);
+                return isSameDay(bookingDate, slotTime) &&
+                    bookingDate.getHours() === slotTime.getHours() &&
+                    bookingDate.getMinutes() === slotTime.getMinutes();
+            });
+        };
+
+        while (isBefore(addMinutes(current, duration), endTime) || isSameDay(addMinutes(current, duration), endTime) && addMinutes(current, duration).getTime() <= endTime.getTime()) {
+            // Only show future slots for today
+            const now = new Date();
+            if (isSameDay(selectedDate, now) && isBefore(current, now)) {
+                current = addMinutes(current, duration);
+                continue;
+            }
+
+            if (!isSlotBooked(current)) {
+                slots.push(new Date(current));
+            }
+            current = addMinutes(current, duration);
+        }
+
+        return slots;
+    };
+
+    const handleBooking = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            // 1. Criar marcação no Firestore
+            const bookingRef = await addDoc(collection(db, `professionals/${pro.id}/bookings`), {
+                serviceId: selectedService.id,
+                serviceName: selectedService.name,
+                price: selectedService.price,
+                duration: selectedService.duration,
+                date: selectedTime.toISOString(),
+                clientName: clientData.name,
+                clientEmail: clientData.email,
+                clientPhone: clientData.phone,
+                status: 'confirmed',
+                createdAt: new Date().toISOString()
+            });
+
+            // 2. Enviar email de confirmação profissional via servidor local
+            try {
+                // Formatar data para português
+                const bookingDate = new Date(selectedTime);
+                const formattedDate = format(bookingDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: pt });
+                const formattedTime = format(bookingDate, 'HH:mm');
+
+                // Chamar servidor local
+                const response = await fetch('http://localhost:3001/api/send-booking-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        clientEmail: clientData.email,
+                        clientName: clientData.name,
+                        professionalName: pro.name,
+                        businessName: pro.businessName || pro.name,
+                        serviceName: selectedService.name,
+                        bookingDate: formattedDate,
+                        bookingTime: formattedTime,
+                        price: selectedService.price,
+                        bookingId: bookingRef.id
+                    })
+                });
+
+                const emailResult = await response.json();
+
+                // Log do resultado
+                if (emailResult.success) {
+                    console.log('✅ Email enviado com sucesso! ID:', emailResult.emailId);
+                } else {
+                    console.warn('⚠️ Erro ao enviar email:', emailResult.error);
+                }
+            } catch (emailError) {
+                // Se o email falhar, não bloquear a marcação
+                console.error('Erro ao enviar email:', emailError);
+                // A marcação foi criada, apenas o email falhou
+            }
+
+            // 3. Mostrar tela de sucesso
+            setStep(4);
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao marcar. Tente novamente.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Get next 14 days for date picker
+    const getDateOptions = () => {
+        const dates = [];
+        for (let i = 0; i < 14; i++) {
+            dates.push(addDays(startOfDay(new Date()), i));
+        }
+        return dates;
+    };
+
+    if (loading) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-primary)'
+            }}>
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
+    if (!pro) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-primary)'
+            }}>
+                Profissional não encontrado.
+            </div>
+        );
+    }
+
+    const slots = generateSlots();
+
+    return (
+        <div style={{
+            minHeight: '100vh',
+            background: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            padding: '2rem 1rem'
+        }}>
+            <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+                {/* Header with pro info */}
+                <div style={{ textAlign: 'center', marginBottom: '2rem' }} className="animate-fade-in">
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        margin: '0 auto 1rem',
+                        background: pro.logoUrl ? 'transparent' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '2rem',
+                        fontWeight: 700,
+                        boxShadow: 'var(--shadow-glow)',
+                        color: 'white',
+                        overflow: 'hidden',
+                        padding: '3px',
+                        background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)'
+                    }}>
+                        <div style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            background: 'var(--bg-card)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            {pro.logoUrl ? (
+                                <img
+                                    src={pro.logoUrl}
+                                    alt={pro.businessName || pro.name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            ) : (
+                                (pro.businessName || pro.name).charAt(0).toUpperCase()
+                            )}
+                        </div>
+                    </div>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
+                        {pro.businessName || pro.name}
+                    </h1>
+                    {pro.businessName && (
+                        <p style={{ color: 'var(--accent-primary)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                            {pro.name}
+                        </p>
+                    )}
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', fontWeight: 500 }}>{pro.profession}</p>
+                </div>
+
+                {/* Progress Bar */}
+                <div style={{
+                    height: '4px',
+                    background: 'var(--bg-elevated)',
+                    borderRadius: '2px',
+                    marginBottom: '2rem',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{
+                        width: `${(step / 4) * 100}%`,
+                        height: '100%',
+                        background: 'var(--accent-primary)',
+                        transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+                    }} />
+                </div>
+
+                {/* Main Card */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '20px',
+                    border: '1px solid var(--border-default)',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-md)'
+                }}>
+                    <div style={{ padding: '1.75rem' }}>
+
+                        {/* Step 1: Select Service */}
+                        {step === 1 && (
+                            <div className="animate-fade-in">
+                                <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
+                                    Escolha um serviço
+                                </h2>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                                    {services.length === 0 ? (
+                                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+                                            Nenhum serviço disponível.
+                                        </p>
+                                    ) : services.map(service => (
+                                        <button
+                                            key={service.id}
+                                            onClick={() => { setSelectedService(service); setStep(2); }}
+                                            style={{
+                                                textAlign: 'left',
+                                                padding: '1.125rem',
+                                                background: 'var(--bg-secondary)',
+                                                border: '1px solid var(--border-default)',
+                                                borderRadius: '14px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.5rem'
+                                            }}
+                                            onMouseOver={(e) => {
+                                                e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                                e.currentTarget.style.background = 'var(--bg-elevated)';
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                            }}
+                                            onMouseOut={(e) => {
+                                                e.currentTarget.style.borderColor = 'var(--border-default)';
+                                                e.currentTarget.style.background = 'var(--bg-secondary)';
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{service.name}</span>
+                                                <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent-success)' }}>{service.price}€</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
+                                                <Clock size={14} />
+                                                {service.duration} min
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 2: Select Date & Time */}
+                        {step === 2 && (
+                            <div className="animate-fade-in">
+                                <button
+                                    onClick={() => setStep(1)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                        color: 'var(--text-secondary)',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        marginBottom: '1rem',
+                                        fontSize: '0.875rem',
+                                        padding: 0
+                                    }}
+                                >
+                                    <ChevronLeft size={16} /> Voltar
+                                </button>
+
+                                <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
+                                    Escolha data e horário
+                                </h2>
+
+                                {/* Date Picker */}
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '0.625rem',
+                                    overflowX: 'auto',
+                                    paddingBottom: '0.75rem',
+                                    marginBottom: '1.5rem',
+                                    scrollbarWidth: 'none',
+                                    msOverflowStyle: 'none'
+                                }}>
+                                    {getDateOptions().map((date, i) => {
+                                        const isSelected = isSameDay(date, selectedDate);
+                                        const dayKey = DAY_MAP[date.getDay()];
+                                        const isOpen = schedule && schedule[dayKey]?.enabled;
+
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => isOpen && setSelectedDate(date)}
+                                                disabled={!isOpen}
+                                                style={{
+                                                    flexShrink: 0,
+                                                    padding: '0.875rem',
+                                                    minWidth: '64px',
+                                                    background: isSelected ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                                    border: '1px solid',
+                                                    borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-default)',
+                                                    borderRadius: '12px',
+                                                    cursor: isOpen ? 'pointer' : 'not-allowed',
+                                                    opacity: isOpen ? 1 : 0.4,
+                                                    textAlign: 'center',
+                                                    transition: 'all 0.2s ease',
+                                                    boxShadow: isSelected ? 'var(--shadow-glow)' : 'none'
+                                                }}
+                                            >
+                                                <div style={{
+                                                    fontSize: '0.625rem',
+                                                    color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)',
+                                                    textTransform: 'uppercase',
+                                                    fontWeight: 700,
+                                                    marginBottom: '0.25rem',
+                                                    letterSpacing: '0.05em'
+                                                }}>
+                                                    {format(date, 'EEE', { locale: pt })}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '1.125rem',
+                                                    fontWeight: 700,
+                                                    color: isSelected ? '#fff' : 'var(--text-primary)'
+                                                }}>
+                                                    {format(date, 'd')}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Time Slots */}
+                                <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Horários - {format(selectedDate, "d 'de' MMMM", { locale: pt })}
+                                </h3>
+
+                                {!schedule ? (
+                                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+                                        O profissional ainda não definiu os horários.
+                                    </p>
+                                ) : slots.length === 0 ? (
+                                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+                                        Nenhum horário disponível neste dia.
+                                    </p>
+                                ) : (
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(3, 1fr)',
+                                        gap: '0.625rem'
+                                    }}>
+                                        {slots.map((slot, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => { setSelectedTime(slot); setStep(3); }}
+                                                style={{
+                                                    padding: '0.875rem',
+                                                    background: 'var(--bg-secondary)',
+                                                    border: '1px solid var(--border-default)',
+                                                    borderRadius: '10px',
+                                                    color: 'var(--text-primary)',
+                                                    fontSize: '0.9375rem',
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                                onMouseOver={(e) => {
+                                                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                                    e.currentTarget.style.background = 'var(--bg-elevated)';
+                                                }}
+                                                onMouseOut={(e) => {
+                                                    e.currentTarget.style.borderColor = 'var(--border-default)';
+                                                    e.currentTarget.style.background = 'var(--bg-secondary)';
+                                                }}
+                                            >
+                                                {format(slot, 'HH:mm')}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Step 3: Client Details */}
+                        {step === 3 && (
+                            <div className="animate-fade-in">
+                                <button
+                                    onClick={() => setStep(2)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                        color: 'var(--text-secondary)',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        marginBottom: '1rem',
+                                        fontSize: '0.875rem',
+                                        padding: 0
+                                    }}
+                                >
+                                    <ChevronLeft size={16} /> Voltar
+                                </button>
+
+                                <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
+                                    Os seus dados
+                                </h2>
+
+                                {/* Summary */}
+                                <div style={{
+                                    padding: '1.25rem',
+                                    background: 'var(--bg-secondary)',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border-default)',
+                                    marginBottom: '1.75rem'
+                                }}>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Resumo da Marcação:</p>
+                                    <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>{selectedService.name}</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <Calendar size={14} style={{ color: 'var(--accent-primary)' }} />
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>
+                                            {format(selectedTime, "EEEE, d 'de' MMMM 'às' HH:mm", { locale: pt })}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Form */}
+                                <form onSubmit={handleBooking} style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
+                                    <div>
+                                        <label className="label" style={{ marginBottom: '0.5rem' }}>
+                                            Nome Completo
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            placeholder="Seu nome"
+                                            value={clientData.name}
+                                            onChange={e => setClientData({ ...clientData, name: e.target.value })}
+                                            className="input"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label" style={{ marginBottom: '0.5rem' }}>
+                                            Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            required
+                                            placeholder="seu@email.com"
+                                            value={clientData.email}
+                                            onChange={e => setClientData({ ...clientData, email: e.target.value })}
+                                            className="input"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label" style={{ marginBottom: '0.5rem' }}>
+                                            Telemóvel
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            required
+                                            placeholder="9xx xxx xxx"
+                                            value={clientData.phone}
+                                            onChange={e => setClientData({ ...clientData, phone: e.target.value })}
+                                            className="input"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={submitting}
+                                        style={{
+                                            padding: '1rem',
+                                            background: 'var(--accent-primary)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '12px',
+                                            fontSize: '1rem',
+                                            fontWeight: 700,
+                                            cursor: submitting ? 'wait' : 'pointer',
+                                            marginTop: '0.75rem',
+                                            transition: 'all 0.2s ease',
+                                            boxShadow: 'var(--shadow-md)'
+                                        }}
+                                        onMouseOver={(e) => !submitting && (e.currentTarget.style.background = 'var(--accent-primary-hover)')}
+                                        onMouseOut={(e) => !submitting && (e.currentTarget.style.background = 'var(--accent-primary)')}
+                                    >
+                                        {submitting ? 'A confirmar...' : 'Confirmar Reserva'}
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Step 4: Success */}
+                        {step === 4 && (
+                            <div className="animate-fade-in" style={{ textAlign: 'center', padding: '1rem 0' }}>
+                                <div style={{
+                                    width: '72px',
+                                    height: '72px',
+                                    margin: '0 auto 1.5rem',
+                                    background: 'rgba(34, 197, 94, 0.1)',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'var(--accent-success)'
+                                }}>
+                                    <Check size={36} strokeWidth={3} />
+                                </div>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
+                                    Reserva Confirmada!
+                                </h2>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.5 }}>
+                                    Enviámos os detalhes para <strong>{clientData.email}</strong>.<br />
+                                    Obrigado pela sua preferência!
+                                </p>
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    style={{
+                                        padding: '0.875rem 2rem',
+                                        background: 'transparent',
+                                        border: '1px solid var(--border-default)',
+                                        borderRadius: '12px',
+                                        color: 'var(--text-primary)',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                >
+                                    Fazer nova marcação
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <p style={{
+                    textAlign: 'center',
+                    marginTop: '2.5rem',
+                    fontSize: '0.8125rem',
+                    color: 'var(--text-muted)',
+                    fontWeight: 500
+                }}>
+                    Powered by <strong style={{ color: 'var(--text-secondary)' }}>Booklyo</strong>
+                </p>
+            </div>
+        </div>
+    );
+}
