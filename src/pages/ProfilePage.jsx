@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db, storage } from '../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { User2, Mail, Building2, Save, CheckCircle2, Loader2, Camera, X } from 'lucide-react';
+import { User2, Mail, Building2, Save, CheckCircle2, Loader2, Camera, X, Briefcase } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 
@@ -15,7 +15,8 @@ export default function ProfilePage() {
         email: '',
         businessName: '',
         phone: '',
-        logoUrl: ''
+        logoUrl: '',
+        profession: ''
     });
     const [savedBusinessName, setSavedBusinessName] = useState('');
     const toast = useToast();
@@ -144,6 +145,7 @@ export default function ProfilePage() {
                     businessName: profile.businessName,
                     name: profile.name,
                     phone: profile.phone || '',
+                    profession: profile.profession || '',
                     logoUrl: profile.logoUrl || '',
                     slug: newSlug
                 });
@@ -341,6 +343,29 @@ export default function ProfilePage() {
                                     cursor: 'not-allowed'
                                 }}
                             />
+                        </div>
+
+                        <div>
+                            <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Briefcase size={16} /> Profissão
+                            </label>
+                            <select
+                                className="select"
+                                value={profile.profession || ''}
+                                onChange={(e) => setProfile({ ...profile, profession: e.target.value })}
+                            >
+                                <option value="">Selecione uma profissão</option>
+                                <option value="Barbeiro">Barbeiro</option>
+                                <option value="Personal Trainer">Personal Trainer</option>
+                                <option value="Tatuador">Tatuador</option>
+                                <option value="Explicador">Explicador</option>
+                                <option value="Freelancer">Freelancer</option>
+                                <option value="Cabeleireiro">Cabeleireiro</option>
+                                <option value="Esteticista">Esteticista</option>
+                                <option value="Massagista">Massagista</option>
+                                <option value="Fotógrafo">Fotógrafo</option>
+                                <option value="Outro">Outro</option>
+                            </select>
                         </div>
                     </div>
 
