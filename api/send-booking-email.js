@@ -50,27 +50,139 @@ export default async function handler(req, res) {
             });
         }
 
-        // Template de email HTML profissional
+        // Template de email HTML profissional com fonte da plataforma
         const emailHTML = `
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .header h1 { margin: 0; font-size: 28px; }
-        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-        .booking-details { background: white; padding: 25px; border-radius: 12px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .booking-details h3 { margin-top: 0; color: #667eea; font-size: 18px; }
-        .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e9ecef; }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-label { font-weight: 600; color: #6c757d; }
-        .detail-value { color: #212529; text-align: right; }
-        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 14px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            line-height: 1.6; 
+            color: #1a1a1a; 
+            background: #f5f5f7;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 48px 32px; 
+            text-align: center;
+        }
+        .header h1 { 
+            margin: 0; 
+            font-size: 32px; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .content { 
+            padding: 40px 32px; 
+        }
+        .content p {
+            font-size: 16px;
+            color: #4a4a4a;
+            margin-bottom: 16px;
+        }
+        .content strong {
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        .booking-details { 
+            background: #f8f9fa; 
+            padding: 28px; 
+            border-radius: 12px; 
+            margin: 28px 0;
+            border: 1px solid #e9ecef;
+        }
+        .booking-details h3 { 
+            margin: 0 0 20px 0; 
+            color: #667eea; 
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        .detail-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 14px 0; 
+            border-bottom: 1px solid #e9ecef;
+            align-items: center;
+        }
+        .detail-row:last-child { 
+            border-bottom: none; 
+            padding-bottom: 0;
+        }
+        .detail-row:first-of-type {
+            padding-top: 0;
+        }
+        .detail-label { 
+            font-weight: 500; 
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .detail-value { 
+            color: #1a1a1a; 
+            text-align: right;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .detail-value strong {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .important-note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 16px 20px;
+            margin: 24px 0;
+            border-radius: 8px;
+        }
+        .important-note p {
+            margin: 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        .footer { 
+            text-align: center; 
+            padding: 32px; 
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            color: #6c757d; 
+            font-size: 13px;
+            margin: 4px 0;
+        }
+        .footer strong {
+            color: #667eea;
+            font-weight: 600;
+        }
         @media only screen and (max-width: 600px) {
-            .detail-row { flex-direction: column; }
-            .detail-value { text-align: left; margin-top: 4px; }
+            .header { padding: 32px 24px; }
+            .header h1 { font-size: 26px; }
+            .content { padding: 32px 24px; }
+            .booking-details { padding: 20px; }
+            .detail-row { 
+                flex-direction: column; 
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .detail-value { 
+                text-align: left;
+            }
         }
     </style>
 </head>
@@ -86,47 +198,44 @@ export default async function handler(req, res) {
             <div class="booking-details">
                 <h3>📋 Detalhes da Marcação</h3>
                 <div class="detail-row">
-                    <span class="detail-label">Profissional:</span>
+                    <span class="detail-label">Profissional</span>
                     <span class="detail-value">${professionalName}</span>
                 </div>
                 ${businessName ? `
                 <div class="detail-row">
-                    <span class="detail-label">Estabelecimento:</span>
+                    <span class="detail-label">Estabelecimento</span>
                     <span class="detail-value">${businessName}</span>
                 </div>
                 ` : ''}
                 <div class="detail-row">
-                    <span class="detail-label">Serviço:</span>
+                    <span class="detail-label">Serviço</span>
                     <span class="detail-value">${serviceName}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Data:</span>
+                    <span class="detail-label">Data</span>
                     <span class="detail-value">${bookingDate}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Hora:</span>
+                    <span class="detail-label">Hora</span>
                     <span class="detail-value">${bookingTime}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Preço:</span>
+                    <span class="detail-label">Preço</span>
                     <span class="detail-value"><strong>${price}€</strong></span>
                 </div>
-                ${bookingId ? `
-                <div class="detail-row">
-                    <span class="detail-label">Ref. Marcação:</span>
-                    <span class="detail-value" style="font-family: monospace;">#${bookingId.substring(0, 8)}</span>
-                </div>
-                ` : ''}
             </div>
 
-            <p>✨ <strong>Importante:</strong> Por favor, chegue com alguns minutos de antecedência.</p>
-            <p style="color: #6c757d; font-size: 14px; margin-top: 20px;">
+            <div class="important-note">
+                <p><strong>⏰ Importante:</strong> Por favor, chegue com alguns minutos de antecedência.</p>
+            </div>
+
+            <p style="font-size: 14px; color: #6c757d;">
                 Se precisar de cancelar ou reagendar a sua marcação, entre em contacto connosco o quanto antes.
             </p>
         </div>
         <div class="footer">
             <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
-            <p style="margin-top: 10px;">Powered by <strong>Bookly</strong></p>
+            <p style="margin-top: 12px;">Powered by <strong>Bookly</strong></p>
         </div>
     </div>
 </body>
