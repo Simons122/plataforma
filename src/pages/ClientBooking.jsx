@@ -120,15 +120,20 @@ export default function ClientBooking() {
                 createdAt: new Date().toISOString()
             });
 
-            // 2. Enviar email de confirmação profissional via servidor local
+            // 2. Enviar email de confirmação profissional via Vercel API
             try {
                 // Formatar data para português
                 const bookingDate = new Date(selectedTime);
                 const formattedDate = format(bookingDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: pt });
                 const formattedTime = format(bookingDate, 'HH:mm');
 
-                // Chamar servidor local
-                const response = await fetch('http://localhost:3001/api/send-booking-email', {
+                // URL da API (Vercel em produção, localhost em dev)
+                const apiUrl = import.meta.env.PROD
+                    ? '/api/send-booking-email'  // Vercel
+                    : 'http://localhost:3001/api/send-booking-email';  // Local
+
+                // Chamar API
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
