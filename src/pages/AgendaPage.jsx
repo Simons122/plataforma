@@ -10,6 +10,8 @@ import { pt } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, CalendarDays, User2, Phone, Clock4, ListFilter, Plus } from 'lucide-react';
 import Layout from '../components/Layout';
 import ManualBookingModal from '../components/ManualBookingModal';
+import BookingDetailsModal from '../components/BookingDetailsModal';
+import { updateDoc } from 'firebase/firestore';
 
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8:00 to 21:00
 
@@ -21,7 +23,34 @@ export default function AgendaPage() {
     const [schedule, setSchedule] = useState(null);
     const [viewMode, setViewMode] = useState('day'); // 'day', 'week', 'month', 'list'
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const handleCancelBooking = async (booking) => {
+        if (!window.confirm("Tem a certeza que deseja cancelar esta marcação?")) return;
+
+        try {
+            const currentOwnerId = profile.isStaff ? profile.ownerId : profile.id;
+            let bookingPath;
+
+            if (booking.isStaff) {
+                bookingPath = `professionals/${currentOwnerId}/staff/${booking.staffId}/bookings/${booking.id}`;
+            } else {
+                bookingPath = `professionals/${currentOwnerId}/bookings/${booking.id}`;
+            }
+
+            await updateDoc(doc(db, bookingPath), {
+                status: 'cancelled',
+                cancelledAt: new Date().toISOString()
+            });
+
+            refetchBookings();
+            setSelectedEvent(null);
+        } catch (error) {
+            console.error("Erro ao cancelar:", error);
+            alert("Erro ao cancelar marcação.");
+        }
+    };
 
     const fetchBookings = async (ownerId, userProfile, isStaffUser) => {
         try {
@@ -349,10 +378,12 @@ export default function AgendaPage() {
                                     </div>
                                     <div style={{ flex: 1, position: 'relative', padding: '4px 8px' }}>
                                         {hourBookings.map(b => (
-                                            <div key={b.id} className="agenda-event-card" style={{
-                                                background: b.isStaff ? 'color-mix(in srgb, #ec4899, transparent 92%)' : 'color-mix(in srgb, var(--accent-primary), transparent 92%)',
-                                                borderColor: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
-                                            }}>
+                                            <div key={b.id} className="agenda-event-card"
+                                                onClick={() => setSelectedEvent(b)}
+                                                style={{
+                                                    background: b.isStaff ? 'color-mix(in srgb, #ec4899, transparent 92%)' : 'color-mix(in srgb, var(--accent-primary), transparent 92%)',
+                                                    borderColor: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
+                                                }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span style={{ fontWeight: 700, color: b.isStaff ? '#ec4899' : 'var(--accent-primary)' }}>
@@ -415,9 +446,11 @@ export default function AgendaPage() {
                                                     className={`agenda-week-cell ${isToday(day) ? 'today-col' : ''}`}
                                                 >
                                                     {dayBookings.map(b => (
-                                                        <div key={b.id} className="agenda-mini-event" style={{
-                                                            background: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
-                                                        }}>
+                                                        <div key={b.id} className="agenda-mini-event"
+                                                            onClick={() => setSelectedEvent(b)}
+                                                            style={{
+                                                                background: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
+                                                            }}>
                                                             {format(parseISO(b.date), 'HH:mm')} • {profile?.isStaff ? b.clientName : b.responsibleName}
                                                         </div>
                                                     ))}
@@ -460,9 +493,11 @@ export default function AgendaPage() {
                                                 {format(day, 'd')}
                                             </div>
                                             {dayBookings.slice(0, 3).map(b => (
-                                                <div key={b.id} className="calendar-event-pill" style={{
-                                                    background: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
-                                                }}>
+                                                <div key={b.id} className="calendar-event-pill"
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedEvent(b); }}
+                                                    style={{
+                                                        background: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
+                                                    }}>
                                                     {format(parseISO(b.date), 'HH:mm')} • {profile?.isStaff ? b.clientName : b.responsibleName}
                                                 </div>
                                             ))}
@@ -568,14 +603,22 @@ export default function AgendaPage() {
                     )}
                 </div>
             )}
+            {/* Details Modal */}
+            <BookingDetailsModal
+                booking={selectedEvent}
+                onClose={() => setSelectedEvent(null)}
+                onCancel={handleCancelBooking}
+            />
+
             {/* Manual Booking Modal */}
             <ManualBookingModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                professionalId={profile.id}
+                ownerId={profile.isStaff ? profile.ownerId : profile.id}
                 isStaff={profile.isStaff}
-                ownerId={profile.ownerId}
-                onBookingAdded={refetchBookings}
+                staffId={profile.id}
+                currentDate={selectedDate}
+                onSuccess={refetchBookings}
             />
         </Layout>
     );
