@@ -14,6 +14,8 @@ export default function ClientBooking() {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [pro, setPro] = useState(null);
+    const [staff, setStaff] = useState([]);
+    const [selectedStaff, setSelectedStaff] = useState(null);
     const [services, setServices] = useState([]);
     const [schedule, setSchedule] = useState(null);
     const [bookings, setBookings] = useState([]);
@@ -87,6 +89,22 @@ export default function ClientBooking() {
                 const proId = proDoc.id;
                 setPro({ id: proId, ...proDoc.data() });
 
+                // Fetch staff members
+                const staffSnap = await getDocs(collection(db, `professionals/${proId}/staff`));
+                const staffData = await Promise.all(staffSnap.docs.map(async (d) => {
+                    const staffId = d.id;
+                    const staffScheduleDoc = await getDoc(doc(db, `professionals/${proId}/staff/${staffId}/settings`, 'schedule'));
+                    const staffBookingsSnap = await getDocs(collection(db, `professionals/${proId}/staff/${staffId}/bookings`));
+
+                    return {
+                        id: staffId,
+                        ...d.data(),
+                        schedule: staffScheduleDoc.exists() ? staffScheduleDoc.data() : null,
+                        bookings: staffBookingsSnap.docs.map(b => ({ id: b.id, ...b.data() }))
+                    };
+                }));
+                setStaff(staffData);
+
                 const servicesSnap = await getDocs(collection(db, `professionals/${proId}/services`));
                 setServices(servicesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
 
@@ -113,10 +131,16 @@ export default function ClientBooking() {
     };
 
     function generateSlots() {
-        if (!schedule || !selectedService) return [];
+        if (!selectedService) return [];
+
+        // Use staff schedule and bookings if staff is selected, otherwise use establishment
+        const activeSchedule = selectedStaff ? selectedStaff.schedule : schedule;
+        const activeBookings = selectedStaff ? selectedStaff.bookings : bookings;
+
+        if (!activeSchedule) return [];
 
         const dayKey = DAY_MAP[selectedDate.getDay()];
-        const daySchedule = schedule[dayKey];
+        const daySchedule = activeSchedule[dayKey];
 
         if (!daySchedule || !daySchedule.enabled) return [];
 
@@ -129,7 +153,7 @@ export default function ClientBooking() {
         const duration = selectedService.duration || 30;
 
         const isSlotBooked = (slotTime) => {
-            return bookings.some(booking => {
+            return activeBookings.some(booking => {
                 const bookingDate = parseISO(booking.date);
                 return isSameDay(bookingDate, slotTime) &&
                     bookingDate.getHours() === slotTime.getHours() &&
@@ -184,8 +208,13 @@ export default function ClientBooking() {
         e.preventDefault();
         setSubmitting(true);
         try {
+            // Determine booking path based on staff selection
+            const bookingPath = selectedStaff
+                ? `professionals/${pro.id}/staff/${selectedStaff.id}/bookings`
+                : `professionals/${pro.id}/bookings`;
+
             // 1. Criar marcação no Firestore
-            const bookingRef = await addDoc(collection(db, `professionals/${pro.id}/bookings`), {
+            const bookingData = {
                 serviceId: selectedService.id,
                 serviceName: selectedService.name,
                 price: selectedService.price,
@@ -196,7 +225,15 @@ export default function ClientBooking() {
                 clientPhone: clientData.phone,
                 status: 'confirmed',
                 createdAt: new Date().toISOString()
-            });
+            };
+
+            // Add staff info if staff is selected
+            if (selectedStaff) {
+                bookingData.staffId = selectedStaff.id;
+                bookingData.staffName = selectedStaff.name;
+            }
+
+            const bookingRef = await addDoc(collection(db, bookingPath), bookingData);
 
             // 2. Enviar email
             try {
@@ -211,7 +248,7 @@ export default function ClientBooking() {
                     body: JSON.stringify({
                         clientEmail: clientData.email,
                         clientName: clientData.name,
-                        professionalName: pro.name,
+                        professionalName: selectedStaff ? selectedStaff.name : pro.name,
                         businessName: pro.businessName || pro.name,
                         serviceName: selectedService.name,
                         bookingDate: formattedDate,
@@ -224,7 +261,7 @@ export default function ClientBooking() {
                 console.error('Erro ao enviar email:', emailError);
             }
 
-            setStep(4);
+            setStep(5);
         } catch (e) {
             console.error(e);
             alert("Erro ao marcar. Tente novamente.");
@@ -307,23 +344,164 @@ export default function ClientBooking() {
                     </div>
 
                     {/* Progress Bar */}
-                    {step < 4 && (
+                    {step < 5 && (
                         <div style={{ height: '4px', background: 'var(--bg-elevated)', borderRadius: '2px', marginBottom: '2rem', overflow: 'hidden' }}>
-                            <div style={{ width: `${(step / 3) * 100}%`, height: '100%', background: 'var(--accent-primary)', transition: 'width 0.4s ease' }} />
+                            <div style={{ width: `${(step / 4) * 100}%`, height: '100%', background: 'var(--accent-primary)', transition: 'width 0.4s ease' }} />
                         </div>
                     )}
 
                     {/* Main Card */}
                     <div style={{ background: 'var(--bg-card)', borderRadius: '20px', border: '1px solid var(--border-default)', overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
                         <div style={{ padding: '1.75rem' }}>
+                            {/* Step 1: Choose Professional */}
                             {step === 1 && (
                                 <div className="animate-fade-in">
+                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
+                                        {staff.length > 0 ? 'Escolha o profissional' : 'Continuar com'}
+                                    </h2>
+                                    <div style={{ display: 'grid', gridTemplateColumns: staff.length > 0 ? 'repeat(2, 1fr)' : '1fr', gap: '1rem' }}>
+                                        {/* Establishment Owner */}
+                                        <button
+                                            onClick={() => {
+                                                setSelectedStaff(null);
+                                                setStep(2);
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '0.75rem',
+                                                padding: '1.5rem',
+                                                background: 'var(--bg-secondary)',
+                                                border: '2px solid var(--border-default)',
+                                                borderRadius: '16px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease',
+                                                textAlign: 'center'
+                                            }}
+                                            className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]"
+                                            onMouseOver={e => {
+                                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                                            }}
+                                            onMouseOut={e => {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'none';
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '80px',
+                                                height: '80px',
+                                                borderRadius: '50%',
+                                                background: pro.logoUrl ? 'transparent' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontSize: '2rem',
+                                                fontWeight: 700,
+                                                color: 'white',
+                                                overflow: 'hidden',
+                                                border: '3px solid var(--bg-card)',
+                                                boxShadow: 'var(--shadow-md)'
+                                            }}>
+                                                {pro.logoUrl ? (
+                                                    <img src={pro.logoUrl} alt={pro.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    pro.name?.charAt(0).toUpperCase()
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                                                    {pro.name}
+                                                </div>
+                                                {pro.profession && (
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                        {pro.profession}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+
+                                        {/* Staff Members */}
+                                        {staff.map(member => (
+                                            <button
+                                                key={member.id}
+                                                onClick={() => {
+                                                    setSelectedStaff(member);
+                                                    setStep(2);
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '0.75rem',
+                                                    padding: '1.5rem',
+                                                    background: 'var(--bg-secondary)',
+                                                    border: '2px solid var(--border-default)',
+                                                    borderRadius: '16px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease',
+                                                    textAlign: 'center'
+                                                }}
+                                                className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]"
+                                                onMouseOver={e => {
+                                                    e.currentTarget.style.transform = 'translateY(-4px)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                                                }}
+                                                onMouseOut={e => {
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }}
+                                            >
+                                                <div style={{
+                                                    width: '80px',
+                                                    height: '80px',
+                                                    borderRadius: '50%',
+                                                    background: member.photoUrl ? 'transparent' : 'linear-gradient(135deg, #a855f7, #ec4899)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '2rem',
+                                                    fontWeight: 700,
+                                                    color: 'white',
+                                                    overflow: 'hidden',
+                                                    border: '3px solid var(--bg-card)',
+                                                    boxShadow: 'var(--shadow-md)'
+                                                }}>
+                                                    {member.photoUrl ? (
+                                                        <img src={member.photoUrl} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        member.name?.charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                                                        {member.name}
+                                                    </div>
+                                                    {member.profession && (
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                            {member.profession}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Step 2: Choose Service */}
+                            {step === 2 && (
+                                <div className="animate-fade-in">
+                                    {(staff.length > 0 || selectedStaff) && (
+                                        <button onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> Voltar</button>
+                                    )}
                                     <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Escolha um serviço</h2>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                                         {services.length === 0 ? (
                                             <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum serviço disponível.</p>
                                         ) : services.map(service => (
-                                            <button key={service.id} onClick={() => { setSelectedService(service); setStep(2); }} style={{ textAlign: 'left', padding: '1.125rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]">
+                                            <button key={service.id} onClick={() => { setSelectedService(service); setStep(3); }} style={{ textAlign: 'left', padding: '1.125rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]">
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                                     <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{service.name}</span>
                                                     <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent-success)' }}>{service.price}€</span>
@@ -335,9 +513,10 @@ export default function ClientBooking() {
                                 </div>
                             )}
 
-                            {step === 2 && (
+                            {/* Step 3: Choose Date and Time */}
+                            {step === 3 && (
                                 <div className="animate-fade-in">
-                                    <button onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> Voltar</button>
+                                    <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> Voltar</button>
                                     <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Escolha data e horário</h2>
                                     <div style={{ display: 'flex', gap: '0.625rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.5rem', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                         {getDateOptions().map((date, i) => {
@@ -356,16 +535,17 @@ export default function ClientBooking() {
                                     {!schedule ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>O profissional ainda não definiu os horários.</p> : slots.length === 0 ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum horário disponível neste dia.</p> : (
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.625rem' }}>
                                             {slots.map((slot, i) => (
-                                                <button key={i} onClick={() => { setSelectedTime(slot); setStep(3); }} style={{ padding: '0.875rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '0.9375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease' }} className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]">{format(slot, 'HH:mm')}</button>
+                                                <button key={i} onClick={() => { setSelectedTime(slot); setStep(4); }} style={{ padding: '0.875rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '0.9375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease' }} className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]">{format(slot, 'HH:mm')}</button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            {step === 3 && (
+                            {/* Step 4: Confirm Details */}
+                            {step === 4 && (
                                 <div className="animate-fade-in">
-                                    <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> Voltar</button>
+                                    <button onClick={() => setStep(3)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> Voltar</button>
                                     <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Os seus dados</h2>
                                     <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-default)', marginBottom: '1.75rem' }}>
                                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Resumo da Marcação:</p>
@@ -381,7 +561,9 @@ export default function ClientBooking() {
                                 </div>
                             )}
 
-                            {step === 4 && (
+
+                            {/* Step 5: Success */}
+                            {step === 5 && (
                                 <div className="animate-fade-in" style={{ textAlign: 'center', padding: '1rem 0' }}>
                                     <div style={{ width: '72px', height: '72px', margin: '0 auto 1.5rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-success)' }}><Check size={36} strokeWidth={3} /></div>
                                     <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Reserva Confirmada!</h2>

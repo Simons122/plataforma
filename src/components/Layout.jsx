@@ -64,6 +64,7 @@ export default function Layout({ children, role = 'professional', restricted = f
         { icon: CalendarDays, label: 'Agenda', path: '/dashboard/agenda' },
         { icon: Sparkles, label: 'Serviços', path: '/dashboard/services' },
         { icon: CalendarClock, label: 'Horários', path: '/dashboard/schedule' },
+        { icon: Users, label: 'Profissionais', path: '/dashboard/staff' },
         { icon: User, label: 'Perfil', path: '/dashboard/profile' }
     ];
 
