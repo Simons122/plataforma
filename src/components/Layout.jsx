@@ -35,15 +35,19 @@ export default function Layout({ children, role = 'professional', restricted = f
                 if (user) {
                     try {
                         // 1. Check Staff Lookup FIRST (Priority Rule)
+                        console.log("Checking Staff Lookup for:", user.uid);
                         const lookupRef = doc(db, "staff_lookup", user.uid);
                         const lookupSnap = await getDoc(lookupRef);
 
                         if (lookupSnap.exists()) {
+                            console.log("Staff Lookup Found:", lookupSnap.data());
                             // User is Staff
                             const { ownerId, staffId } = lookupSnap.data();
-                            const staffSnap = await getDoc(doc(db, `professionals/${ownerId}/staff/${staffId}`));
+                            const staffRef = doc(db, `professionals/${ownerId}/staff/${staffId}`);
+                            const staffSnap = await getDoc(staffRef);
 
                             if (staffSnap.exists()) {
+                                console.log("Staff Profile Found");
                                 const sData = staffSnap.data();
                                 setFetchedProfile({
                                     ...sData,
@@ -54,12 +58,18 @@ export default function Layout({ children, role = 'professional', restricted = f
                                     businessName: sData.name,
                                     paymentStatus: 'active'
                                 });
+                            } else {
+                                console.error("Staff Profile Document MISSING at:", staffRef.path);
                             }
                         } else {
+                            console.log("Staff Lookup Not Found. Checking Owner...");
                             // 2. If not Staff, check Professional (Owner)
                             const proDoc = await getDoc(doc(db, "professionals", user.uid));
                             if (proDoc.exists()) {
+                                console.log("Owner Profile Found");
                                 setFetchedProfile({ ...proDoc.data(), isStaff: false });
+                            } else {
+                                console.log("Owner Profile Not Found");
                             }
                         }
                     } catch (err) {
@@ -76,6 +86,39 @@ export default function Layout({ children, role = 'professional', restricted = f
             setLoadingProfile(false);
         }
     }, [role]);
+
+    // Fallback UI for Missing Profile
+    if (!loadingProfile && !fetchedProfile && (role === 'professional' || role === undefined)) {
+        return (
+            <div style={{
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                padding: '2rem'
+            }}>
+                <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>Perfil Não Encontrado</h1>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>A sua conta existe, mas não conseguimos encontrar o seu perfil de staff.</p>
+                <code style={{ background: 'var(--bg-card)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', marginBottom: '1.5rem' }}>UID: {auth.currentUser?.uid}</code>
+                <button
+                    onClick={() => { auth.signOut(); navigate('/auth'); }}
+                    style={{
+                        padding: '0.75rem 1.5rem',
+                        background: 'var(--accent-primary)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Sair e Tentar Novamente
+                </button>
+            </div>
+        );
+    }
 
     const handleLogout = () => {
         auth.signOut();
