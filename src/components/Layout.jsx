@@ -32,9 +32,32 @@ export default function Layout({ children, role = 'professional', restricted = f
         if (role === 'professional') {
             const unsubscribe = auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    const proDoc = await getDoc(doc(db, "professionals", user.uid));
-                    if (proDoc.exists()) {
-                        setFetchedProfile(proDoc.data());
+                    try {
+                        const proDoc = await getDoc(doc(db, "professionals", user.uid));
+                        if (proDoc.exists()) {
+                            setFetchedProfile({ ...proDoc.data(), isStaff: false });
+                        } else {
+                            // Try Staff Check
+                            const lookupSnap = await getDoc(doc(db, "staff_lookup", user.uid));
+                            if (lookupSnap.exists()) {
+                                const { ownerId, staffId } = lookupSnap.data();
+                                const staffSnap = await getDoc(doc(db, `professionals/${ownerId}/staff/${staffId}`));
+                                if (staffSnap.exists()) {
+                                    const sData = staffSnap.data();
+                                    setFetchedProfile({
+                                        ...sData,
+                                        isStaff: true,
+                                        ownerId: ownerId,
+                                        id: staffId,
+                                        logoUrl: sData.photoUrl,     // Use staff photo as logo
+                                        businessName: sData.name,    // Use staff name as brand
+                                        paymentStatus: 'active'      // Staff is always active if logged in (for now)
+                                    });
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Layout Profile Fetch Error", err);
                     }
                 }
             });
@@ -59,7 +82,7 @@ export default function Layout({ children, role = 'professional', restricted = f
         { icon: Shield, label: 'Configurações', path: '/admin/settings' }
     ];
 
-    const proLinks = [
+    let proLinks = [
         { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
         { icon: CalendarDays, label: 'Agenda', path: '/dashboard/agenda' },
         { icon: Sparkles, label: 'Serviços', path: '/dashboard/services' },
@@ -67,6 +90,13 @@ export default function Layout({ children, role = 'professional', restricted = f
         { icon: Users, label: 'Profissionais', path: '/dashboard/staff' },
         { icon: User, label: 'Perfil', path: '/dashboard/profile' }
     ];
+
+    // Filter links for Staff
+    if (fetchedProfile?.isStaff) {
+        proLinks = proLinks.filter(link =>
+            ['/dashboard', '/dashboard/agenda', '/dashboard/profile'].includes(link.path)
+        );
+    }
 
     const clientLinks = [
         { icon: Search, label: 'Explorar', path: '/client/explore' },

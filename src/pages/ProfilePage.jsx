@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { auth, db, storage } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { User2, Mail, Building2, Save, CheckCircle2, Loader2, Camera, X, Briefcase } from 'lucide-react';
+import { User2, Mail, Building2, Save, Loader2, Camera, X, Briefcase, Phone } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 
@@ -24,12 +23,44 @@ export default function ProfilePage() {
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const docRef = doc(db, "professionals", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setProfile(prev => ({ ...prev, ...data }));
-                    setSavedBusinessName(data.businessName || '');
+                try {
+                    // 1. Try Professional
+                    const docRef = doc(db, "professionals", user.uid);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        setProfile(prev => ({
+                            ...prev,
+                            ...data,
+                            isStaff: false,
+                            id: user.uid
+                        }));
+                        setSavedBusinessName(data.businessName || '');
+                    } else {
+                        // 2. Try Staff
+                        const lookupSnap = await getDoc(doc(db, "staff_lookup", user.uid));
+                        if (lookupSnap.exists()) {
+                            const { ownerId, staffId } = lookupSnap.data();
+                            const staffRef = doc(db, `professionals/${ownerId}/staff/${staffId}`);
+                            const staffSnap = await getDoc(staffRef);
+
+                            if (staffSnap.exists()) {
+                                const data = staffSnap.data();
+                                setProfile({
+                                    ...data,
+                                    logoUrl: data.photoUrl || '', // Map photoUrl to logoUrl for UI consistency
+                                    isStaff: true,
+                                    ownerId: ownerId,
+                                    id: staffId,
+                                    email: user.email // Ensure email comes from Auth if not in doc
+                                });
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error fetching profile:", err);
+                    toast.error("Erro ao carregar perfil.");
                 }
             }
             setLoading(false);
@@ -37,7 +68,7 @@ export default function ProfilePage() {
         return () => unsubscribe();
     }, []);
 
-    const handleLogoUpload = async (e) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -59,8 +90,8 @@ export default function ProfilePage() {
                 img.onload = async () => {
                     // Create canvas for resizing
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 200;
-                    const MAX_HEIGHT = 200;
+                    const MAX_WIDTH = 400; // Increased resolution slightly
+                    const MAX_HEIGHT = 400;
                     let width = img.width;
                     let height = img.height;
 
@@ -82,15 +113,21 @@ export default function ProfilePage() {
                     ctx.drawImage(img, 0, 0, width, height);
 
                     // Get compressed Base64
-                    const base64 = canvas.toDataURL('image/jpeg', 0.8);
+                    const base64 = canvas.toDataURL('image/jpeg', 0.85);
 
-                    const user = auth.currentUser;
-                    await updateDoc(doc(db, "professionals", user.uid), {
-                        logoUrl: base64
-                    });
+                    // Update immediately in Firestore depending on role
+                    if (profile.isStaff) {
+                        await updateDoc(doc(db, `professionals/${profile.ownerId}/staff/${profile.id}`), {
+                            photoUrl: base64
+                        });
+                    } else {
+                        await updateDoc(doc(db, "professionals", auth.currentUser.uid), {
+                            logoUrl: base64
+                        });
+                    }
 
                     setProfile(prev => ({ ...prev, logoUrl: base64 }));
-                    toast.success('Logo atualizada com sucesso!');
+                    toast.success(profile.isStaff ? 'Foto atualizada!' : 'Logo atualizada!');
                     setUploading(false);
                 };
                 img.src = event.target.result;
@@ -103,18 +140,23 @@ export default function ProfilePage() {
         }
     };
 
-    const handleRemoveLogo = async () => {
-        const user = auth.currentUser;
+    const handleRemoveImage = async () => {
         setUploading(true);
         try {
-            await updateDoc(doc(db, "professionals", user.uid), {
-                logoUrl: ''
-            });
+            if (profile.isStaff) {
+                await updateDoc(doc(db, `professionals/${profile.ownerId}/staff/${profile.id}`), {
+                    photoUrl: ''
+                });
+            } else {
+                await updateDoc(doc(db, "professionals", auth.currentUser.uid), {
+                    logoUrl: ''
+                });
+            }
             setProfile(prev => ({ ...prev, logoUrl: '' }));
-            toast.success('Logo removida.');
+            toast.success('Imagem removida.');
         } catch (error) {
             console.error(error);
-            toast.error('Erro ao remover logo.');
+            toast.error('Erro ao remover imagem.');
         } finally {
             setUploading(false);
         }
@@ -124,21 +166,17 @@ export default function ProfilePage() {
         e.preventDefault();
         setSaving(true);
         try {
-            const user = auth.currentUser;
-            if (user) {
-                const slugify = (text) => {
-                    return text
-                        .toString()
-                        .toLowerCase()
-                        .normalize('NFD')
-                        .replace(/[\u0300-\u036f]/g, '')
-                        .replace(/\s+/g, '-')
-                        .replace(/[^\w\-]+/g, '')
-                        .replace(/\-\-+/g, '-')
-                        .replace(/^-+/, '')
-                        .replace(/-+$/, '');
-                };
-
+            if (profile.isStaff) {
+                // STAFF SAVE
+                await updateDoc(doc(db, `professionals/${profile.ownerId}/staff/${profile.id}`), {
+                    name: profile.name,
+                    phone: profile.phone || ''
+                });
+                toast.success('Perfil atualizado!');
+            } else {
+                // OWNER SAVE
+                const user = auth.currentUser;
+                const slugify = (text) => text.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/^-+/, '').replace(/-+$/, '');
                 const newSlug = slugify(profile.businessName || profile.name);
 
                 await updateDoc(doc(db, "professionals", user.uid), {
@@ -150,7 +188,7 @@ export default function ProfilePage() {
                     slug: newSlug
                 });
                 setSavedBusinessName(profile.businessName);
-                toast.success('Guardado com sucesso!');
+                toast.success('Perfil atualizado com sucesso!');
             }
         } catch (error) {
             console.error(error);
@@ -169,15 +207,19 @@ export default function ProfilePage() {
     }
 
     return (
-        <Layout role="professional" brandName={savedBusinessName}>
+        <Layout role="professional" brandName={profile.isStaff ? profile.name : savedBusinessName}>
             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
                 <div style={{ marginBottom: '2rem' }}>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Perfil Profissional</h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>Gerencie as informações do seu estabelecimento.</p>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                        {profile.isStaff ? 'O Meu Perfil' : 'Perfil Profissional'}
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                        {profile.isStaff ? 'Gerencie a sua informação pessoal.' : 'Gerencie as informações do seu estabelecimento.'}
+                    </p>
                 </div>
 
                 <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* Logo Upload Section */}
+                    {/* Image Upload Section */}
                     <div style={{
                         background: 'var(--bg-card)',
                         padding: '1.5rem',
@@ -193,7 +235,7 @@ export default function ProfilePage() {
                             <div style={{
                                 width: '100px',
                                 height: '100px',
-                                borderRadius: '20px',
+                                borderRadius: profile.isStaff ? '50%' : '20px', // Round for staff, square-ish for logo
                                 background: 'var(--bg-secondary)',
                                 border: '2px dashed var(--border-default)',
                                 overflow: 'hidden',
@@ -205,11 +247,11 @@ export default function ProfilePage() {
                                 {profile.logoUrl ? (
                                     <img
                                         src={profile.logoUrl}
-                                        alt="Logo"
+                                        alt="Profile"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                     />
                                 ) : (
-                                    <Building2 size={24} strokeWidth={1.75} style={{ color: 'var(--text-muted)' }} />
+                                    <Camera size={24} strokeWidth={1.75} style={{ color: 'var(--text-muted)' }} />
                                 )}
                                 {uploading && (
                                     <div style={{
@@ -228,11 +270,11 @@ export default function ProfilePage() {
                             {profile.logoUrl && !uploading && (
                                 <button
                                     type="button"
-                                    onClick={handleRemoveLogo}
+                                    onClick={handleRemoveImage}
                                     style={{
                                         position: 'absolute',
-                                        top: '-8px',
-                                        right: '-8px',
+                                        top: '-4px',
+                                        right: '-4px', // Adjusted position
                                         width: '24px',
                                         height: '24px',
                                         borderRadius: '50%',
@@ -267,11 +309,11 @@ export default function ProfilePage() {
                                 transition: 'all 0.2s ease'
                             }}>
                                 <Camera size={16} />
-                                {profile.logoUrl ? 'Alterar Logo' : 'Carregar Logo'}
+                                {profile.logoUrl ? (profile.isStaff ? 'Alterar Foto' : 'Alterar Logo') : (profile.isStaff ? 'Carregar Foto' : 'Carregar Logo')}
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={handleLogoUpload}
+                                    onChange={handleImageUpload}
                                     style={{ display: 'none' }}
                                     disabled={uploading}
                                 />
@@ -282,28 +324,30 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    {/* Business Name */}
-                    <div style={{
-                        background: 'var(--bg-card)',
-                        padding: '1.5rem',
-                        borderRadius: '16px',
-                        border: '1px solid var(--border-default)',
-                        boxShadow: 'var(--shadow-sm)'
-                    }}>
-                        <label className="label" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Building2 size={16} strokeWidth={1.75} /> Nome do Estabelecimento
-                        </label>
-                        <input
-                            type="text"
-                            className="input"
-                            value={profile.businessName || ''}
-                            onChange={(e) => setProfile({ ...profile, businessName: e.target.value })}
-                            placeholder="Ex: Barbearia do João, Clínica Estética..."
-                        />
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
-                            Este nome será exibido no topo do seu dashboard e no seu link de marcações.
-                        </p>
-                    </div>
+                    {/* Business Name - Only for Owners */}
+                    {!profile.isStaff && (
+                        <div style={{
+                            background: 'var(--bg-card)',
+                            padding: '1.5rem',
+                            borderRadius: '16px',
+                            border: '1px solid var(--border-default)',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <label className="label" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Building2 size={16} strokeWidth={1.75} /> Nome do Estabelecimento
+                            </label>
+                            <input
+                                type="text"
+                                className="input"
+                                value={profile.businessName || ''}
+                                onChange={(e) => setProfile({ ...profile, businessName: e.target.value })}
+                                placeholder="Ex: Barbearia do João..."
+                            />
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+                                Este nome será exibido no topo do seu dashboard.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Basic Info */}
                     <div style={{
@@ -347,26 +391,41 @@ export default function ProfilePage() {
 
                         <div>
                             <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Briefcase size={16} /> Profissão
+                                <Phone size={16} /> Telefone
                             </label>
-                            <select
-                                className="select"
-                                value={profile.profession || ''}
-                                onChange={(e) => setProfile({ ...profile, profession: e.target.value })}
-                            >
-                                <option value="">Selecione uma profissão</option>
-                                <option value="Barbeiro">Barbeiro</option>
-                                <option value="Personal Trainer">Personal Trainer</option>
-                                <option value="Tatuador">Tatuador</option>
-                                <option value="Explicador">Explicador</option>
-                                <option value="Freelancer">Freelancer</option>
-                                <option value="Cabeleireiro">Cabeleireiro</option>
-                                <option value="Esteticista">Esteticista</option>
-                                <option value="Massagista">Massagista</option>
-                                <option value="Fotógrafo">Fotógrafo</option>
-                                <option value="Outro">Outro</option>
-                            </select>
+                            <input
+                                type="tel"
+                                className="input"
+                                value={profile.phone || ''}
+                                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                                placeholder="(Opcional)"
+                            />
                         </div>
+
+                        {!profile.isStaff && (
+                            <div>
+                                <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Briefcase size={16} /> Profissão
+                                </label>
+                                <select
+                                    className="select"
+                                    value={profile.profession || ''}
+                                    onChange={(e) => setProfile({ ...profile, profession: e.target.value })}
+                                >
+                                    <option value="">Selecione uma profissão</option>
+                                    <option value="Barbeiro">Barbeiro</option>
+                                    <option value="Personal Trainer">Personal Trainer</option>
+                                    <option value="Tatuador">Tatuador</option>
+                                    <option value="Explicador">Explicador</option>
+                                    <option value="Freelancer">Freelancer</option>
+                                    <option value="Cabeleireiro">Cabeleireiro</option>
+                                    <option value="Esteticista">Esteticista</option>
+                                    <option value="Massagista">Massagista</option>
+                                    <option value="Fotógrafo">Fotógrafo</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                        )}
                     </div>
 
                     <button
