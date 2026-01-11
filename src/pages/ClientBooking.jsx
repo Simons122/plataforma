@@ -428,6 +428,7 @@ export default function ClientBooking() {
                                             )}
                                         </button>
 
+
                                         {/* Expanded Professional Options */}
                                         {showStaffSelector && staff.length > 0 && (
                                             <div
@@ -437,10 +438,10 @@ export default function ClientBooking() {
                                                     background: 'var(--bg-elevated)',
                                                     border: '1px solid var(--border-default)',
                                                     borderRadius: '12px',
-                                                    padding: '0.75rem',
+                                                    padding: '1rem',
                                                     display: 'grid',
-                                                    gridTemplateColumns: 'repeat(2, 1fr)',
-                                                    gap: '0.625rem'
+                                                    gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+                                                    gap: '0.75rem'
                                                 }}
                                             >
                                                 {/* Establishment Owner */}
@@ -451,31 +452,34 @@ export default function ClientBooking() {
                                                     }}
                                                     style={{
                                                         display: 'flex',
+                                                        flexDirection: 'column',
                                                         alignItems: 'center',
                                                         gap: '0.5rem',
-                                                        padding: '0.625rem',
-                                                        background: !selectedStaff ? 'var(--bg-card)' : 'var(--bg-secondary)',
-                                                        border: !selectedStaff ? '2px solid var(--accent-primary)' : '1px solid var(--border-default)',
-                                                        borderRadius: '8px',
+                                                        padding: '0.75rem',
+                                                        background: !selectedStaff ? 'var(--bg-card)' : 'transparent',
+                                                        border: !selectedStaff ? '2px solid var(--accent-primary)' : '1px solid transparent',
+                                                        borderRadius: '12px',
                                                         cursor: 'pointer',
                                                         transition: 'all 0.2s ease',
-                                                        textAlign: 'left'
+                                                        textAlign: 'center',
+                                                        boxShadow: !selectedStaff ? 'var(--shadow-sm)' : 'none'
                                                     }}
-                                                    className="hover:bg-[var(--bg-card)]"
+                                                    className="hover:border-[var(--border-default)]"
                                                 >
                                                     <div style={{
-                                                        width: '32px',
-                                                        height: '32px',
+                                                        width: '48px',
+                                                        height: '48px',
                                                         borderRadius: '50%',
                                                         background: pro.logoUrl ? 'transparent' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        fontSize: '0.875rem',
+                                                        fontSize: '1.25rem',
                                                         fontWeight: 700,
                                                         color: 'white',
                                                         overflow: 'hidden',
-                                                        flexShrink: 0
+                                                        flexShrink: 0,
+                                                        boxShadow: 'var(--shadow-sm)'
                                                     }}>
                                                         {pro.logoUrl ? (
                                                             <img src={pro.logoUrl} alt={pro.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -483,7 +487,7 @@ export default function ClientBooking() {
                                                             pro.name?.charAt(0).toUpperCase()
                                                         )}
                                                     </div>
-                                                    <div style={{ flex: 1, minWidth: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                                                         {pro.name}
                                                     </div>
                                                 </button>
@@ -498,31 +502,34 @@ export default function ClientBooking() {
                                                         }}
                                                         style={{
                                                             display: 'flex',
+                                                            flexDirection: 'column',
                                                             alignItems: 'center',
                                                             gap: '0.5rem',
-                                                            padding: '0.625rem',
-                                                            background: selectedStaff?.id === member.id ? 'var(--bg-card)' : 'var(--bg-secondary)',
-                                                            border: selectedStaff?.id === member.id ? '2px solid var(--accent-primary)' : '1px solid var(--border-default)',
-                                                            borderRadius: '8px',
+                                                            padding: '0.75rem',
+                                                            background: selectedStaff?.id === member.id ? 'var(--bg-card)' : 'transparent',
+                                                            border: selectedStaff?.id === member.id ? '2px solid var(--accent-primary)' : '1px solid transparent',
+                                                            borderRadius: '12px',
                                                             cursor: 'pointer',
                                                             transition: 'all 0.2s ease',
-                                                            textAlign: 'left'
+                                                            textAlign: 'center',
+                                                            boxShadow: selectedStaff?.id === member.id ? 'var(--shadow-sm)' : 'none'
                                                         }}
-                                                        className="hover:bg-[var(--bg-card)]"
+                                                        className="hover:border-[var(--border-default)]"
                                                     >
                                                         <div style={{
-                                                            width: '32px',
-                                                            height: '32px',
+                                                            width: '48px',
+                                                            height: '48px',
                                                             borderRadius: '50%',
                                                             background: member.photoUrl ? 'transparent' : 'linear-gradient(135deg, #a855f7, #ec4899)',
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
-                                                            fontSize: '0.875rem',
+                                                            fontSize: '1.25rem',
                                                             fontWeight: 700,
                                                             color: 'white',
                                                             overflow: 'hidden',
-                                                            flexShrink: 0
+                                                            flexShrink: 0,
+                                                            boxShadow: 'var(--shadow-sm)'
                                                         }}>
                                                             {member.photoUrl ? (
                                                                 <img src={member.photoUrl} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -530,7 +537,7 @@ export default function ClientBooking() {
                                                                 member.name?.charAt(0).toUpperCase()
                                                             )}
                                                         </div>
-                                                        <div style={{ flex: 1, minWidth: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                                                             {member.name}
                                                         </div>
                                                     </button>
