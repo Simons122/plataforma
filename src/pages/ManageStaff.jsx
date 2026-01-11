@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { db, auth, storage } from '../lib/firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, auth } from '../lib/firebase';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import Layout from '../components/Layout';
 import { UserPlus, Trash2, Clock, Edit2, Save, X, Users, Upload } from 'lucide-react';
 import { format } from 'date-fns';
@@ -22,8 +21,15 @@ export default function ManageStaff() {
     const [staffSchedule, setStaffSchedule] = useState(null);
 
     useEffect(() => {
-        fetchStaff();
-        fetchEstablishmentSchedule();
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) {
+                fetchStaff();
+                fetchEstablishmentSchedule();
+            } else {
+                setLoading(false);
+            }
+        });
+        return () => unsubscribe();
     }, []);
 
     const fetchEstablishmentSchedule = async () => {
@@ -62,6 +68,44 @@ export default function ManageStaff() {
         }
     };
 
+    const processImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300; // Um pouco maior que logo
+                    const MAX_HEIGHT = 300;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                img.onerror = reject;
+                img.src = event.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
     const handleAddStaff = async (e) => {
         e.preventDefault();
         try {
@@ -71,11 +115,15 @@ export default function ManageStaff() {
             setUploadingPhoto(true);
             let photoUrl = '';
 
-            // Upload photo to Firebase Storage if file is selected
             if (photoFile) {
-                const photoRef = ref(storage, `staff/${user.uid}/${Date.now()}_${photoFile.name}`);
-                await uploadBytes(photoRef, photoFile);
-                photoUrl = await getDownloadURL(photoRef);
+                try {
+                    photoUrl = await processImage(photoFile);
+                } catch (err) {
+                    console.error("Erro ao processar imagem", err);
+                    alert("Erro ao processar imagem. Tente uma menor.");
+                    setUploadingPhoto(false);
+                    return;
+                }
             }
 
             await addDoc(collection(db, `professionals/${user.uid}/staff`), {
@@ -91,7 +139,7 @@ export default function ManageStaff() {
             fetchStaff();
         } catch (error) {
             console.error("Erro ao adicionar profissional:", error);
-            alert("Erro ao adicionar profissional!");
+            alert("Erro ao adicionar profissional: " + error.message);
         } finally {
             setUploadingPhoto(false);
         }
