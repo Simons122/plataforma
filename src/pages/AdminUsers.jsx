@@ -240,13 +240,11 @@ export default function AdminDashboard() {
                                 overflow: 'hidden'
                             }}
                                 onMouseOver={e => {
-                                    e.currentTarget.style.transform = 'translateY(-4px)';
                                     e.currentTarget.style.boxShadow = isSuperAdmin
                                         ? '0 12px 40px rgba(168, 85, 247, 0.4)'
                                         : 'var(--shadow-lg)';
                                 }}
                                 onMouseOut={e => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
                                     e.currentTarget.style.boxShadow = 'none';
                                 }}
                             >
@@ -532,12 +530,10 @@ export default function AdminDashboard() {
                                                             justifyContent: 'center'
                                                         }}
                                                         onMouseOver={e => {
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
                                                             e.currentTarget.style.borderColor = getStatusColor(pro.paymentStatus || 'pending');
                                                             e.currentTarget.style.boxShadow = `0 4px 12px ${getStatusColor(pro.paymentStatus || 'pending')}40`;
                                                         }}
                                                         onMouseOut={e => {
-                                                            e.currentTarget.style.transform = 'translateY(0)';
                                                             e.currentTarget.style.borderColor = `${getStatusColor(pro.paymentStatus || 'pending')}30`;
                                                             e.currentTarget.style.boxShadow = 'none';
                                                         }}
@@ -589,11 +585,9 @@ export default function AdminDashboard() {
                                                             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
                                                         }}
                                                         onMouseOver={e => {
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
                                                             e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
                                                         }}
                                                         onMouseOut={e => {
-                                                            e.currentTarget.style.transform = 'translateY(0)';
                                                             e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                                                         }}
                                                     >
@@ -656,13 +650,11 @@ export default function AdminDashboard() {
                                                     e.currentTarget.style.background = 'var(--bg-card)';
                                                     e.currentTarget.style.color = 'var(--accent-primary)';
                                                     e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                                    e.currentTarget.style.transform = 'translateY(-1px)';
                                                 }}
                                                 onMouseOut={e => {
                                                     e.currentTarget.style.background = 'var(--bg-elevated)';
                                                     e.currentTarget.style.color = 'var(--text-secondary)';
                                                     e.currentTarget.style.borderColor = 'var(--border-default)';
-                                                    e.currentTarget.style.transform = 'translateY(0)';
                                                 }}
                                             >
                                                 <Mail size={16} />
@@ -691,13 +683,11 @@ export default function AdminDashboard() {
                                                         e.currentTarget.style.background = 'var(--bg-card)';
                                                         e.currentTarget.style.color = 'var(--accent-primary)';
                                                         e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                                        e.currentTarget.style.transform = 'translateY(-1px)';
                                                     }}
                                                     onMouseOut={e => {
                                                         e.currentTarget.style.background = 'var(--bg-elevated)';
                                                         e.currentTarget.style.color = 'var(--text-secondary)';
                                                         e.currentTarget.style.borderColor = 'var(--border-default)';
-                                                        e.currentTarget.style.transform = 'translateY(0)';
                                                     }}
                                                 >
                                                     <ExternalLink size={16} />
