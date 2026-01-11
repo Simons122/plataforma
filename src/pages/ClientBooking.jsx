@@ -31,6 +31,7 @@ export default function ClientBooking() {
                 // Não está logado, redirecionar para login
                 // Guardar URL atual para voltar depois
                 sessionStorage.setItem('returnTo', `/book/${slug}`);
+                setLoading(false); // ← IMPORTANTE: Desativar loading antes de redirecionar
                 navigate('/client/auth');
                 return;
             }
@@ -45,6 +46,10 @@ export default function ClientBooking() {
                     phone: clientInfo.phone || ''
                 });
                 setCurrentUser(user);
+            } else {
+                // Usuário autenticado mas não é cliente
+                setLoading(false);
+                navigate('/client/auth');
             }
         });
 
