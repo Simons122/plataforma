@@ -252,8 +252,44 @@ export default function ManageStaff() {
         } catch (error) {
             console.error("Erro ao salvar profissional:", error);
             if (error.code === 'auth/email-already-in-use') {
-                toast.error("Este email já está registado no sistema.");
-                alert("Erro: Este email já existe no Firebase Authentication.\n\nSe apagou este utilizador recentemente e o erro persiste, é porque a limpeza automática falhou. Terá de contactar o suporte ou usar outro email.");
+                const [username, domain] = newStaff.email.split('@');
+                const aliasEmail = `${username}+novo@${domain}`;
+
+                if (confirm(`O email original (${newStaff.email}) está "preso" no sistema devido a uma eliminação anterior incompleta.\n\nSOLUÇÃO RÁPIDA: Deseja criar a conta usando um email alternativo: "${aliasEmail}"?\n\n(O funcionário receberá emails na mesma caixa de entrada, mas terá de usar "${aliasEmail}" para fazer login).`)) {
+                    try {
+                        const userCredential = await createUserWithEmailAndPassword(auth, aliasEmail, newStaff.password);
+                        const user = userCredential.user;
+
+                        // Save to Firestore with the NEW alias email
+                        const staffData = {
+                            ...newStaff,
+                            email: aliasEmail, // Use alias
+                            originalEmail: newStaff.email, // Keep record of original
+                            ownerId: auth.currentUser.uid,
+                            createdAt: new Date().toISOString(),
+                            role: 'staff',
+                            authUserId: user.uid
+                        };
+
+                        const docRef = await addDoc(collection(db, `professionals/${auth.currentUser.uid}/staff`), staffData);
+                        await setDoc(doc(db, "staff_lookup", user.uid), {
+                            ownerId: auth.currentUser.uid,
+                            staffId: docRef.id,
+                            email: aliasEmail
+                        });
+
+                        setNewStaff({ name: '', email: '', phone: '', photoUrl: '', password: '' });
+                        setPhotoFile(null);
+                        setShowAddModal(false);
+                        toast.success(`Conta criada com sucesso usando: ${aliasEmail}`);
+                        fetchStaff();
+                        return; // Exit success
+
+                    } catch (retryError) {
+                        console.error("Erro na tentativa automática:", retryError);
+                        toast.error("Falha ao criar conta alternativa: " + retryError.message);
+                    }
+                }
             } else {
                 toast.error("Erro ao salvar: " + error.message);
             }
