@@ -439,11 +439,6 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
             </div>
 
             <style>{`
-                .booking-ticket:hover {
-                    box-shadow: var(--shadow-md);
-                    transform: translateY(-2px);
-                    border-color: var(--accent-primary-dim);
-                }
                 .text-accent { color: var(--accent-primary); }
                 .badge-pill {
                     padding: 4px 10px;
