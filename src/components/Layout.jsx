@@ -451,6 +451,11 @@ export default function Layout({ children, role = 'professional', restricted = f
                     </h1>
                 </div>
 
+                <div style={{ fontSize: '10px', color: 'red', padding: '5px' }}>
+                    DEBUG UID: {auth.currentUser?.uid?.substring(0, 6)}... <br />
+                    IsStaff: {fetchedProfile?.isStaff ? 'YES' : 'NO'}
+                </div>
+
                 {/* Navigation */}
                 <nav style={{ flex: 1, padding: '1rem 0.75rem' }}>
                     {loadingProfile ? (
