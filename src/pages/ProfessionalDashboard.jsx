@@ -23,47 +23,81 @@ export default function ProfessionalDashboard() {
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const docRef = doc(db, "professionals", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    let profileData = { id: user.uid, ...data };
+                try {
+                    let profileData = null;
+                    let isStaffUser = false;
+                    let ownerId = user.uid;
 
-                    // Backfill Slug if missing
-                    if (!data.slug) {
-                        const slugify = (text) => {
-                            return text
-                                .toString()
-                                .toLowerCase()
-                                .normalize('NFD') // Split accents
-                                .replace(/[\u0300-\u036f]/g, '') // Remove accents
-                                .replace(/\s+/g, '-') // Replace spaces with -
-                                .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-                                .replace(/\-\-+/g, '-') // Replace multiple - with single -
-                                .replace(/^-+/, '') // Trim - from start
-                                .replace(/-+$/, ''); // Trim - from end
-                        };
+                    // 1. Try Professional (Owner)
+                    const docRef = doc(db, "professionals", user.uid);
+                    const docSnap = await getDoc(docRef);
 
-                        const newSlug = slugify(data.businessName || data.name || user.uid);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        profileData = { id: user.uid, role: 'professional', ...data };
 
-                        // Optimistic update
-                        profileData.slug = newSlug;
+                        // Backfill Slug if missing (Owner only)
+                        if (!data.slug) {
+                            const slugify = (text) => {
+                                return text
+                                    .toString()
+                                    .toLowerCase()
+                                    .normalize('NFD')
+                                    .replace(/[\u0300-\u036f]/g, '')
+                                    .replace(/\s+/g, '-')
+                                    .replace(/[^\w\-]+/g, '')
+                                    .replace(/\-\-+/g, '-')
+                                    .replace(/-+$/, '');
+                            };
+                            const newSlug = slugify(data.businessName || data.name || user.uid);
+                            // Optimistic update
+                            profileData.slug = newSlug;
+                            try {
+                                await updateDoc(docRef, { slug: newSlug });
+                            } catch (err) {
+                                console.error("Error backfilling slug", err);
+                            }
+                        }
+                    } else {
+                        // 2. Try Staff Lookup
+                        const lookupRef = doc(db, "staff_lookup", user.uid);
+                        const lookupSnap = await getDoc(lookupRef);
+                        if (lookupSnap.exists()) {
+                            isStaffUser = true;
+                            const lookupData = lookupSnap.data();
+                            ownerId = lookupData.ownerId;
 
-                        try {
-                            await updateDoc(docRef, { slug: newSlug });
-                        } catch (err) {
-                            console.error("Error backfilling slug", err);
+                            const staffDoc = await getDoc(doc(db, `professionals/${ownerId}/staff/${lookupData.staffId}`));
+                            if (staffDoc.exists()) {
+                                profileData = {
+                                    id: lookupData.staffId,
+                                    ...staffDoc.data(),
+                                    ownerId: ownerId,
+                                    isStaff: true,
+                                    role: 'staff',
+                                    paymentStatus: 'active' // Assume active if owner exists (refine later if needed)
+                                };
+                            }
                         }
                     }
 
-                    setProfile(profileData);
+                    if (profileData) {
+                        setProfile(profileData);
 
-                    try {
-                        const servicesSnap = await getDocs(collection(db, `professionals/${user.uid}/services`));
-                        const bookingsSnap = await getDocs(collection(db, `professionals/${user.uid}/bookings`));
+                        // Fetch Data for Stats
+                        // Services are global (Owner's services)
+                        const servicesSnap = await getDocs(collection(db, `professionals/${ownerId}/services`));
 
-
-                        const allBookings = bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        let allBookings = [];
+                        if (isStaffUser) {
+                            // Staff Bookings
+                            const bookingsSnap = await getDocs(collection(db, `professionals/${ownerId}/staff/${profileData.id}/bookings`));
+                            allBookings = bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        } else {
+                            // Owner Bookings (Main collection)
+                            const bookingsSnap = await getDocs(collection(db, `professionals/${ownerId}/bookings`));
+                            allBookings = bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        }
 
                         // Filter today's bookings
                         const todaysBookings = allBookings
@@ -86,9 +120,9 @@ export default function ProfessionalDashboard() {
                             bookingsMonth,
                             revenueMonth
                         });
-                    } catch (e) {
-                        console.error(e);
                     }
+                } catch (e) {
+                    console.error("Dashboard Error:", e);
                 }
             }
             setLoading(false);
@@ -402,119 +436,129 @@ export default function ProfessionalDashboard() {
                     onClick={() => setIsModalOpen(true)}
                     highlight={true}
                 />
-                <ActionCard
-                    icon={Sparkles}
-                    title="Serviços"
-                    onClick={() => navigate('/dashboard/services')}
-                />
-                <ActionCard
-                    icon={CalendarClock}
-                    title="Horários"
-                    onClick={() => navigate('/dashboard/schedule')}
-                />
+
+                {!profile.isStaff && (
+                    <>
+                        <ActionCard
+                            icon={Sparkles}
+                            title="Serviços"
+                            onClick={() => navigate('/dashboard/services')}
+                        />
+                        <ActionCard
+                            icon={CalendarClock}
+                            title="Horários"
+                            onClick={() => navigate('/dashboard/schedule')}
+                        />
+                    </>
+                )}
             </div>
 
             {/* Share Section */}
-            <div style={{
-                padding: '1.25rem 1.75rem',
-                background: 'var(--bg-card)',
-                borderRadius: '16px',
-                border: '1px solid var(--border-default)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '1.5rem',
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
+            {!profile.isStaff && (
                 <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: '150px',
-                    height: '150px',
-                    background: 'radial-gradient(circle at center, var(--accent-primary) 0%, transparent 70%)',
-                    opacity: 0.03,
-                    filter: 'blur(40px)',
-                    zIndex: 0
-                }} />
-
-                <div style={{ minWidth: 0, flex: 1, position: 'relative', zIndex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <div style={{ width: '6px', height: '6px', background: 'var(--accent-primary)', borderRadius: '50%' }} />
-                        <h4 style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800 }}>
-                            O Seu Link de Marcações
-                        </h4>
-                    </div>
+                    padding: '1.25rem 1.75rem',
+                    background: 'var(--bg-card)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-default)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1.5rem',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
                     <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        background: 'var(--bg-primary)',
-                        padding: '0.75rem 1rem',
-                        borderRadius: '10px',
-                        border: '1px solid var(--border-default)'
-                    }}>
-                        <code style={{
-                            fontSize: '0.875rem',
-                            color: 'var(--text-secondary)',
-                            fontFamily: 'var(--font-mono)',
-                            display: 'block',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            flex: 1
-                        }}>
-                            {window.location.origin}/book/{profile.slug}
-                        </code>
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        width: '150px',
+                        height: '150px',
+                        background: 'radial-gradient(circle at center, var(--accent-primary) 0%, transparent 70%)',
+                        opacity: 0.03,
+                        filter: 'blur(40px)',
+                        zIndex: 0
+                    }} />
+
+                    <div style={{ minWidth: 0, flex: 1, position: 'relative', zIndex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <div style={{ width: '6px', height: '6px', background: 'var(--accent-primary)', borderRadius: '50%' }} />
+                            <h4 style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800 }}>
+                                O Seu Link de Marcações
+                            </h4>
+                        </div>
                         <div style={{
-                            width: '4px',
-                            height: '4px',
-                            background: 'var(--border-default)',
-                            borderRadius: '50%'
-                        }} />
-                        <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Público</span>
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            background: 'var(--bg-primary)',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '10px',
+                            border: '1px solid var(--border-default)'
+                        }}>
+                            <code style={{
+                                fontSize: '0.875rem',
+                                color: 'var(--text-secondary)',
+                                fontFamily: 'var(--font-mono)',
+                                display: 'block',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                flex: 1
+                            }}>
+                                {window.location.origin}/book/{profile.slug}
+                            </code>
+                            <div style={{
+                                width: '4px',
+                                height: '4px',
+                                background: 'var(--border-default)',
+                                borderRadius: '50%'
+                            }} />
+                            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Público</span>
+                        </div>
                     </div>
+                    <button
+                        onClick={() => {
+                            navigator.clipboard.writeText(bookingLink);
+                            toast.success('Link copiado com sucesso!');
+                        }}
+                        style={{
+                            padding: '0.875rem 2rem',
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                            boxShadow: 'var(--shadow-md)',
+                            position: 'relative',
+                            zIndex: 1
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'var(--accent-primary-hover)';
+                            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                            e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'var(--accent-primary)';
+                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                            e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                        }}
+                    >
+                        Copiar Link
+                    </button>
                 </div>
-                <button
-                    onClick={() => {
-                        navigator.clipboard.writeText(bookingLink);
-                        toast.success('Link copiado com sucesso!');
-                    }}
-                    style={{
-                        padding: '0.875rem 2rem',
-                        background: 'var(--accent-primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '12px',
-                        fontSize: '0.875rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                        boxShadow: 'var(--shadow-md)',
-                        position: 'relative',
-                        zIndex: 1
-                    }}
-                    onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'var(--accent-primary-hover)';
-                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                    }}
-                    onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'var(--accent-primary)';
-                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                    }}
-                >
-                    Copiar Link
-                </button>
-            </div>
+            )}
+
             {/* Manual Booking Modal */}
             <ManualBookingModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 professionalId={profile.id}
+                ownerId={profile.ownerId || profile.id}
+                isStaff={profile.isStaff}
                 onBookingAdded={refetchData}
             />
         </Layout>
