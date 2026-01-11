@@ -550,6 +550,19 @@ export default function Layout({ children, role = 'professional', restricted = f
                     }} className="animate-fade-in">
                         {children}
                     </div>
+                    {/* Powered By Footer */}
+                    <div style={{
+                        marginTop: 'auto',
+                        textAlign: 'center',
+                        padding: '1.5rem',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        borderTop: '1px solid var(--border-default)',
+                        opacity: 0.7
+                    }}>
+                        Powered by Booklyo
+                    </div>
                 </div>
             </main>
         </div>
