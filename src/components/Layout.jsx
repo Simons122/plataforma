@@ -12,8 +12,21 @@ export default function Layout({ children, role = 'professional', restricted = f
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [fetchedProfile, setFetchedProfile] = useState(null);
 
-    const businessName = propBrandName || fetchedProfile?.businessName || (role === 'admin' ? 'Admin' : (role === 'client' ? 'Cliente' : 'Solo'));
-    const logoUrl = fetchedProfile?.logoUrl;
+    const isProfessionalPending = role === 'professional' && (!fetchedProfile || fetchedProfile.paymentStatus === 'pending' || fetchedProfile.paymentStatus === 'expired');
+    const APP_NAME = "Booklyo";
+
+    let businessName = propBrandName;
+    if (!businessName) {
+        if (role === 'admin') businessName = 'Admin Portal';
+        else if (role === 'client') businessName = 'Área Cliente';
+        else if (role === 'professional') {
+            businessName = isProfessionalPending ? APP_NAME : (fetchedProfile?.businessName || APP_NAME);
+        } else {
+            businessName = APP_NAME;
+        }
+    }
+
+    const logoUrl = (!isProfessionalPending ? fetchedProfile?.logoUrl : null);
 
     useEffect(() => {
         if (role === 'professional') {
@@ -176,7 +189,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 fontSize: '2rem',
                                 boxShadow: 'var(--shadow-glow)'
                             }}>
-                                {businessName.charAt(0).toUpperCase()}
+                                {businessName === APP_NAME ? <CalendarDays size={36} /> : businessName.charAt(0).toUpperCase()}
                             </div>
                         )}
                         <h1 style={{
@@ -318,7 +331,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                             flexShrink: 0,
                             boxShadow: 'var(--shadow-glow)'
                         }}>
-                            {businessName.charAt(0).toUpperCase()}
+                            {businessName === APP_NAME ? <CalendarDays size={32} /> : businessName.charAt(0).toUpperCase()}
                         </div>
                     )}
                     <h1 style={{
