@@ -92,7 +92,14 @@ export default function ClientAuth() {
                     createdAt: new Date().toISOString()
                 });
 
-                navigate('/client/bookings');
+                // Verificar se deve voltar para página de marcação
+                const returnTo = sessionStorage.getItem('returnTo');
+                if (returnTo) {
+                    sessionStorage.removeItem('returnTo');
+                    navigate(returnTo);
+                } else {
+                    navigate('/client/bookings');
+                }
             }
         } catch (err) {
             console.error(err);

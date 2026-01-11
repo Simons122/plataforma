@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, addDoc, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import { Clock, Check, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addMinutes, setHours, setMinutes, isBefore, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -10,6 +10,7 @@ const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 export default function ClientBooking() {
     const { slug } = useParams();
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [pro, setPro] = useState(null);
     const [services, setServices] = useState([]);
@@ -21,10 +22,38 @@ export default function ClientBooking() {
     const [clientData, setClientData] = useState({ name: '', email: '', phone: '' });
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    // Verificar se está logado
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                // Não está logado, redirecionar para login
+                // Guardar URL atual para voltar depois
+                sessionStorage.setItem('returnTo', `/book/${slug}`);
+                navigate('/client/auth');
+                return;
+            }
+
+            // Carregar dados do cliente
+            const clientDoc = await getDoc(doc(db, 'clients', user.uid));
+            if (clientDoc.exists()) {
+                const clientInfo = clientDoc.data();
+                setClientData({
+                    name: clientInfo.name || user.displayName || '',
+                    email: clientInfo.email || user.email || '',
+                    phone: clientInfo.phone || ''
+                });
+                setCurrentUser(user);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [slug, navigate]);
 
     useEffect(() => {
-        if (slug) fetchData();
-    }, [slug]);
+        if (slug && currentUser) fetchData();
+    }, [slug, currentUser]);
 
     const fetchData = async () => {
         try {
