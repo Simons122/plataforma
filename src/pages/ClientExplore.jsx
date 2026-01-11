@@ -3,7 +3,7 @@ import { db, auth } from '../lib/firebase';
 import { collection, getDocs, query, where, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { Search, MapPin, Heart, ArrowRight, Info, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Layout from '../components/Layout';
+import ClientLayout from '../components/ClientLayout';
 
 export default function ClientExplore() {
     const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ export default function ClientExplore() {
     }
 
     return (
-        <Layout role="client" brandName={user?.displayName || user?.email?.split('@')[0]}>
+        <ClientLayout userName={user?.displayName || user?.email?.split('@')[0]}>
             <div style={{ paddingBottom: '2rem', position: 'relative' }}>
                 {/* Toast Notification */}
                 {toast && (
@@ -315,6 +315,6 @@ export default function ClientExplore() {
                 }
                 .action-btn:active { transform: translateY(0); }
             `}</style>
-        </Layout >
+        </ClientLayout>
     );
 }
