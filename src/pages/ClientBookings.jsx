@@ -331,8 +331,8 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
                 <span style={{ fontSize: '1.75rem', fontWeight: 800, color: isCancelled ? 'var(--text-muted)' : 'var(--text-primary)', lineHeight: 1 }}>
                     {format(bookingDate, 'd')}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>
-                    {format(bookingDate, 'EEE', { locale: pt })}
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px', textTransform: 'capitalize' }}>
+                    {format(bookingDate, 'EEE', { locale: pt }).replace('.', '')}
                 </span>
             </div>
 
@@ -407,27 +407,32 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '6px',
-                            padding: '8px 12px',
-                            background: '#ef4444', // Vermelho forte
-                            color: 'white',
-                            border: 'none',
+                            padding: '6px 12px',
+                            background: 'transparent',
+                            color: 'var(--accent-danger)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
                             borderRadius: '8px',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.02em',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
                             cursor: cancelling ? 'wait' : 'pointer',
                             transition: 'all 0.2s',
                             width: '100%',
                             marginTop: 'auto',
-                            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+                            whiteSpace: 'nowrap'
                         }}
-                        onMouseOver={(e) => e.currentTarget.style.background = '#dc2626'}
-                        onMouseOut={(e) => e.currentTarget.style.background = '#ef4444'}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)';
+                            e.currentTarget.style.borderColor = 'var(--accent-danger)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                        }}
                     >
                         {cancelling ? (
-                            <div className="spinner-sm" style={{ borderColor: 'white', borderTopColor: 'transparent' }} />
+                            <div className="spinner-sm" style={{ borderColor: 'var(--accent-danger)', borderTopColor: 'transparent' }} />
                         ) : (
-                            <>CANCELAR MARCAÇÃO</>
+                            <>Cancelar marcação</>
                         )}
                     </button>
                 )}
