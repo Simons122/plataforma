@@ -89,6 +89,11 @@ export default function ClientBooking() {
 
                 const bookingsSnap = await getDocs(collection(db, `professionals/${proId}/bookings`));
                 setBookings(bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            } else {
+                // Profissional não encontrado -> Redirecionar para Explorar
+                console.warn("Profissional não encontrado para o slug:", slug);
+                navigate('/client/explore');
+                return;
             }
         } catch (e) {
             console.error(e);
@@ -242,7 +247,7 @@ export default function ClientBooking() {
     if (!pro) {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-                Profissional não encontrado.
+                <div className="spinner"></div>
             </div>
         );
     }
