@@ -11,6 +11,7 @@ export default function Layout({ children, role = 'professional', restricted = f
     const { theme, toggleTheme } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [fetchedProfile, setFetchedProfile] = useState(null);
+    const [loadingProfile, setLoadingProfile] = useState(true);
 
     const isProfessionalPending = role === 'professional' && (!fetchedProfile || fetchedProfile.paymentStatus === 'pending' || fetchedProfile.paymentStatus === 'expired');
     const APP_NAME = "Booklyo";
@@ -49,19 +50,25 @@ export default function Layout({ children, role = 'professional', restricted = f
                                         isStaff: true,
                                         ownerId: ownerId,
                                         id: staffId,
-                                        logoUrl: sData.photoUrl,     // Use staff photo as logo
-                                        businessName: sData.name,    // Use staff name as brand
-                                        paymentStatus: 'active'      // Staff is always active if logged in (for now)
+                                        logoUrl: sData.photoUrl,
+                                        businessName: sData.name,
+                                        paymentStatus: 'active'
                                     });
                                 }
                             }
                         }
                     } catch (err) {
                         console.error("Layout Profile Fetch Error", err);
+                    } finally {
+                        setLoadingProfile(false);
                     }
+                } else {
+                    setLoadingProfile(false);
                 }
             });
             return () => unsubscribe();
+        } else {
+            setLoadingProfile(false);
         }
     }, [role]);
 
@@ -241,7 +248,13 @@ export default function Layout({ children, role = 'professional', restricted = f
                 </div>
 
                 <nav style={{ flex: 1, padding: '1rem' }}>
-                    {!restricted && (
+                    {loadingProfile ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', opacity: 0.5 }}>
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} style={{ height: '48px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
+                            ))}
+                        </div>
+                    ) : !restricted && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {links.map(link => (
                                 <NavItem
@@ -388,7 +401,13 @@ export default function Layout({ children, role = 'professional', restricted = f
 
                 {/* Navigation */}
                 <nav style={{ flex: 1, padding: '1rem 0.75rem' }}>
-                    {!restricted && (
+                    {loadingProfile ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', opacity: 0.5 }}>
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} style={{ height: '40px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
+                            ))}
+                        </div>
+                    ) : !restricted && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                             {links.map(link => (
                                 <NavItem
