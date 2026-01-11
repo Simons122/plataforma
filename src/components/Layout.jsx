@@ -161,8 +161,8 @@ export default function Layout({ children, role = 'professional', restricted = f
     let links = [];
     if (role === 'admin') links = adminLinks;
     else if (role === 'client') links = clientLinks;
-    else if (role === 'professional') {
-        links = fetchedProfile?.isStaff ? staffLinks : proLinks;
+    else if (role === 'professional' || role === 'staff') {
+        links = (fetchedProfile?.isStaff || role === 'staff') ? staffLinks : proLinks;
     }
 
     // Mobile Sidebar
@@ -453,11 +453,6 @@ export default function Layout({ children, role = 'professional', restricted = f
 
                 {/* Navigation */}
                 <nav style={{ flex: 1, padding: '1rem 0.75rem' }}>
-                    <div style={{ padding: '0.5rem', marginBottom: '0.5rem', fontSize: '0.7rem', color: 'red', background: '#ffebee', borderRadius: '4px' }}>
-                        DEBUG: Role={String(role)}, restricted={String(restricted)} <br />
-                        Links={links.length}, Staff={fetchedProfile?.isStaff ? 'Y' : 'N'} <br />
-                        Loaded={loadingProfile ? 'Loading...' : 'Done'}
-                    </div>
                     {loadingProfile ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', opacity: 0.5 }}>
                             {[1, 2, 3, 4].map(i => (
