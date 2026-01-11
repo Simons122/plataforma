@@ -13,15 +13,15 @@ export default function Layout({ children, role = 'professional', restricted = f
     const [fetchedProfile, setFetchedProfile] = useState(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
 
-    const isProfessionalPending = role === 'professional' && (!fetchedProfile || fetchedProfile.paymentStatus === 'pending' || fetchedProfile.paymentStatus === 'expired');
+    const isProfessionalPending = (role === 'professional' || role === 'staff') && (!fetchedProfile || fetchedProfile.paymentStatus === 'pending' || fetchedProfile.paymentStatus === 'expired');
     const APP_NAME = "Booklyo";
 
     let businessName = propBrandName;
     if (!businessName) {
         if (role === 'admin') businessName = 'Admin Portal';
         else if (role === 'client') businessName = 'Área Cliente';
-        else if (role === 'professional') {
-            businessName = isProfessionalPending ? APP_NAME : (fetchedProfile?.businessName || APP_NAME);
+        else if (role === 'professional' || role === 'staff') {
+            businessName = isProfessionalPending ? APP_NAME : (fetchedProfile?.businessName || fetchedProfile?.name || APP_NAME);
         } else {
             businessName = APP_NAME;
         }
