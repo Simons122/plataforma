@@ -85,6 +85,22 @@ export default function AdminDashboard() {
             p.businessName?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRole = roleFilter === 'all' || p.role === roleFilter;
         return matchesSearch && matchesRole;
+    }).sort((a, b) => {
+        // 1. Super Admin (Prioridade Máxima)
+        if (a.superAdmin && !b.superAdmin) return -1;
+        if (!a.superAdmin && b.superAdmin) return 1;
+
+        // 2. Admins (Segunda Prioridade)
+        const aIsAdmin = a.role === 'admin';
+        const bIsAdmin = b.role === 'admin';
+
+        if (aIsAdmin && !bIsAdmin) return -1;
+        if (!aIsAdmin && bIsAdmin) return 1;
+
+        // 3. Restantes por data de criação (mais recentes primeiro) ou nome
+        const dateA = new Date(a.createdAt || 0);
+        const dateB = new Date(b.createdAt || 0);
+        return dateB - dateA;
     });
 
     const getStatusColor = (status) => {
