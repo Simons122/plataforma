@@ -328,43 +328,42 @@ export default function AgendaPage() {
 
             {/* DAY VIEW */}
             {viewMode === 'day' && (
-                <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-default)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-secondary)' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {format(selectedDate, "EEEE, d 'de' MMMM", { locale: pt })}
-                        </span>
-                        <span style={{ marginLeft: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {currentDayBookings.length} marcações
-                        </span>
+                <div className="agenda-container">
+                    <div className="agenda-grid-header">
+                        <div className="agenda-day-header-content">
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                {format(selectedDate, "EEEE, d 'de' MMMM", { locale: pt })}
+                            </span>
+                            <span className="badge badge-success">
+                                {currentDayBookings.length} marcações
+                            </span>
+                        </div>
                     </div>
                     <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 280px)' }}>
                         {HOURS.map(hour => {
                             const hourBookings = currentDayBookings.filter(b => parseISO(b.date).getHours() === hour);
                             return (
-                                <div key={hour} style={{ display: 'flex', borderBottom: '1px solid var(--border-default)', minHeight: '50px' }}>
-                                    <div style={{ width: '50px', padding: '0.25rem', borderRight: '1px solid var(--border-default)', color: 'var(--text-muted)', fontSize: '0.6875rem', textAlign: 'right' }}>
+                                <div key={hour} className="agenda-time-row">
+                                    <div className="agenda-time-col-min">
                                         {String(hour).padStart(2, '0')}:00
                                     </div>
-                                    <div style={{ flex: 1, position: 'relative', padding: '2px' }}>
+                                    <div style={{ flex: 1, position: 'relative', padding: '4px 8px' }}>
                                         {hourBookings.map(b => (
-                                            <div key={b.id} style={{
+                                            <div key={b.id} className="agenda-event-card" style={{
                                                 background: b.isStaff ? 'color-mix(in srgb, #ec4899, transparent 92%)' : 'color-mix(in srgb, var(--accent-primary), transparent 92%)',
-                                                borderLeft: `3px solid ${b.isStaff ? '#ec4899' : 'var(--accent-primary)'}`,
-                                                borderRadius: '4px',
-                                                padding: '0.25rem 0.5rem',
-                                                marginBottom: '2px',
-                                                fontSize: '0.75rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between'
+                                                borderColor: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
                                             }}>
-                                                <div>
-                                                    <span style={{ fontWeight: 600, color: b.isStaff ? '#ec4899' : 'var(--accent-primary)' }}>{format(parseISO(b.date), 'HH:mm')}</span>
-                                                    <span style={{ marginLeft: '0.5rem', color: 'var(--text-primary)' }}>{b.clientName}</span>
-                                                    <span style={{ marginLeft: '0.5rem', color: 'var(--text-secondary)' }}>{b.serviceName}</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ fontWeight: 700, color: b.isStaff ? '#ec4899' : 'var(--accent-primary)' }}>
+                                                            {format(parseISO(b.date), 'HH:mm')}
+                                                        </span>
+                                                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{b.clientName}</span>
+                                                    </div>
+                                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{b.serviceName}</span>
                                                 </div>
                                                 {!profile?.isStaff && (
-                                                    <div style={{ fontSize: '0.625rem', fontWeight: 600, background: 'rgba(255,255,255,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                    <div style={{ fontSize: '0.625rem', fontWeight: 600, background: 'var(--bg-card)', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border-default)' }}>
                                                         {b.responsibleName}
                                                     </div>
                                                 )}
@@ -380,33 +379,22 @@ export default function AgendaPage() {
 
             {/* WEEK VIEW */}
             {viewMode === 'week' && (
-                <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-default)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+                <div className="agenda-container">
                     <div style={{ overflowX: 'auto' }}>
                         <div style={{ minWidth: '700px' }}>
                             {/* Week Header */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '50px repeat(7, 1fr)', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-secondary)' }}>
-                                <div style={{ padding: '0.5rem', borderRight: '1px solid var(--border-default)' }}></div>
+                            <div className="agenda-grid-header agenda-week-grid-layout">
+                                <div style={{ borderRight: '1px solid var(--border-default)' }}></div>
                                 {getWeekDays().map((day, i) => (
                                     <div
                                         key={i}
                                         onClick={() => { setSelectedDate(day); setViewMode('day'); }}
-                                        style={{
-                                            padding: '0.5rem',
-                                            textAlign: 'center',
-                                            borderRight: i < 6 ? '1px solid var(--border-default)' : 'none',
-                                            cursor: 'pointer',
-                                            background: isToday(day) ? 'color-mix(in srgb, var(--accent-primary), transparent 95%)' : 'transparent',
-                                            transition: 'background 0.2s ease'
-                                        }}
+                                        className="agenda-week-header-cell"
                                     >
-                                        <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                                        <div className="agenda-week-day-label">
                                             {format(day, 'EEE', { locale: pt })}
                                         </div>
-                                        <div style={{
-                                            fontSize: '0.9375rem',
-                                            fontWeight: isToday(day) ? 700 : 500,
-                                            color: isToday(day) ? 'var(--accent-primary)' : 'var(--text-primary)'
-                                        }}>
+                                        <div className={`agenda-week-day-number ${isToday(day) ? 'today' : ''}`}>
                                             {format(day, 'd')}
                                         </div>
                                     </div>
@@ -415,8 +403,8 @@ export default function AgendaPage() {
                             {/* Week Grid */}
                             <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 300px)' }}>
                                 {HOURS.map(hour => (
-                                    <div key={hour} style={{ display: 'grid', gridTemplateColumns: '50px repeat(7, 1fr)', borderBottom: '1px solid var(--border-default)', minHeight: '40px' }}>
-                                        <div style={{ padding: '0.125rem 0.25rem', borderRight: '1px solid var(--border-default)', color: 'var(--text-muted)', fontSize: '0.625rem', textAlign: 'right' }}>
+                                    <div key={hour} className="agenda-week-row">
+                                        <div className="agenda-time-col-min" style={{ fontSize: '0.6875rem' }}>
                                             {String(hour).padStart(2, '0')}:00
                                         </div>
                                         {getWeekDays().map((day, i) => {
@@ -424,23 +412,11 @@ export default function AgendaPage() {
                                             return (
                                                 <div
                                                     key={i}
-                                                    style={{
-                                                        borderRight: i < 6 ? '1px solid var(--border-default)' : 'none',
-                                                        padding: '1px',
-                                                        background: isToday(day) ? 'rgba(99,102,241,0.02)' : 'transparent'
-                                                    }}
+                                                    className={`agenda-week-cell ${isToday(day) ? 'today-col' : ''}`}
                                                 >
                                                     {dayBookings.map(b => (
-                                                        <div key={b.id} style={{
-                                                            background: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
-                                                            borderRadius: '3px',
-                                                            padding: '2px 4px',
-                                                            fontSize: '0.5625rem',
-                                                            color: 'white',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap',
-                                                            marginBottom: '1px'
+                                                        <div key={b.id} className="agenda-mini-event" style={{
+                                                            background: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
                                                         }}>
                                                             {format(parseISO(b.date), 'HH:mm')} • {profile?.isStaff ? b.clientName : b.responsibleName}
                                                         </div>
