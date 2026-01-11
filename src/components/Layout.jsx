@@ -97,6 +97,7 @@ export default function Layout({ children, role = 'professional', restricted = f
     const staffLinks = [
         { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
         { icon: CalendarDays, label: 'Agenda', path: '/dashboard/agenda' },
+        { icon: CalendarClock, label: 'Horários', path: '/dashboard/schedule' },
         { icon: User, label: 'Perfil', path: '/dashboard/profile' }
     ];
 

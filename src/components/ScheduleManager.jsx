@@ -24,20 +24,25 @@ const DEFAULT_SCHEDULE = {
     sun: { enabled: false, start: '09:00', end: '13:00' }
 };
 
-export default function ScheduleManager({ userId }) {
+export default function ScheduleManager({ userId, isStaff, ownerId }) {
     const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const toast = useToast();
 
+    // Determine path based on role
+    const settingsPath = isStaff
+        ? `professionals/${ownerId}/staff/${userId}/settings`
+        : `professionals/${userId}/settings`;
+
     useEffect(() => {
-        fetchSchedule();
-    }, [userId]);
+        if (userId) fetchSchedule();
+    }, [userId, isStaff, ownerId]);
 
     const fetchSchedule = async () => {
         try {
-            const docRef = doc(db, `professionals/${userId}/settings`, 'schedule');
+            const docRef = doc(db, settingsPath, 'schedule');
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 setSchedule(docSnap.data());
@@ -68,13 +73,13 @@ export default function ScheduleManager({ userId }) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await setDoc(doc(db, `professionals/${userId}/settings`, 'schedule'), schedule);
+            await setDoc(doc(db, settingsPath, 'schedule'), schedule);
             setSaved(true);
             toast.success('Horário guardado com sucesso!');
             setTimeout(() => setSaved(false), 2000);
         } catch (e) {
             console.error('Error saving schedule:', e);
-            toast.error('Erro ao guardar horário. Verifique as permissões do Firestore.');
+            toast.error('Erro ao guardar horário. Verifique as permissões.');
         } finally {
             setSaving(false);
         }

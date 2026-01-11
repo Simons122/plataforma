@@ -1,26 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { auth, db } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import Layout from '../components/Layout';
-import ScheduleManager from '../components/ScheduleManager';
+import { useUser } from '../context/UserContext';
 
 export default function SchedulePage() {
-    const [loading, setLoading] = useState(true);
-    const [profile, setProfile] = useState(null);
-
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                const docRef = doc(db, "professionals", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setProfile({ id: user.uid, ...docSnap.data() });
-                }
-            }
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
+    const { profile, loading } = useUser();
 
     if (loading) {
         return (
@@ -36,12 +17,10 @@ export default function SchedulePage() {
         );
     }
 
-    if (!profile) {
-        return null;
-    }
+    if (!profile) return null;
 
     return (
-        <Layout role={profile.role || 'professional'}>
+        <Layout>
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
                     Horários
@@ -50,7 +29,11 @@ export default function SchedulePage() {
                     Configure os dias e horários em que está disponível para atender.
                 </p>
             </div>
-            <ScheduleManager userId={profile.id} />
+            <ScheduleManager
+                userId={profile.id}
+                isStaff={profile.isStaff}
+                ownerId={profile.ownerId}
+            />
         </Layout>
     );
 }
