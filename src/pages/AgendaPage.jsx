@@ -363,9 +363,11 @@ export default function AgendaPage() {
                                                     <span style={{ marginLeft: '0.5rem', color: 'var(--text-primary)' }}>{b.clientName}</span>
                                                     <span style={{ marginLeft: '0.5rem', color: 'var(--text-secondary)' }}>{b.serviceName}</span>
                                                 </div>
-                                                <div style={{ fontSize: '0.625rem', fontWeight: 600, background: 'rgba(255,255,255,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                    {b.responsibleName}
-                                                </div>
+                                                {!profile?.isStaff && (
+                                                    <div style={{ fontSize: '0.625rem', fontWeight: 600, background: 'rgba(255,255,255,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                        {b.responsibleName}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -577,16 +579,18 @@ export default function AgendaPage() {
                                             <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                 {b.clientName}
                                             </div>
-                                            <div style={{
-                                                fontSize: '0.625rem',
-                                                fontWeight: 600,
-                                                background: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
-                                                color: 'white',
-                                                padding: '2px 6px',
-                                                borderRadius: '10px'
-                                            }}>
-                                                {b.responsibleName}
-                                            </div>
+                                            {!profile?.isStaff && (
+                                                <div style={{
+                                                    fontSize: '0.625rem',
+                                                    fontWeight: 600,
+                                                    background: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
+                                                    color: 'white',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '10px'
+                                                }}>
+                                                    {b.responsibleName}
+                                                </div>
+                                            )}
                                         </div>
                                         <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                                             {b.serviceName} • {b.duration}min • <span style={{ color: 'var(--accent-success)', fontWeight: 600 }}>{b.price}€</span>
@@ -617,6 +621,8 @@ export default function AgendaPage() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 professionalId={profile.id}
+                isStaff={profile.isStaff}
+                ownerId={profile.ownerId}
                 onBookingAdded={refetchBookings}
             />
         </Layout>

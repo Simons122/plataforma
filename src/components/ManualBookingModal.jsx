@@ -5,7 +5,7 @@ import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { useToast } from './Toast';
 
-export default function ManualBookingModal({ isOpen, onClose, professionalId, onBookingAdded }) {
+export default function ManualBookingModal({ isOpen, onClose, professionalId, onBookingAdded, isStaff, ownerId }) {
     const [loading, setLoading] = useState(false);
     const [services, setServices] = useState([]);
     const [formData, setFormData] = useState({
@@ -25,7 +25,9 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
 
     const fetchServices = async () => {
         try {
-            const snap = await getDocs(collection(db, `professionals/${professionalId}/services`));
+            // Services belong to the Owner, regardless of who is booking
+            const targetId = isStaff ? ownerId : professionalId;
+            const snap = await getDocs(collection(db, `professionals/${targetId}/services`));
             setServices(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (error) {
             console.error(error);
@@ -44,7 +46,11 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
             const selectedService = services.find(s => s.id === formData.serviceId);
             const bookingDate = new Date(`${formData.date}T${formData.time}:00`);
 
-            await addDoc(collection(db, `professionals/${professionalId}/bookings`), {
+            const bookingPath = isStaff
+                ? `professionals/${ownerId}/staff/${professionalId}/bookings`
+                : `professionals/${professionalId}/bookings`;
+
+            await addDoc(collection(db, bookingPath), {
                 serviceId: selectedService.id,
                 serviceName: selectedService.name,
                 price: selectedService.price,
