@@ -12,7 +12,7 @@ export default function Layout({ children, role = 'professional', restricted = f
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [fetchedProfile, setFetchedProfile] = useState(null);
 
-    const businessName = propBrandName || fetchedProfile?.businessName || (role === 'admin' ? 'Admin' : 'Solo');
+    const businessName = propBrandName || fetchedProfile?.businessName || (role === 'admin' ? 'Admin' : (role === 'client' ? 'Cliente' : 'Solo'));
     const logoUrl = fetchedProfile?.logoUrl;
 
     useEffect(() => {
@@ -31,7 +31,11 @@ export default function Layout({ children, role = 'professional', restricted = f
 
     const handleLogout = () => {
         auth.signOut();
-        navigate('/auth');
+        if (role === 'client') {
+            navigate('/client/auth');
+        } else {
+            navigate('/auth');
+        }
     };
 
     const isActive = (path) => location.pathname === path;
@@ -50,7 +54,11 @@ export default function Layout({ children, role = 'professional', restricted = f
         { icon: User, label: 'Perfil', path: '/dashboard/profile' }
     ];
 
-    const links = role === 'admin' ? adminLinks : proLinks;
+    const clientLinks = [
+        { icon: CalendarDays, label: 'Minhas Marcações', path: '/client/bookings' }
+    ];
+
+    const links = role === 'admin' ? adminLinks : (role === 'client' ? clientLinks : proLinks);
 
     // Mobile Sidebar
     const MobileSidebar = () => (

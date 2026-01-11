@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, DollarSign, X, ArrowLeft } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import ClientLayout from '../components/ClientLayout';
+import Layout from '../components/Layout';
 
 export default function ClientBookings() {
     const [loading, setLoading] = useState(true);
@@ -106,7 +106,7 @@ export default function ClientBookings() {
     const pastBookings = bookings.filter(b => b.status === 'cancelled' || new Date(b.selectedTime) <= new Date());
 
     return (
-        <ClientLayout userName={user?.displayName || user?.email}>
+        <Layout role="client" brandName={user?.displayName || user?.email?.split('@')[0]}>
             {/* Upcoming Bookings */}
             {upcomingBookings.length > 0 && (
                 <div style={{ marginBottom: '2rem' }}>
@@ -198,7 +198,7 @@ export default function ClientBookings() {
                     </Link>
                 </div>
             )}
-        </ClientLayout>
+        </Layout>
     );
 }
 
