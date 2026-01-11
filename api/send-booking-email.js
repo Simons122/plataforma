@@ -1,12 +1,51 @@
 // Serverless Function para enviar emails via Resend
 // Deploy automático no Vercel em: /api/send-booking-email
 
+// Security: Escape HTML to prevent XSS
+function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+}
+
+// Security: Validate email format
+function isValidEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return typeof email === 'string' && regex.test(email) && email.length <= 254;
+}
+
+// Security: Sanitize and limit string length
+function sanitize(str, maxLen = 100) {
+    if (typeof str !== 'string') return '';
+    return escapeHtml(str.trim().substring(0, maxLen));
+}
+
 export default async function handler(req, res) {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    // Security Headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+    // CORS - Restringir a origens conhecidas em produção
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://booklyo.pt',
+        'https://www.booklyo.pt',
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
+    ].filter(Boolean);
+
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+        res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     // Handle OPTIONS request
     if (req.method === 'OPTIONS') {
@@ -32,13 +71,39 @@ export default async function handler(req, res) {
             bookingId
         } = req.body;
 
-        // Validar dados
-        if (!clientEmail || !clientName || !serviceName) {
+        // === SECURITY VALIDATIONS ===
+
+        // Validate email format
+        if (!isValidEmail(clientEmail)) {
             return res.status(400).json({
                 success: false,
-                error: 'Dados incompletos'
+                error: 'Email inválido'
             });
         }
+
+        // Validate required fields exist and are strings
+        if (!clientName || typeof clientName !== 'string' || clientName.length > 100) {
+            return res.status(400).json({
+                success: false,
+                error: 'Nome do cliente inválido'
+            });
+        }
+
+        if (!serviceName || typeof serviceName !== 'string' || serviceName.length > 100) {
+            return res.status(400).json({
+                success: false,
+                error: 'Nome do serviço inválido'
+            });
+        }
+
+        // Sanitize all user inputs for XSS prevention
+        const safeClientName = sanitize(clientName, 100);
+        const safeProfessionalName = sanitize(professionalName, 100);
+        const safeBusinessName = sanitize(businessName, 100);
+        const safeServiceName = sanitize(serviceName, 100);
+        const safeBookingDate = sanitize(bookingDate, 50);
+        const safeBookingTime = sanitize(bookingTime, 10);
+        const safePrice = sanitize(String(price), 20);
 
         const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
@@ -86,7 +151,7 @@ export default async function handler(req, res) {
                             
                             <!-- Greeting -->
                             <p style="margin: 0 0 24px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
-                                Olá <strong style="color: #111827; font-weight: 600;">${clientName}</strong>,
+                                Olá <strong style="color: #111827; font-weight: 600;">${safeClientName}</strong>,
                             </p>
                             
                             <p style="margin: 0 0 32px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
@@ -104,7 +169,7 @@ export default async function handler(req, res) {
                                             <tr>
                                                 <td style="padding: 0 0 16px 0; border-bottom: 1px solid #e5e7eb;">
                                                     <div style="color: #6b7280; font-size: 13px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Profissional</div>
-                                                    <div style="color: #111827; font-size: 16px; font-weight: 600;">${professionalName}</div>
+                                                    <div style="color: #111827; font-size: 16px; font-weight: 600;">${safeProfessionalName}</div>
                                                 </td>
                                             </tr>
                                         </table>
@@ -115,7 +180,7 @@ export default async function handler(req, res) {
                                             <tr>
                                                 <td style="padding: 16px 0; border-bottom: 1px solid #e5e7eb;">
                                                     <div style="color: #6b7280; font-size: 13px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Estabelecimento</div>
-                                                    <div style="color: #111827; font-size: 16px; font-weight: 600;">${businessName}</div>
+                                                    <div style="color: #111827; font-size: 16px; font-weight: 600;">${safeBusinessName}</div>
                                                 </td>
                                             </tr>
                                         </table>
@@ -126,7 +191,7 @@ export default async function handler(req, res) {
                                             <tr>
                                                 <td style="padding: 16px 0; border-bottom: 1px solid #e5e7eb;">
                                                     <div style="color: #6b7280; font-size: 13px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Serviço</div>
-                                                    <div style="color: #111827; font-size: 16px; font-weight: 600;">${serviceName}</div>
+                                                    <div style="color: #111827; font-size: 16px; font-weight: 600;">${safeServiceName}</div>
                                                 </td>
                                             </tr>
                                         </table>
@@ -136,11 +201,11 @@ export default async function handler(req, res) {
                                             <tr>
                                                 <td width="50%" style="padding: 16px 12px 16px 0; border-bottom: 1px solid #e5e7eb;">
                                                     <div style="color: #6b7280; font-size: 13px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Data</div>
-                                                    <div style="color: #111827; font-size: 15px; font-weight: 600;">${bookingDate}</div>
+                                                    <div style="color: #111827; font-size: 15px; font-weight: 600;">${safeBookingDate}</div>
                                                 </td>
                                                 <td width="50%" style="padding: 16px 0 16px 12px; border-bottom: 1px solid #e5e7eb;">
                                                     <div style="color: #6b7280; font-size: 13px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Hora</div>
-                                                    <div style="color: #111827; font-size: 15px; font-weight: 600;">${bookingTime}</div>
+                                                    <div style="color: #111827; font-size: 15px; font-weight: 600;">${safeBookingTime}</div>
                                                 </td>
                                             </tr>
                                         </table>
@@ -150,7 +215,7 @@ export default async function handler(req, res) {
                                             <tr>
                                                 <td style="padding: 16px 0 0 0;">
                                                     <div style="color: #6b7280; font-size: 13px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Valor</div>
-                                                    <div style="color: #4F46E5; font-size: 24px; font-weight: 700;">${price}€</div>
+                                                    <div style="color: #4F46E5; font-size: 24px; font-weight: 700;">${safePrice}€</div>
                                                 </td>
                                             </tr>
                                         </table>

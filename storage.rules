@@ -1,9 +1,58 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /staff/{userId}/{allPaths=**} {
+    
+    // Função para verificar autenticação
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Função para verificar tamanho máximo (2MB)
+    function isValidSize() {
+      return request.resource.size < 2 * 1024 * 1024;
+    }
+    
+    // Função para verificar tipo de ficheiro (apenas imagens)
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // REGRA GLOBAL: Bloquear tudo por defeito
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+    
+    // LOGOS DOS PROFISSIONAIS
+    match /professionals/{userId}/logo/{fileName} {
+      // Leitura pública (logo aparece no perfil público)
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      // Escrita: apenas owner, imagem válida, max 2MB
+      allow write: if isAuthenticated() 
+        && request.auth.uid == userId
+        && isImage()
+        && isValidSize();
+    }
+    
+    // FOTOS DO STAFF
+    match /professionals/{ownerId}/staff/{staffId}/photo/{fileName} {
+      // Leitura pública
+      allow read: if true;
+      
+      // Escrita: owner do estabelecimento ou próprio staff
+      allow write: if isAuthenticated()
+        && isImage()
+        && isValidSize()
+        && (request.auth.uid == ownerId || request.auth.uid == staffId);
+    }
+    
+    // IMAGENS DE SERVIÇOS (se implementado no futuro)
+    match /professionals/{userId}/services/{serviceId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+        && request.auth.uid == userId
+        && isImage()
+        && isValidSize();
     }
   }
 }

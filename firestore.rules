@@ -2,91 +2,194 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Funções auxiliares
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    // ============================================
+    // FUNÇÕES DE SEGURANÇA
+    // ============================================
+    
+    // Verifica se está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    // Verifica se é admin olhando para a coleção professionals
-    // Valida se o documento existe E se tem role admin ou superAdmin
+    // Verifica se é o dono do documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Verifica se é admin (role admin ou superAdmin)
     function isAdmin() {
        let docPath = /databases/$(database)/documents/professionals/$(request.auth.uid);
-       return request.auth != null && exists(docPath) && (get(docPath).data.role == 'admin' || get(docPath).data.superAdmin == true);
+       return isAuthenticated() && exists(docPath) && (get(docPath).data.role == 'admin' || get(docPath).data.superAdmin == true);
+    }
+    
+    // Valida tamanho de string (previne spam/overflow)
+    function isValidString(field, maxLen) {
+      return field is string && field.size() <= maxLen && field.size() > 0;
+    }
+    
+    // Valida email básico
+    function isValidEmail(email) {
+      return email is string && email.matches('.*@.*[.].*') && email.size() <= 254;
+    }
+    
+    // Valida data ISO
+    function isValidISODate(dateStr) {
+      return dateStr is string && dateStr.size() >= 10 && dateStr.size() <= 30;
+    }
+    
+    // Rate limiting básico (previne criação em massa)
+    function isRecentlyCreated() {
+      return request.time < resource.data.createdAt + duration.value(1, 's');
     }
 
-    // Regra global de bloqueio por defeito - Segurança Máxima
+    // ============================================
+    // REGRA GLOBAL DE BLOQUEIO (DEFAULT DENY)
+    // ============================================
     match /{document=**} {
       allow read, write: if false; 
     }
 
-    // PROFISSIONAIS (Perfil público para leitura, escrita por owner/admin)
+    // ============================================
+    // PROFISSIONAIS
+    // ============================================
     match /professionals/{userId} {
-      allow read: if true; // Perfil é público
-      allow write: if isOwner(userId) || isAdmin();
+      // Leitura pública (perfil visível para clientes)
+      allow read: if true;
+      
+      // Criação: apenas autenticado e criando próprio perfil
+      allow create: if isOwner(userId) 
+        && request.resource.data.keys().hasAll(['name', 'email'])
+        && isValidString(request.resource.data.name, 100)
+        && isValidEmail(request.resource.data.email);
+      
+      // Update: apenas owner ou admin
+      allow update: if (isOwner(userId) || isAdmin())
+        && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role || isAdmin())
+        && (!('superAdmin' in request.resource.data) || isAdmin());
+      
+      // Delete: apenas admin
+      allow delete: if isAdmin();
 
       // SERVIÇOS
       match /services/{serviceId} {
         allow read: if true;
-        allow write: if isOwner(userId) || isAdmin();
+        
+        allow create: if (isOwner(userId) || isAdmin())
+          && request.resource.data.keys().hasAll(['name', 'price', 'duration'])
+          && isValidString(request.resource.data.name, 100)
+          && request.resource.data.price is number
+          && request.resource.data.price >= 0
+          && request.resource.data.price <= 10000
+          && request.resource.data.duration is number
+          && request.resource.data.duration >= 5
+          && request.resource.data.duration <= 480;
+          
+        allow update: if (isOwner(userId) || isAdmin())
+          && request.resource.data.price >= 0
+          && request.resource.data.price <= 10000;
+          
+        allow delete: if isOwner(userId) || isAdmin();
       }
       
-      // MARCAÇÕES (BOOKINGS) - Raiz do profissional
+      // MARCAÇÕES (BOOKINGS)
       match /bookings/{bookingId} {
-        // Validação na criação: data e serviço obrigatórios
-        allow create: if true 
-           && request.resource.data.keys().hasAll(['date', 'serviceId', 'clientName'])
-           && request.resource.data.date is string;
-           
-        // Leitura permitida publicamente para cálculo de disponibilidade (frontend)
-        // Em produção de alta segurança, usar Backend/Edge Functions para verificar slots.
-        allow read: if true; 
-        allow update, delete: if isOwner(userId) || isAdmin();
+        // Criação: validação rigorosa
+        allow create: if true
+          && request.resource.data.keys().hasAll(['date', 'serviceId', 'clientName', 'status'])
+          && isValidISODate(request.resource.data.date)
+          && isValidString(request.resource.data.serviceId, 50)
+          && isValidString(request.resource.data.clientName, 100)
+          && request.resource.data.status == 'confirmed'
+          && (!('clientEmail' in request.resource.data) || isValidEmail(request.resource.data.clientEmail))
+          && (!('clientPhone' in request.resource.data) || request.resource.data.clientPhone.size() <= 20);
+        
+        // Leitura: pública (necessária para verificar disponibilidade)
+        // NOTA: Em produção crítica, mover para Cloud Function
+        allow read: if true;
+        
+        // Update/Delete: apenas owner ou admin
+        allow update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
       }
 
-      // STAFF E SUAS SUB-COLEÇÕES
+      // STAFF
       match /staff/{staffId} {
         allow read: if true;
         
-        // Escrita: Owner (userId da rota), Admin, ou o próprio Staff (valido pelo authUserId no doc existente ou no payload novos)
-        allow write: if isOwner(userId) || isAdmin() || (resource != null && resource.data.authUserId == request.auth.uid) || (request.resource.data.authUserId == request.auth.uid);
+        // Criação: apenas owner ou admin
+        allow create: if (isOwner(userId) || isAdmin())
+          && request.resource.data.keys().hasAll(['name', 'email'])
+          && isValidString(request.resource.data.name, 100)
+          && isValidEmail(request.resource.data.email);
+        
+        // Update: owner, admin, ou próprio staff
+        allow update: if isOwner(userId) || isAdmin() 
+          || (isAuthenticated() && resource.data.authUserId == request.auth.uid);
+        
+        // Delete: apenas owner ou admin
+        allow delete: if isOwner(userId) || isAdmin();
 
-        // Configurações do Staff (Horários)
+        // Settings do Staff
         match /settings/{docId} {
-             allow read: if true;
-             // Validar parent staff authUserId é complexo em queries, mas ok em gets diretos
-             allow write: if isOwner(userId) || isAdmin() || get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid;
+          allow read: if true;
+          allow write: if isOwner(userId) || isAdmin() 
+            || (isAuthenticated() && get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid);
         }
 
-        // MARCAÇÕES DO STAFF
+        // Bookings do Staff
         match /bookings/{bookingId} {
-            allow create: if true
-               && request.resource.data.keys().hasAll(['date', 'serviceId']);
-            allow read: if true; 
-            allow update, delete: if isOwner(userId) || isAdmin() || get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid;
+          allow create: if true
+            && request.resource.data.keys().hasAll(['date', 'serviceId'])
+            && isValidISODate(request.resource.data.date)
+            && isValidString(request.resource.data.serviceId, 50);
+            
+          allow read: if true;
+          
+          allow update, delete: if isOwner(userId) || isAdmin() 
+            || (isAuthenticated() && get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid);
         }
       }
       
-       // SETTINGS GERAIS (Horários do dono)
+      // SETTINGS (Horários)
       match /settings/{document=**} {
-         allow read: if true;
-         allow write: if isOwner(userId) || isAdmin();
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
       }
     }
     
+    // ============================================
     // CLIENTES
+    // ============================================
     match /clients/{clientId} {
-        allow create: if true;
-        // Cliente só mexe nos dados dele
-        allow read, update: if request.auth != null && request.auth.uid == clientId;
+      // Criação: autenticado e criando próprio documento
+      allow create: if isOwner(clientId)
+        && request.resource.data.keys().hasAll(['name', 'email'])
+        && isValidString(request.resource.data.name, 100)
+        && isValidEmail(request.resource.data.email);
+      
+      // Leitura/Update: apenas próprio cliente
+      allow read, update: if isOwner(clientId);
+      
+      // Delete: não permitido
+      allow delete: if false;
     }
 
-    // STAFF LOOKUP - Mapeamento para login
+    // ============================================
+    // STAFF LOOKUP (Mapeamento de login)
+    // ============================================
     match /staff_lookup/{authUid} {
-      allow read: if request.auth != null;
-      // Qualquer auth user pode criar o seu lookup (no setup)
-      allow create: if request.auth != null; 
-      // Update/Delete só pelo dono associado ao doc (não o authUid, mas quem gere) ou o próprio
-      allow update, delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || request.auth.uid == authUid);
+      // Leitura: apenas autenticado
+      allow read: if isAuthenticated();
+      
+      // Criação: autenticado (para setup inicial)
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['ownerId', 'staffId'])
+        && isValidString(request.resource.data.ownerId, 50)
+        && isValidString(request.resource.data.staffId, 50);
+      
+      // Update/Delete: apenas pelo owner do estabelecimento ou próprio
+      allow update, delete: if isAuthenticated() 
+        && (resource.data.ownerId == request.auth.uid || request.auth.uid == authUid);
     }
   }
 }
