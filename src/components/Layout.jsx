@@ -175,6 +175,8 @@ export default function Layout({ children, role = 'professional', restricted = f
                                     }}
                                 />
                             </div>
+                        ) : businessName === APP_NAME ? (
+                            <img src="/logo.png" alt="Booklyo" style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '0.5rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }} />
                         ) : (
                             <div style={{
                                 width: '80px',
@@ -189,11 +191,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 fontSize: '2rem',
                                 boxShadow: 'var(--shadow-glow)'
                             }}>
-                                {businessName === APP_NAME ? (
-                                    <img src="/logo.png" alt="Booklyo" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
-                                ) : (
-                                    businessName.charAt(0).toUpperCase()
-                                )}
+                                {businessName.charAt(0).toUpperCase()}
                             </div>
                         )}
                         <h1 style={{
@@ -320,6 +318,8 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 }}
                             />
                         </div>
+                    ) : businessName === APP_NAME ? (
+                        <img src="/logo.png" alt="Booklyo" style={{ width: '72px', height: '72px', objectFit: 'contain', marginBottom: '0.25rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }} />
                     ) : (
                         <div style={{
                             width: '72px',
@@ -335,11 +335,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                             flexShrink: 0,
                             boxShadow: 'var(--shadow-glow)'
                         }}>
-                            {businessName === APP_NAME ? (
-                                <img src="/logo.png" alt="Booklyo" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
-                            ) : (
-                                businessName.charAt(0).toUpperCase()
-                            )}
+                            {businessName.charAt(0).toUpperCase()}
                         </div>
                     )}
                     <h1 style={{
