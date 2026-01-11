@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { db, auth, storage } from '../lib/firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -377,8 +378,9 @@ export default function ManageStaff() {
                 ))}
             </div>
 
+
             {/* Add Staff Modal */}
-            {showAddModal && (
+            {showAddModal && ReactDOM.createPortal(
                 <div style={{
                     position: 'fixed',
                     inset: 0,
@@ -541,22 +543,19 @@ export default function ManageStaff() {
                         </form>
                     </div>
                 </div>
-            )}
+                , document.body)}
 
             {/* Edit Schedule Modal */}
-            {editingSchedule && staffSchedule && (
+            {editingSchedule && staffSchedule && ReactDOM.createPortal(
                 <div style={{
                     position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                    inset: 0,
                     background: 'rgba(0, 0, 0, 0.7)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    zIndex: 1000,
-                    padding: '1rem',
+                    zIndex: 9999,
+                    padding: '2rem',
                     overflowY: 'auto'
                 }} onClick={() => setEditingSchedule(null)}>
                     <div style={{
@@ -689,7 +688,7 @@ export default function ManageStaff() {
                         </div>
                     </div>
                 </div>
-            )}
+                , document.body)}
         </Layout>
     );
 }
