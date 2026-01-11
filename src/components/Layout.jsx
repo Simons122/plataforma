@@ -34,27 +34,32 @@ export default function Layout({ children, role = 'professional', restricted = f
             const unsubscribe = auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     try {
-                        const proDoc = await getDoc(doc(db, "professionals", user.uid));
-                        if (proDoc.exists()) {
-                            setFetchedProfile({ ...proDoc.data(), isStaff: false });
+                        // 1. Check Staff Lookup FIRST (Priority Rule)
+                        const lookupRef = doc(db, "staff_lookup", user.uid);
+                        const lookupSnap = await getDoc(lookupRef);
+
+                        if (lookupSnap.exists()) {
+                            // User is Staff
+                            const { ownerId, staffId } = lookupSnap.data();
+                            const staffSnap = await getDoc(doc(db, `professionals/${ownerId}/staff/${staffId}`));
+
+                            if (staffSnap.exists()) {
+                                const sData = staffSnap.data();
+                                setFetchedProfile({
+                                    ...sData,
+                                    isStaff: true,
+                                    ownerId: ownerId,
+                                    id: staffId,
+                                    logoUrl: sData.photoUrl,
+                                    businessName: sData.name,
+                                    paymentStatus: 'active'
+                                });
+                            }
                         } else {
-                            // Try Staff Check
-                            const lookupSnap = await getDoc(doc(db, "staff_lookup", user.uid));
-                            if (lookupSnap.exists()) {
-                                const { ownerId, staffId } = lookupSnap.data();
-                                const staffSnap = await getDoc(doc(db, `professionals/${ownerId}/staff/${staffId}`));
-                                if (staffSnap.exists()) {
-                                    const sData = staffSnap.data();
-                                    setFetchedProfile({
-                                        ...sData,
-                                        isStaff: true,
-                                        ownerId: ownerId,
-                                        id: staffId,
-                                        logoUrl: sData.photoUrl,
-                                        businessName: sData.name,
-                                        paymentStatus: 'active'
-                                    });
-                                }
+                            // 2. If not Staff, check Professional (Owner)
+                            const proDoc = await getDoc(doc(db, "professionals", user.uid));
+                            if (proDoc.exists()) {
+                                setFetchedProfile({ ...proDoc.data(), isStaff: false });
                             }
                         }
                     } catch (err) {
