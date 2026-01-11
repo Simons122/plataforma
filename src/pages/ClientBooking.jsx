@@ -610,7 +610,6 @@ export default function ClientBooking() {
                             )}
                         </div>
                     </div>
-                    <p style={{ textAlign: 'center', marginTop: '2.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>Powered by <strong style={{ color: 'var(--text-secondary)' }}>Booklyo</strong></p>
                 </div>
             </div>
         </Layout>

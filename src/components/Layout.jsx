@@ -555,13 +555,16 @@ export default function Layout({ children, role = 'professional', restricted = f
                         marginTop: 'auto',
                         textAlign: 'center',
                         padding: '1.5rem',
-                        color: 'var(--text-muted)',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
                         borderTop: '1px solid var(--border-default)',
-                        opacity: 0.7
                     }}>
-                        Powered by Booklyo
+                        <p style={{
+                            fontSize: '13px',
+                            color: 'var(--text-muted)',
+                            fontWeight: 500,
+                            margin: 0
+                        }}>
+                            Powered by <strong style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Booklyo</strong>
+                        </p>
                     </div>
                 </div>
             </main>
