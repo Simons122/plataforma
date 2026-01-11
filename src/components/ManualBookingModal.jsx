@@ -18,19 +18,29 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
     const toast = useToast();
 
     useEffect(() => {
-        if (isOpen && professionalId) {
+        if (isOpen && (professionalId || (isStaff && ownerId))) {
             fetchServices();
         }
-    }, [isOpen, professionalId]);
+    }, [isOpen, professionalId, ownerId, isStaff]);
 
     const fetchServices = async () => {
         try {
             // Services belong to the Owner, regardless of who is booking
             const targetId = isStaff ? ownerId : professionalId;
+            console.log("Refetching services for:", targetId, "isStaff:", isStaff);
+
+            if (!targetId) {
+                console.warn("fetchServices skipped: No targetId");
+                return;
+            }
+
             const snap = await getDocs(collection(db, `professionals/${targetId}/services`));
-            setServices(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const fetchedServices = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            console.log("Services found:", fetchedServices.length);
+            setServices(fetchedServices);
         } catch (error) {
-            console.error(error);
+            console.error("Error fetching services:", error);
+            toast.error("Erro ao carregar serviços. Tente novamente.");
         }
     };
 

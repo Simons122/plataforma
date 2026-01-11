@@ -614,11 +614,10 @@ export default function AgendaPage() {
             <ManualBookingModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                ownerId={profile.isStaff ? profile.ownerId : profile.id}
-                isStaff={profile.isStaff}
-                staffId={profile.id}
-                currentDate={selectedDate}
-                onSuccess={refetchBookings}
+                professionalId={profile?.id}
+                ownerId={profile?.isStaff ? profile.ownerId : profile?.id}
+                isStaff={profile?.isStaff}
+                onBookingAdded={refetchBookings}
             />
         </Layout>
     );
