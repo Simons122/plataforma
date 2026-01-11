@@ -453,7 +453,32 @@ export default function Layout({ children, role = 'professional', restricted = f
 
                 <div style={{ fontSize: '10px', color: 'red', padding: '5px' }}>
                     DEBUG UID: {auth.currentUser?.uid?.substring(0, 6)}... <br />
-                    IsStaff: {fetchedProfile?.isStaff ? 'YES' : 'NO'}
+                    IsStaff: {fetchedProfile?.isStaff ? 'YES' : 'NO'}<br />
+                    <button onClick={async () => {
+                        try {
+                            const u = auth.currentUser;
+                            console.log("Manual Check for", u.uid);
+                            const ref = doc(db, "staff_lookup", u.uid);
+                            const snap = await getDoc(ref);
+
+                            if (snap.exists()) {
+                                alert("Lookup SUCESSO: " + JSON.stringify(snap.data()));
+                                const d = snap.data();
+                                const sRef = doc(db, `professionals/${d.ownerId}/staff/${d.staffId}`);
+                                const sSnap = await getDoc(sRef);
+                                alert(sSnap.exists() ? "Perfil Staff SUCESSO" : "Perfil Staff NÃO ENCONTRADO em " + sRef.path);
+                            } else {
+                                alert("Lookup NÃO ENCONTRADO para " + u.uid);
+                                // Check if Owner exists
+                                const pRef = doc(db, "professionals", u.uid);
+                                const pSnap = await getDoc(pRef);
+                                alert(pSnap.exists() ? "Mas é DONO (Professional)!" : "Nem Dono nem Staff.");
+                            }
+                        } catch (e) {
+                            alert("ERRO ERRO: " + e.message);
+                            console.error(e);
+                        }
+                    }} style={{ background: 'white', border: '1px solid red' }}>Check DB</button>
                 </div>
 
                 {/* Navigation */}
