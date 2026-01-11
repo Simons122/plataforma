@@ -189,7 +189,11 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 fontSize: '2rem',
                                 boxShadow: 'var(--shadow-glow)'
                             }}>
-                                {businessName === APP_NAME ? <CalendarDays size={36} /> : businessName.charAt(0).toUpperCase()}
+                                {businessName === APP_NAME ? (
+                                    <img src="/logo.png" alt="Booklyo" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+                                ) : (
+                                    businessName.charAt(0).toUpperCase()
+                                )}
                             </div>
                         )}
                         <h1 style={{
@@ -331,7 +335,11 @@ export default function Layout({ children, role = 'professional', restricted = f
                             flexShrink: 0,
                             boxShadow: 'var(--shadow-glow)'
                         }}>
-                            {businessName === APP_NAME ? <CalendarDays size={32} /> : businessName.charAt(0).toUpperCase()}
+                            {businessName === APP_NAME ? (
+                                <img src="/logo.png" alt="Booklyo" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                            ) : (
+                                businessName.charAt(0).toUpperCase()
+                            )}
                         </div>
                     )}
                     <h1 style={{
