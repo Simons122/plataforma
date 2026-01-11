@@ -390,7 +390,7 @@ export default function ManageStaff() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 1000,
-                    padding: '1rem'
+                    padding: '2rem'
                 }} onClick={() => setShowAddModal(false)}>
                     <div style={{
                         background: 'var(--bg-card)',
@@ -400,7 +400,7 @@ export default function ManageStaff() {
                         width: '100%',
                         border: '1px solid var(--border-default)',
                         boxShadow: 'var(--shadow-xl)',
-                        maxHeight: '90vh',
+                        maxHeight: '85vh',
                         overflowY: 'auto'
                     }} onClick={e => e.stopPropagation()}>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
