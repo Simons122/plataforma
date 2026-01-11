@@ -381,16 +381,14 @@ export default function ManageStaff() {
             {showAddModal && (
                 <div style={{
                     position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                    inset: 0,
                     background: 'rgba(0, 0, 0, 0.7)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    zIndex: 1000,
-                    padding: '2rem'
+                    zIndex: 9999,
+                    padding: '2rem',
+                    overflow: 'auto'
                 }} onClick={() => setShowAddModal(false)}>
                     <div style={{
                         background: 'var(--bg-card)',
@@ -399,9 +397,10 @@ export default function ManageStaff() {
                         maxWidth: '500px',
                         width: '100%',
                         border: '1px solid var(--border-default)',
-                        boxShadow: 'var(--shadow-xl)',
-                        maxHeight: '85vh',
-                        overflowY: 'auto'
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        maxHeight: 'calc(100vh - 4rem)',
+                        overflowY: 'auto',
+                        margin: 'auto'
                     }} onClick={e => e.stopPropagation()}>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
                             Adicionar Profissional
