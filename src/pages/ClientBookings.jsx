@@ -402,23 +402,33 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
                     <button
                         onClick={() => onCancel(booking)}
                         disabled={cancelling}
-                        className="btn-icon-danger"
-                        title="Cancelar Marcação"
                         style={{
-                            background: 'transparent',
-                            border: '1px solid var(--border-default)',
-                            borderRadius: '8px',
-                            width: '32px',
-                            height: '32px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            gap: '6px',
+                            padding: '8px 12px',
+                            background: '#ef4444', // Vermelho forte
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.02em',
                             cursor: cancelling ? 'wait' : 'pointer',
-                            color: 'var(--text-muted)',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            width: '100%',
+                            marginTop: 'auto',
+                            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
                         }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#dc2626'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#ef4444'}
                     >
-                        {cancelling ? <div className="spinner-sm" /> : <X size={16} />}
+                        {cancelling ? (
+                            <div className="spinner-sm" style={{ borderColor: 'white', borderTopColor: 'transparent' }} />
+                        ) : (
+                            <>CANCELAR MARCAÇÃO</>
+                        )}
                     </button>
                 )}
             </div>
