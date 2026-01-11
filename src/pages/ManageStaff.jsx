@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { db, auth } from '../lib/firebase';
+import { db, auth, storage } from '../lib/firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Layout from '../components/Layout';
-import { UserPlus, Trash2, Clock, Edit2, Save, X, Users } from 'lucide-react';
+import { UserPlus, Trash2, Clock, Edit2, Save, X, Users, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -13,7 +14,9 @@ export default function ManageStaff() {
     const [staff, setStaff] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState(null);
-    const [newStaff, setNewStaff] = useState({ name: '', email: '', phone: '', photoUrl: '', profession: '' });
+    const [newStaff, setNewStaff] = useState({ name: '', email: '', phone: '', photoUrl: '' });
+    const [photoFile, setPhotoFile] = useState(null);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [establishmentSchedule, setEstablishmentSchedule] = useState(null);
     const [staffSchedule, setStaffSchedule] = useState(null);
 
@@ -64,18 +67,32 @@ export default function ManageStaff() {
             const user = auth.currentUser;
             if (!user) return;
 
+            setUploadingPhoto(true);
+            let photoUrl = '';
+
+            // Upload photo to Firebase Storage if file is selected
+            if (photoFile) {
+                const photoRef = ref(storage, `staff/${user.uid}/${Date.now()}_${photoFile.name}`);
+                await uploadBytes(photoRef, photoFile);
+                photoUrl = await getDownloadURL(photoRef);
+            }
+
             await addDoc(collection(db, `professionals/${user.uid}/staff`), {
                 ...newStaff,
+                photoUrl: photoUrl || newStaff.photoUrl,
                 createdAt: new Date().toISOString(),
                 establishmentId: user.uid
             });
 
-            setNewStaff({ name: '', email: '', phone: '', photoUrl: '', profession: '' });
+            setNewStaff({ name: '', email: '', phone: '', photoUrl: '' });
+            setPhotoFile(null);
             setShowAddModal(false);
             fetchStaff();
         } catch (error) {
             console.error("Erro ao adicionar profissional:", error);
             alert("Erro ao adicionar profissional!");
+        } finally {
+            setUploadingPhoto(false);
         }
     };
 
@@ -370,19 +387,21 @@ export default function ManageStaff() {
                     bottom: 0,
                     background: 'rgba(0, 0, 0, 0.7)',
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-end',
                     justifyContent: 'center',
                     zIndex: 1000,
                     padding: '1rem'
                 }} onClick={() => setShowAddModal(false)}>
                     <div style={{
                         background: 'var(--bg-card)',
-                        borderRadius: '20px',
+                        borderRadius: '20px 20px 0 0',
                         padding: '2rem',
                         maxWidth: '500px',
                         width: '100%',
                         border: '1px solid var(--border-default)',
-                        boxShadow: 'var(--shadow-xl)'
+                        boxShadow: 'var(--shadow-xl)',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
                     }} onClick={e => e.stopPropagation()}>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
                             Adicionar Profissional
@@ -421,24 +440,69 @@ export default function ManageStaff() {
                                 />
                             </div>
                             <div>
-                                <label className="label" style={{ marginBottom: '0.5rem' }}>Profissão</label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: Cabeleireiro, Barbeiro, etc."
-                                    value={newStaff.profession}
-                                    onChange={e => setNewStaff({ ...newStaff, profession: e.target.value })}
-                                    className="input"
-                                />
-                            </div>
-                            <div>
-                                <label className="label" style={{ marginBottom: '0.5rem' }}>URL da Foto (opcional)</label>
-                                <input
-                                    type="url"
-                                    placeholder="https://..."
-                                    value={newStaff.photoUrl}
-                                    onChange={e => setNewStaff({ ...newStaff, photoUrl: e.target.value })}
-                                    className="input"
-                                />
+                                <label className="label" style={{ marginBottom: '0.5rem' }}>Foto do Profissional</label>
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    {photoFile && (
+                                        <div style={{
+                                            width: '64px',
+                                            height: '64px',
+                                            borderRadius: '50%',
+                                            overflow: 'hidden',
+                                            border: '2px solid var(--accent-primary)',
+                                            flexShrink: 0
+                                        }}>
+                                            <img
+                                                src={URL.createObjectURL(photoFile)}
+                                                alt="Preview"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        </div>
+                                    )}
+                                    <label style={{
+                                        flex: 1,
+                                        padding: '0.875rem',
+                                        background: 'var(--bg-elevated)',
+                                        border: '1px solid var(--border-default)',
+                                        borderRadius: '12px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        textAlign: 'center',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.5rem',
+                                        color: 'var(--text-primary)',
+                                        fontWeight: 600,
+                                        fontSize: '0.9375rem'
+                                    }} className="hover:bg-[var(--bg-card)]">
+                                        <Upload size={18} />
+                                        {photoFile ? 'Alterar Foto' : 'Escolher Foto'}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={e => setPhotoFile(e.target.files[0])}
+                                            style={{ display: 'none' }}
+                                        />
+                                    </label>
+                                </div>
+                                {photoFile && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPhotoFile(null)}
+                                        style={{
+                                            marginTop: '0.5rem',
+                                            padding: '0.5rem',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'var(--accent-danger)',
+                                            cursor: 'pointer',
+                                            fontSize: '0.8125rem',
+                                            fontWeight: 500
+                                        }}
+                                    >
+                                        Remover foto
+                                    </button>
+                                )}
                             </div>
                             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
                                 <button
@@ -459,19 +523,20 @@ export default function ManageStaff() {
                                 </button>
                                 <button
                                     type="submit"
+                                    disabled={uploadingPhoto}
                                     style={{
                                         flex: 1,
                                         padding: '0.875rem',
-                                        background: 'var(--accent-primary)',
-                                        color: 'white',
+                                        background: uploadingPhoto ? 'var(--bg-elevated)' : 'var(--accent-primary)',
+                                        color: uploadingPhoto ? 'var(--text-muted)' : 'white',
                                         border: 'none',
                                         borderRadius: '12px',
                                         fontWeight: 600,
-                                        cursor: 'pointer',
-                                        boxShadow: 'var(--shadow-md)'
+                                        cursor: uploadingPhoto ? 'wait' : 'pointer',
+                                        boxShadow: uploadingPhoto ? 'none' : 'var(--shadow-md)'
                                     }}
                                 >
-                                    Adicionar
+                                    {uploadingPhoto ? 'Enviando...' : 'Adicionar'}
                                 </button>
                             </div>
                         </form>
