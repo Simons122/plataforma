@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, query, where, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
-import { Clock, Check, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Clock, Check, ChevronLeft, ChevronRight, Calendar, Heart } from 'lucide-react';
 import { format, addMinutes, setHours, setMinutes, isBefore, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -23,20 +23,19 @@ export default function ClientBooking() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    const [isFavorite, setIsFavorite] = useState(false);
 
     // Verificar se está logado
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (!user) {
-                // Não está logado, redirecionar para login
-                // Guardar URL atual para voltar depois
                 sessionStorage.setItem('returnTo', `/book/${slug}`);
-                setLoading(false); // ← IMPORTANTE: Desativar loading antes de redirecionar
+                setLoading(false);
                 navigate('/client/auth');
                 return;
             }
 
-            // Carregar dados do cliente
+            // Carregar dados do cliente e verificar favoritos
             const clientDoc = await getDoc(doc(db, 'clients', user.uid));
             if (clientDoc.exists()) {
                 const clientInfo = clientDoc.data();
@@ -46,15 +45,19 @@ export default function ClientBooking() {
                     phone: clientInfo.phone || ''
                 });
                 setCurrentUser(user);
+
+                // Check favorites
+                if (clientInfo.favorites && clientInfo.favorites.includes(pro?.id)) {
+                    setIsFavorite(true);
+                }
             } else {
-                // Usuário autenticado mas não é cliente
                 setLoading(false);
                 navigate('/client/auth');
             }
         });
 
         return () => unsubscribe();
-    }, [slug, navigate]);
+    }, [slug, navigate, pro?.id]);
 
     useEffect(() => {
         if (slug && currentUser) fetchData();
@@ -134,6 +137,28 @@ export default function ClientBooking() {
         }
 
         return slots;
+    };
+
+    const toggleFavorite = async () => {
+        if (!currentUser || !pro) return;
+
+        try {
+            const clientRef = doc(db, 'clients', currentUser.uid);
+
+            if (isFavorite) {
+                await updateDoc(clientRef, {
+                    favorites: arrayRemove(pro.id)
+                });
+                setIsFavorite(false);
+            } else {
+                await updateDoc(clientRef, {
+                    favorites: arrayUnion(pro.id)
+                });
+                setIsFavorite(true);
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar favoritos:", error);
+        }
     };
 
     const handleBooking = async (e) => {
@@ -298,9 +323,30 @@ export default function ClientBooking() {
                             )}
                         </div>
                     </div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                        {pro.businessName || pro.name}
-                    </h1>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                            {pro.businessName || pro.name}
+                        </h1>
+                        {currentUser && (
+                            <button
+                                onClick={toggleFavorite}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: isFavorite ? 'var(--accent-danger)' : 'var(--text-muted)',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    transition: 'transform 0.2s',
+                                    transform: isFavorite ? 'scale(1.1)' : 'scale(1)'
+                                }}
+                                title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                            >
+                                <Heart size={20} fill={isFavorite ? "currentColor" : "none"} />
+                            </button>
+                        )}
+                    </div>
                     {pro.businessName && (
                         <p style={{ color: 'var(--accent-primary)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                             {pro.name}

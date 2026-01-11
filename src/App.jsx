@@ -13,6 +13,7 @@ import ClientBooking from './pages/ClientBooking';
 import TestNotifications from './pages/TestNotifications';
 import ClientAuth from './pages/ClientAuth';
 import ClientBookings from './pages/ClientBookings';
+import ClientFavorites from './pages/ClientFavorites';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -102,6 +103,7 @@ function App() {
           {/* Client Routes */}
           <Route path="/client/auth" element={<ClientAuth />} />
           <Route path="/client/bookings" element={<ClientBookings />} />
+          <Route path="/client/favorites" element={<ClientFavorites />} />
 
           {/* Public Client Booking Route */}
           <Route path="/book/:slug" element={<ClientBooking />} />
