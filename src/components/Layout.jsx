@@ -176,7 +176,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 />
                             </div>
                         ) : businessName === APP_NAME ? (
-                            <img src="/logo.png" alt="Booklyo" style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '0.5rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }} />
+                            <img src="/logo.png" alt="Booklyo" style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '0.5rem' }} />
                         ) : (
                             <div style={{
                                 width: '80px',
@@ -319,7 +319,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                             />
                         </div>
                     ) : businessName === APP_NAME ? (
-                        <img src="/logo.png" alt="Booklyo" style={{ width: '72px', height: '72px', objectFit: 'contain', marginBottom: '0.25rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }} />
+                        <img src="/logo.png" alt="Booklyo" style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '0.25rem' }} />
                     ) : (
                         <div style={{
                             width: '72px',
