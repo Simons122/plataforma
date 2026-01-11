@@ -23,39 +23,54 @@ export default function AgendaPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    const fetchBookings = async (userId, userProfile) => {
+    const fetchBookings = async (ownerId, userProfile, isStaffUser) => {
         try {
             const allBookings = [];
 
-            // 1. Fetch Owner Bookings
-            const ownerBookingsSnap = await getDocs(collection(db, `professionals/${userId}/bookings`));
-            ownerBookingsSnap.docs.forEach(d => {
-                allBookings.push({
-                    id: d.id,
-                    ...d.data(),
-                    responsibleName: userProfile.name.split(' ')[0],
-                    isStaff: false
+            if (isStaffUser) {
+                // Staff only sees their own bookings
+                const bookingsSnap = await getDocs(collection(db, `professionals/${ownerId}/staff/${userProfile.id}/bookings`));
+                bookingsSnap.docs.forEach(d => {
+                    allBookings.push({
+                        id: d.id,
+                        ...d.data(),
+                        responsibleName: userProfile.name.split(' ')[0],
+                        isStaff: true,
+                        staffId: userProfile.id
+                    });
                 });
-            });
+            } else {
+                // Owner sees everything (Owner + All Staff)
 
-            // 2. Fetch Staff Bookings
-            const staffSnap = await getDocs(collection(db, `professionals/${userId}/staff`));
+                // 1. Fetch Owner Bookings
+                const ownerBookingsSnap = await getDocs(collection(db, `professionals/${ownerId}/bookings`));
+                ownerBookingsSnap.docs.forEach(d => {
+                    allBookings.push({
+                        id: d.id,
+                        ...d.data(),
+                        responsibleName: userProfile.name.split(' ')[0],
+                        isStaff: false
+                    });
+                });
 
-            // Use Promise.all for parallel fetching
-            const staffPromises = staffSnap.docs.map(async (staffDoc) => {
-                const staffData = staffDoc.data();
-                const bookingsSnap = await getDocs(collection(db, `professionals/${userId}/staff/${staffDoc.id}/bookings`));
-                return bookingsSnap.docs.map(d => ({
-                    id: d.id,
-                    ...d.data(),
-                    responsibleName: staffData.name.split(' ')[0],
-                    isStaff: true,
-                    staffId: staffDoc.id
-                }));
-            });
+                // 2. Fetch Staff Bookings
+                const staffSnap = await getDocs(collection(db, `professionals/${ownerId}/staff`));
 
-            const staffBookingsMatrix = await Promise.all(staffPromises);
-            staffBookingsMatrix.forEach(bookings => allBookings.push(...bookings));
+                const staffPromises = staffSnap.docs.map(async (staffDoc) => {
+                    const staffData = staffDoc.data();
+                    const bookingsSnap = await getDocs(collection(db, `professionals/${ownerId}/staff/${staffDoc.id}/bookings`));
+                    return bookingsSnap.docs.map(d => ({
+                        id: d.id,
+                        ...d.data(),
+                        responsibleName: staffData.name.split(' ')[0],
+                        isStaff: true,
+                        staffId: staffDoc.id
+                    }));
+                });
+
+                const staffBookingsMatrix = await Promise.all(staffPromises);
+                staffBookingsMatrix.forEach(bookings => allBookings.push(...bookings));
+            }
 
             setBookings(allBookings);
         } catch (error) {
@@ -66,15 +81,53 @@ export default function AgendaPage() {
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const docRef = doc(db, "professionals", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const profileData = { id: user.uid, ...docSnap.data() };
-                    setProfile(profileData);
-                    await fetchBookings(user.uid, profileData);
+                try {
+                    // Check Role Logic
+                    let userProfile = null;
+                    let isStaffUser = false;
+                    let ownerId = user.uid;
 
-                    const scheduleSnap = await getDoc(doc(db, `professionals/${user.uid}/settings`, 'schedule'));
-                    if (scheduleSnap.exists()) setSchedule(scheduleSnap.data());
+                    // 1. Try Professional (Owner)
+                    let docSnap = await getDoc(doc(db, "professionals", user.uid));
+
+                    if (docSnap.exists()) {
+                        userProfile = { id: user.uid, ...docSnap.data(), role: 'professional' };
+                    } else {
+                        // 2. Try Staff Lookup
+                        const lookupRef = doc(db, "staff_lookup", user.uid);
+                        const lookupSnap = await getDoc(lookupRef);
+                        if (lookupSnap.exists()) {
+                            isStaffUser = true;
+                            const lookupData = lookupSnap.data();
+                            ownerId = lookupData.ownerId;
+                            // Fetch Staff Details
+                            const staffDoc = await getDoc(doc(db, `professionals/${ownerId}/staff/${lookupData.staffId}`));
+                            if (staffDoc.exists()) {
+                                userProfile = {
+                                    id: lookupData.staffId,
+                                    ...staffDoc.data(),
+                                    ownerId: ownerId,
+                                    isStaff: true,
+                                    role: 'staff' // Force role for Layout
+                                };
+                            }
+                        }
+                    }
+
+                    if (userProfile) {
+                        setProfile(userProfile);
+                        await fetchBookings(ownerId, userProfile, isStaffUser);
+
+                        // Schedule settings
+                        const schedulePath = isStaffUser
+                            ? `professionals/${ownerId}/staff/${userProfile.id}/settings`
+                            : `professionals/${ownerId}/settings`;
+
+                        const scheduleSnap = await getDoc(doc(db, schedulePath, 'schedule'));
+                        if (scheduleSnap.exists()) setSchedule(scheduleSnap.data());
+                    }
+                } catch (err) {
+                    console.error("Auth check error:", err);
                 }
             }
             setLoading(false);
@@ -83,7 +136,10 @@ export default function AgendaPage() {
     }, [refreshTrigger]);
 
     const refetchBookings = () => {
-        if (profile) fetchBookings(profile.id, profile);
+        if (profile) {
+            const ownerId = profile.isStaff ? profile.ownerId : profile.id;
+            fetchBookings(ownerId, profile, profile.isStaff);
+        }
         setRefreshTrigger(prev => prev + 1);
     };
 

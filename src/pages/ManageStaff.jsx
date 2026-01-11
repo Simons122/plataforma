@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { db, auth } from '../lib/firebase';
+import { db, auth, firebaseConfig } from '../lib/firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import Layout from '../components/Layout';
 import { UserPlus, Trash2, Clock, Edit2, Save, X, Users, Upload } from 'lucide-react';
 import { format } from 'date-fns';
@@ -151,6 +153,11 @@ export default function ManageStaff() {
         setShowAddModal(true);
     };
 
+
+
+
+    // ... inside handleAddStaff ...
+
     const handleAddStaff = async (e) => {
         e.preventDefault();
         try {
@@ -171,11 +178,40 @@ export default function ManageStaff() {
                 }
             }
 
+            // Create Staff User Account if not editing
+            let authUserId = null;
+            if (!isEditing && newStaff.password) {
+                try {
+                    // Initialize a secondary app to create user without logging out admin
+                    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+                    const secondaryAuth = getAuth(secondaryApp);
+                    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, newStaff.email, newStaff.password);
+                    authUserId = userCredential.user.uid;
+                    await signOut(secondaryAuth); // Cleanup
+
+                    // Delete the secondary app instance locally (improves memory, though optional in JS GC)
+                    // (firebase/app deleteApp is available but initializeApp re-use is complex. 
+                    //  Just signing out is usually enough for this flow.)
+
+                } catch (authError) {
+                    console.error("Erro ao criar conta de utilizador:", authError);
+                    alert("Erro ao criar conta de login para o funcionário: " + authError.message);
+                    setUploadingPhoto(false);
+                    return;
+                }
+            }
+
             const staffData = {
                 ...newStaff,
                 photoUrl: photoUrl,
-                establishmentId: user.uid
+                establishmentId: user.uid,
+                // Remove password from stored data for security
             };
+            delete staffData.password;
+
+            if (authUserId) {
+                staffData.authUserId = authUserId;
+            }
 
             if (isEditing && editingId) {
                 // Update existing staff
@@ -185,13 +221,23 @@ export default function ManageStaff() {
                 });
             } else {
                 // Create new staff
-                await addDoc(collection(db, `professionals/${user.uid}/staff`), {
+                const docRef = await addDoc(collection(db, `professionals/${user.uid}/staff`), {
                     ...staffData,
                     createdAt: new Date().toISOString()
                 });
+
+                // Create Lookup Entry for Login
+                if (authUserId) {
+                    await setDoc(doc(db, "staff_lookup", authUserId), {
+                        ownerId: user.uid,
+                        staffId: docRef.id,
+                        email: newStaff.email,
+                        role: 'staff'
+                    });
+                }
             }
 
-            setNewStaff({ name: '', email: '', phone: '', photoUrl: '' });
+            setNewStaff({ name: '', email: '', phone: '', photoUrl: '', password: '' });
             setPhotoFile(null);
             setIsEditing(false);
             setEditingId(null);
@@ -527,6 +573,24 @@ export default function ManageStaff() {
                                         onChange={e => setNewStaff({ ...newStaff, phone: e.target.value })}
                                     />
                                 </div>
+
+                                {!isEditing && (
+                                    <div>
+                                        <label className="label">Senha para Login *</label>
+                                        <input
+                                            type="password"
+                                            className="input"
+                                            placeholder="Senha segura (mín. 6 caracteres)"
+                                            value={newStaff.password || ''}
+                                            onChange={e => setNewStaff({ ...newStaff, password: e.target.value })}
+                                            required
+                                            minLength={6}
+                                        />
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                            Esta senha será usada pelo funcionário para entrar na plataforma.
+                                        </p>
+                                    </div>
+                                )}
 
                                 {/* Photo Upload */}
                                 <div>

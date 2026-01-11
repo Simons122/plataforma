@@ -5,7 +5,7 @@ import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 
 // Configuração do Firebase (Colada pelo utilizador)
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyC1syikigApBQX71pdwHm0a6zONovV3r04",
   authDomain: "platforma-e0c48.firebaseapp.com",
   projectId: "platforma-e0c48",
