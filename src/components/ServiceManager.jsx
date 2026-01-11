@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Plus, Trash2, Edit2, Clock, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Edit2, Clock, Euro, Briefcase } from 'lucide-react';
 
 export default function ServiceManager({ userId }) {
     const [services, setServices] = useState([]);
@@ -221,7 +221,7 @@ export default function ServiceManager({ userId }) {
                             <h4 style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>{service.name}</h4>
                             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={14} /> {service.duration} min</span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--accent-success)', fontWeight: 600 }}><DollarSign size={14} /> {service.price}€</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--accent-success)', fontWeight: 600 }}><Euro size={14} /> {service.price}€</span>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -262,5 +262,3 @@ export default function ServiceManager({ userId }) {
         </div>
     );
 }
-
-import { Briefcase } from 'lucide-react';

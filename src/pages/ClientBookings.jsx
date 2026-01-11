@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Building2, DollarSign, X, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Building2, Euro, X, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import Layout from '../components/Layout';
@@ -351,7 +351,7 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
                     highlight={isUpcoming}
                 />
                 <InfoItem
-                    icon={DollarSign}
+                    icon={Euro}
                     label="Preço"
                     value={`${booking.price}€`}
                 />

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { db, auth } from '../lib/firebase';
 import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import Layout from '../components/Layout';
-import { Users, Shield, TrendingUp, Calendar, DollarSign, Activity, ArrowUpRight, ShieldAlert } from 'lucide-react';
+import { Users, Shield, TrendingUp, Calendar, Euro, Activity, ArrowUpRight, ShieldAlert } from 'lucide-react';
 import { format, subDays, isAfter } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
                     subtitle={`${stats.bookingsThisWeek} esta semana`}
                 />
                 <StatCard
-                    icon={DollarSign}
+                    icon={Euro}
                     label="Volume Total"
                     value={`${stats.revenue}€`}
                     color="#f59e0b"
