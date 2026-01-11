@@ -60,7 +60,7 @@ export default function ClientBookings() {
             }
 
             // Ordenar por data (mais recente primeiro)
-            allBookings.sort((a, b) => new Date(b.selectedTime) - new Date(a.selectedTime));
+            allBookings.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
             setBookings(allBookings);
         } catch (error) {
             console.error('Erro ao carregar marcações:', error);
@@ -102,109 +102,141 @@ export default function ClientBookings() {
         );
     }
 
-    const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && new Date(b.selectedTime) > new Date());
-    const pastBookings = bookings.filter(b => b.status === 'cancelled' || new Date(b.selectedTime) <= new Date());
+    const [activeTab, setActiveTab] = useState('upcoming');
+
+    // Helper para data (compatibilidade com antigos)
+    const getBookingDate = (b) => new Date(b.date || b.selectedTime);
+
+    const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && getBookingDate(b) > new Date());
+    const pastBookings = bookings.filter(b => b.status === 'cancelled' || getBookingDate(b) <= new Date());
 
     return (
         <Layout role="client" brandName={user?.displayName || user?.email?.split('@')[0]}>
-            {/* Upcoming Bookings */}
-            {upcomingBookings.length > 0 && (
-                <div style={{ marginBottom: '2rem' }}>
-                    <h2 style={{
-                        fontSize: '1.25rem',
-                        fontWeight: 700,
-                        color: 'var(--text-primary)',
-                        marginBottom: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}>
-                        <Calendar size={20} style={{ color: 'var(--accent-primary)' }} />
-                        Próximas Marcações ({upcomingBookings.length})
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {upcomingBookings.map(booking => (
-                            <BookingCard
-                                key={booking.id}
-                                booking={booking}
-                                onCancel={handleCancelBooking}
-                                cancelling={cancelling === booking.id}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
+            <div style={{ marginBottom: '2rem' }}>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>
+                    Minhas Marcações
+                </h1>
 
-            {/* Past/Cancelled Bookings */}
-            {pastBookings.length > 0 && (
-                <div>
-                    <h2 style={{
-                        fontSize: '1.25rem',
-                        fontWeight: 700,
-                        color: 'var(--text-primary)',
-                        marginBottom: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}>
-                        <Clock size={20} style={{ color: 'var(--text-muted)' }} />
-                        Histórico ({pastBookings.length})
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {pastBookings.map(booking => (
-                            <BookingCard
-                                key={booking.id}
-                                booking={booking}
-                                isPast={true}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Empty State */}
-            {bookings.length === 0 && (
+                {/* Tabs */}
                 <div style={{
+                    display: 'flex',
                     background: 'var(--bg-card)',
-                    borderRadius: '20px',
-                    padding: '4rem 2rem',
-                    textAlign: 'center',
-                    border: '1px solid var(--border-default)'
+                    padding: '4px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-default)',
+                    marginBottom: '2rem',
+                    width: 'fit-content'
                 }}>
-                    <Calendar size={64} style={{ color: 'var(--text-muted)', margin: '0 auto 1.5rem' }} />
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                        Nenhuma Marcação
-                    </h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Você ainda não tem marcações agendadas.
-                    </p>
-                    <Link
-                        to="/"
+                    <button
+                        onClick={() => setActiveTab('upcoming')}
                         style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.75rem 1.5rem',
-                            background: 'var(--accent-primary)',
-                            color: 'white',
-                            borderRadius: '12px',
-                            textDecoration: 'none',
+                            padding: '0.625rem 1.25rem',
+                            borderRadius: '10px',
+                            background: activeTab === 'upcoming' ? 'var(--accent-primary)' : 'transparent',
+                            color: activeTab === 'upcoming' ? 'white' : 'var(--text-secondary)',
+                            border: 'none',
                             fontWeight: 600,
-                            transition: 'all 0.2s'
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
                         }}
                     >
-                        <ArrowLeft size={16} />
-                        Fazer Marcação
-                    </Link>
+                        <Calendar size={18} />
+                        Próximas
+                        {upcomingBookings.length > 0 && (
+                            <span style={{
+                                background: activeTab === 'upcoming' ? 'rgba(255,255,255,0.2)' : 'var(--bg-elevated)',
+                                padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem'
+                            }}>
+                                {upcomingBookings.length}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        style={{
+                            padding: '0.625rem 1.25rem',
+                            borderRadius: '10px',
+                            background: activeTab === 'history' ? 'var(--bg-elevated)' : 'transparent', // Diferente visual para inativo mas selecionado? Não, tab normal.
+                            // Melhor:
+                            background: activeTab === 'history' ? 'var(--text-primary)' : 'transparent',
+                            color: activeTab === 'history' ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                            border: 'none',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        <Clock size={18} />
+                        Histórico
+                    </button>
                 </div>
-            )}
+
+                {/* Tab Content */}
+                <div className="animate-fade-in">
+                    {activeTab === 'upcoming' ? (
+                        upcomingBookings.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {upcomingBookings.map(booking => (
+                                    <BookingCard
+                                        key={booking.id}
+                                        booking={booking}
+                                        onCancel={handleCancelBooking}
+                                        cancelling={cancelling === booking.id}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '4rem 2rem',
+                                color: 'var(--text-secondary)',
+                                background: 'var(--bg-card)',
+                                borderRadius: '20px',
+                                border: '1px solid var(--border-default)'
+                            }}>
+                                <p style={{ marginBottom: '1.5rem', fontSize: '1.125rem' }}>Você não tem próximas marcações.</p>
+                                <Link to="/client/explore" style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                                    padding: '0.875rem 1.5rem', background: 'var(--accent-primary)',
+                                    color: 'white', borderRadius: '12px', textDecoration: 'none', fontWeight: 600
+                                }}>
+                                    Explorar Profissionais
+                                </Link>
+                            </div>
+                        )
+                    ) : (
+                        pastBookings.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {pastBookings.map(booking => (
+                                    <BookingCard
+                                        key={booking.id}
+                                        booking={booking}
+                                        isPast={true}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                                <p>Nenhum histórico disponível.</p>
+                            </div>
+                        )
+                    )}
+                </div>
+            </div>
         </Layout>
     );
 }
 
 function BookingCard({ booking, onCancel, isPast, cancelling }) {
-    const bookingDate = parseISO(booking.selectedTime);
-    const isUpcoming = new Date(booking.selectedTime) > new Date() && booking.status !== 'cancelled';
+    const dateStr = booking.date || booking.selectedTime;
+    const bookingDate = parseISO(dateStr);
+    const isUpcoming = new Date(dateStr) > new Date() && booking.status !== 'cancelled';
 
     return (
         <div style={{
