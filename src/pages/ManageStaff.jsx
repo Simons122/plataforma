@@ -165,7 +165,7 @@ export default function ManageStaff() {
 
     if (loading) {
         return (
-            <Layout role="professional" brandName="Profissionais">
+            <Layout role="professional">
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
                     <div className="spinner"></div>
                 </div>
@@ -174,7 +174,7 @@ export default function ManageStaff() {
     }
 
     return (
-        <Layout role="professional" brandName="Profissionais">
+        <Layout role="professional">
             <div style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div>
