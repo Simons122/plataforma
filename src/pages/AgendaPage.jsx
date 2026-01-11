@@ -458,19 +458,19 @@ export default function AgendaPage() {
 
             {/* MONTH VIEW */}
             {viewMode === 'month' && (
-                <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-default)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+                <div className="calendar-wrapper">
                     <div style={{ overflowX: 'auto' }}>
                         <div style={{ minWidth: '700px' }}>
                             {/* Month Header */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-secondary)' }}>
+                            <div className="calendar-header">
                                 {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => (
-                                    <div key={d} style={{ padding: '0.625rem', textAlign: 'center', fontSize: '0.6875rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                    <div key={d} className="calendar-header-cell">
                                         {d}
                                     </div>
                                 ))}
                             </div>
                             {/* Month Grid */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                            <div className="calendar-grid-body">
                                 {getMonthDays().map((day, i) => {
                                     const dayBookings = getDayBookings(day);
                                     const inCurrentMonth = isSameMonth(day, selectedDate);
@@ -478,31 +478,14 @@ export default function AgendaPage() {
                                         <div
                                             key={i}
                                             onClick={() => { setSelectedDate(day); setViewMode('day'); }}
-                                            className={`agenda-cell-month ${!inCurrentMonth ? 'agenda-cell-month-inactive' : ''}`}
-                                            style={{
-                                                background: isToday(day) ? 'color-mix(in srgb, var(--accent-primary), transparent 95%)' : undefined,
-                                                opacity: inCurrentMonth ? 1 : 0.5
-                                            }}
+                                            className={`calendar-day-cell ${!inCurrentMonth ? 'inactive' : ''}`}
                                         >
-                                            <div style={{
-                                                fontSize: '0.75rem',
-                                                fontWeight: isToday(day) ? 700 : 500,
-                                                color: isToday(day) ? 'var(--accent-primary)' : 'var(--text-primary)',
-                                                marginBottom: '0.25rem'
-                                            }}>
+                                            <div className={`calendar-day-number ${isToday(day) ? 'today' : ''}`}>
                                                 {format(day, 'd')}
                                             </div>
                                             {dayBookings.slice(0, 3).map(b => (
-                                                <div key={b.id} style={{
-                                                    background: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
-                                                    borderRadius: '3px',
-                                                    padding: '2px 4px',
-                                                    fontSize: '0.5625rem',
-                                                    color: 'white',
-                                                    marginBottom: '2px',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
+                                                <div key={b.id} className="calendar-event-pill" style={{
+                                                    background: b.isStaff ? '#ec4899' : 'var(--accent-primary)'
                                                 }}>
                                                     {format(parseISO(b.date), 'HH:mm')} • {profile?.isStaff ? b.clientName : b.responsibleName}
                                                 </div>
