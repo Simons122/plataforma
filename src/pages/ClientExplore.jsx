@@ -269,19 +269,21 @@ export default function ClientExplore() {
                                             gap: '0.5rem',
                                             width: '100%',
                                             padding: '0.875rem',
-                                            background: 'var(--text-primary)',
-                                            color: 'var(--bg-primary)',
+                                            background: 'var(--accent-primary)',
+                                            color: 'white',
                                             border: 'none',
-                                            borderRadius: '12px',
-                                            fontWeight: 700,
+                                            borderRadius: '14px',
+                                            fontWeight: 600,
+                                            fontSize: '0.9375rem',
                                             cursor: 'pointer',
                                             textDecoration: 'none',
-                                            transition: 'transform 0.1s, opacity 0.2s'
+                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' // Sombra subtil azulada
                                         }}
                                         className="action-btn"
                                     >
                                         Agendar
-                                        <ArrowRight size={18} />
+                                        <ArrowRight size={18} strokeWidth={2.5} />
                                     </Link>
                                 </div>
                             </div>
@@ -298,8 +300,13 @@ export default function ClientExplore() {
             <style>{`
                 .pro-card { transition: border-color 0.2s; }
                 .pro-card:hover { border-color: var(--border-hover); }
-                .action-btn:hover { opacity: 0.9; }
-                .action-btn:active { transform: scale(0.98); }
+                
+                .action-btn:hover { 
+                    transform: translateY(-2px);
+                    background: var(--accent-primary-hover) !important;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+                }
+                .action-btn:active { transform: translateY(0); }
             `}</style>
         </Layout>
     );
