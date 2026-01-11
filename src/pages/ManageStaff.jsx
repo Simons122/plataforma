@@ -272,11 +272,13 @@ export default function ManageStaff() {
                         };
 
                         const docRef = await addDoc(collection(db, `professionals/${auth.currentUser.uid}/staff`), staffData);
+                        console.log("A criar staff_lookup para UID:", user.uid);
                         await setDoc(doc(db, "staff_lookup", user.uid), {
                             ownerId: auth.currentUser.uid,
                             staffId: docRef.id,
                             email: aliasEmail
                         });
+                        console.log("staff_lookup criado com sucesso!");
 
                         setNewStaff({ name: '', email: '', phone: '', photoUrl: '', password: '' });
                         setPhotoFile(null);
