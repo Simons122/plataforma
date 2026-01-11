@@ -43,19 +43,20 @@ service cloud.firestore {
       // STAFF E SUAS SUB-COLEÇÕES
       match /staff/{staffId} {
         allow read: if true;
-        allow write: if isOwner(userId) || isAdmin();
+        // Permitir escrita se for o DONO ou se for o PRÓPRIO funcionário (verificado pelo authUserId no doc)
+        allow write: if isOwner(userId) || isAdmin() || (resource.data.authUserId == request.auth.uid) || (request.resource.data.authUserId == request.auth.uid);
 
         // Configurações do Staff (Horários)
         match /settings/{docId} {
              allow read: if true;
-             allow write: if isOwner(userId) || isAdmin();
+             allow write: if isOwner(userId) || isAdmin() || get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid;
         }
 
         // MARCAÇÕES DO STAFF
         match /bookings/{bookingId} {
             allow create: if true;
-            allow read: if true; // Permite ler para calcular slots ocupados do staff
-            allow update, delete: if isOwner(userId) || isAdmin();
+            allow read: if true; 
+            allow update, delete: if isOwner(userId) || isAdmin() || get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid;
         }
       }
       
