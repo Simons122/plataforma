@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, collectionGroup, getDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Building2, Euro, X, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -36,29 +36,51 @@ export default function ClientBookings() {
 
     const loadBookings = async (email) => {
         try {
-            const professionalsSnap = await getDocs(collection(db, 'professionals'));
-            const allBookings = [];
+            // Use collectionGroup to find bookings across all collections named 'bookings'
+            // This includes both owner bookings and staff bookings
+            const q = query(collectionGroup(db, 'bookings'), where('clientEmail', '==', email));
+            const querySnapshot = await getDocs(q);
 
-            for (const professionalDoc of professionalsSnap.docs) {
-                const bookingsRef = collection(db, 'professionals', professionalDoc.id, 'bookings');
-                const q = query(bookingsRef, where('clientEmail', '==', email));
-                const bookingsSnap = await getDocs(q);
+            const bookingsData = [];
+            const professionalCache = {}; // Cache to avoid refetching same professional data
 
-                bookingsSnap.forEach((bookingDoc) => {
-                    allBookings.push({
-                        id: bookingDoc.id,
-                        professionalId: professionalDoc.id,
-                        professionalName: professionalDoc.data().name,
-                        businessName: professionalDoc.data().businessName,
-                        logoUrl: professionalDoc.data().logoUrl,
-                        profession: professionalDoc.data().profession,
-                        ...bookingDoc.data()
+            for (const docSnapshot of querySnapshot.docs) {
+                const booking = { id: docSnapshot.id, ...docSnapshot.data() };
+                const pathSegments = docSnapshot.ref.path.split('/');
+
+                // Path format: 
+                // Owner: professionals/{ownerId}/bookings/{bookingId}
+                // Staff: professionals/{ownerId}/staff/{staffId}/bookings/{bookingId}
+
+                const ownerId = pathSegments[1];
+                let professionalData = professionalCache[ownerId];
+
+                if (!professionalData) {
+                    // Fetch professional/owner details if not in cache
+                    const profDoc = await getDoc(doc(db, 'professionals', ownerId));
+                    if (profDoc.exists()) {
+                        professionalData = {
+                            professionalId: profDoc.id,
+                            businessName: profDoc.data().businessName,
+                            professionalName: profDoc.data().name, // Fallback name
+                            logoUrl: profDoc.data().logoUrl,
+                            profession: profDoc.data().profession
+                        };
+                        professionalCache[ownerId] = professionalData;
+                    }
+                }
+
+                if (professionalData) {
+                    bookingsData.push({
+                        ...booking,
+                        ...professionalData,
+                        docPath: docSnapshot.ref.path
                     });
-                });
+                }
             }
 
-            allBookings.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
-            setBookings(allBookings);
+            bookingsData.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
+            setBookings(bookingsData);
         } catch (error) {
             console.error('Erro ao carregar marcações:', error);
         }
@@ -69,7 +91,7 @@ export default function ClientBookings() {
 
         setCancelling(booking.id);
         try {
-            const bookingRef = doc(db, 'professionals', booking.professionalId, 'bookings', booking.id);
+            const bookingRef = booking.docPath ? doc(db, booking.docPath) : doc(db, 'professionals', booking.professionalId, 'bookings', booking.id);
             await updateDoc(bookingRef, {
                 status: 'cancelled',
                 cancelledAt: new Date().toISOString()
