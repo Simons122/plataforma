@@ -534,14 +534,16 @@ export default function Layout({ children, role = 'professional', restricted = f
                 </header>
 
                 {/* Content Area */}
-                <div style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    padding: '1rem',
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
+                <div
+                    className="layout-content"
+                    style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        padding: '2.5rem',
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
                     <div style={{
                         maxWidth: '1200px', // Increased for better view in large screens
                         width: '100%',
