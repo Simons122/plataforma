@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar, Clock, User, Building2, DollarSign, X, LogOut, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, User, Building2, DollarSign, X, ArrowLeft } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import ClientLayout from '../components/ClientLayout';
 
 export default function ClientBookings() {
     const [loading, setLoading] = useState(true);
@@ -93,11 +94,6 @@ export default function ClientBookings() {
         }
     };
 
-    const handleLogout = async () => {
-        await auth.signOut();
-        navigate('/client/auth');
-    };
-
     if (loading) {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
@@ -110,145 +106,99 @@ export default function ClientBookings() {
     const pastBookings = bookings.filter(b => b.status === 'cancelled' || new Date(b.selectedTime) <= new Date());
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '2rem 1rem' }}>
-            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <ClientLayout userName={user?.displayName || user?.email}>
+            {/* Upcoming Bookings */}
+            {upcomingBookings.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                    <h2 style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: 'var(--text-primary)',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}>
+                        <Calendar size={20} style={{ color: 'var(--accent-primary)' }} />
+                        Próximas Marcações ({upcomingBookings.length})
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {upcomingBookings.map(booking => (
+                            <BookingCard
+                                key={booking.id}
+                                booking={booking}
+                                onCancel={handleCancelBooking}
+                                cancelling={cancelling === booking.id}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
-                {/* Header */}
+            {/* Past/Cancelled Bookings */}
+            {pastBookings.length > 0 && (
+                <div>
+                    <h2 style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: 'var(--text-primary)',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}>
+                        <Clock size={20} style={{ color: 'var(--text-muted)' }} />
+                        Histórico ({pastBookings.length})
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {pastBookings.map(booking => (
+                            <BookingCard
+                                key={booking.id}
+                                booking={booking}
+                                isPast={true}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Empty State */}
+            {bookings.length === 0 && (
                 <div style={{
                     background: 'var(--bg-card)',
                     borderRadius: '20px',
-                    padding: '2rem',
-                    marginBottom: '2rem',
-                    border: '1px solid var(--border-default)',
-                    boxShadow: 'var(--shadow-lg)'
+                    padding: '4rem 2rem',
+                    textAlign: 'center',
+                    border: '1px solid var(--border-default)'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div>
-                            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                                Minhas Marcações
-                            </h1>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-                                Olá, <strong>{user?.displayName || user?.email}</strong>
-                            </p>
-                        </div>
-                        <button
-                            onClick={handleLogout}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.625rem 1rem',
-                                background: 'var(--bg-secondary)',
-                                border: '1px solid var(--border-default)',
-                                borderRadius: '10px',
-                                color: 'var(--text-primary)',
-                                fontSize: '0.875rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                            onMouseOut={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                        >
-                            <LogOut size={16} />
-                            Sair
-                        </button>
-                    </div>
+                    <Calendar size={64} style={{ color: 'var(--text-muted)', margin: '0 auto 1.5rem' }} />
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                        Nenhuma Marcação
+                    </h3>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                        Você ainda não tem marcações agendadas.
+                    </p>
+                    <Link
+                        to="/"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.75rem 1.5rem',
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            borderRadius: '12px',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <ArrowLeft size={16} />
+                        Fazer Marcação
+                    </Link>
                 </div>
-
-                {/* Upcoming Bookings */}
-                {upcomingBookings.length > 0 && (
-                    <div style={{ marginBottom: '2rem' }}>
-                        <h2 style={{
-                            fontSize: '1.25rem',
-                            fontWeight: 700,
-                            color: 'var(--text-primary)',
-                            marginBottom: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                        }}>
-                            <Calendar size={20} style={{ color: 'var(--accent-primary)' }} />
-                            Próximas Marcações ({upcomingBookings.length})
-                        </h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {upcomingBookings.map(booking => (
-                                <BookingCard
-                                    key={booking.id}
-                                    booking={booking}
-                                    onCancel={handleCancelBooking}
-                                    cancelling={cancelling === booking.id}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Past/Cancelled Bookings */}
-                {pastBookings.length > 0 && (
-                    <div>
-                        <h2 style={{
-                            fontSize: '1.25rem',
-                            fontWeight: 700,
-                            color: 'var(--text-primary)',
-                            marginBottom: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                        }}>
-                            <Clock size={20} style={{ color: 'var(--text-muted)' }} />
-                            Histórico ({pastBookings.length})
-                        </h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {pastBookings.map(booking => (
-                                <BookingCard
-                                    key={booking.id}
-                                    booking={booking}
-                                    isPast={true}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Empty State */}
-                {bookings.length === 0 && (
-                    <div style={{
-                        background: 'var(--bg-card)',
-                        borderRadius: '20px',
-                        padding: '4rem 2rem',
-                        textAlign: 'center',
-                        border: '1px solid var(--border-default)'
-                    }}>
-                        <Calendar size={64} style={{ color: 'var(--text-muted)', margin: '0 auto 1.5rem' }} />
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            Nenhuma Marcação
-                        </h3>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                            Você ainda não tem marcações agendadas.
-                        </p>
-                        <Link
-                            to="/"
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.75rem 1.5rem',
-                                background: 'var(--accent-primary)',
-                                color: 'white',
-                                borderRadius: '12px',
-                                textDecoration: 'none',
-                                fontWeight: 600,
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            <ArrowLeft size={16} />
-                            Fazer Marcação
-                        </Link>
-                    </div>
-                )}
-            </div>
-        </div>
+            )}
+        </ClientLayout>
     );
 }
 
