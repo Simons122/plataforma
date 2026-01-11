@@ -442,7 +442,7 @@ export default function AgendaPage() {
                                                             whiteSpace: 'nowrap',
                                                             marginBottom: '1px'
                                                         }}>
-                                                            {format(parseISO(b.date), 'HH:mm')} • {b.responsibleName}
+                                                            {format(parseISO(b.date), 'HH:mm')} • {profile?.isStaff ? b.clientName : b.responsibleName}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -511,7 +511,7 @@ export default function AgendaPage() {
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap'
                                                 }}>
-                                                    {format(parseISO(b.date), 'HH:mm')} • {b.responsibleName}
+                                                    {format(parseISO(b.date), 'HH:mm')} • {profile?.isStaff ? b.clientName : b.responsibleName}
                                                 </div>
                                             ))}
                                             {dayBookings.length > 3 && (
