@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../lib/firebase';
 import { collection, getDocs, query, where, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { Search, MapPin, Heart, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Heart, ArrowRight, Info, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 
@@ -11,6 +11,12 @@ export default function ClientExplore() {
     const [searchTerm, setSearchTerm] = useState('');
     const [user, setUser] = useState(null);
     const [favorites, setFavorites] = useState([]);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -48,13 +54,18 @@ export default function ClientExplore() {
         if (!user) return;
 
         const clientRef = doc(db, 'clients', user.uid);
+        const pro = professionals.find(p => p.id === proId);
+        const proName = pro ? (pro.businessName || pro.name) : 'O estabelecimento';
+
         try {
             if (favorites.includes(proId)) {
                 await updateDoc(clientRef, { favorites: arrayRemove(proId) });
                 setFavorites(prev => prev.filter(id => id !== proId));
+                showToast(`${proName} removido dos favoritos.`, 'info');
             } else {
                 await updateDoc(clientRef, { favorites: arrayUnion(proId) });
                 setFavorites(prev => [...prev, proId]);
+                showToast(`${proName} adicionado aos favoritos!`, 'success');
             }
         } catch (error) {
             console.error("Erro ao atualizar favorito:", error);
@@ -80,7 +91,30 @@ export default function ClientExplore() {
 
     return (
         <Layout role="client" brandName={user?.displayName || user?.email?.split('@')[0]}>
-            <div style={{ paddingBottom: '2rem' }}>
+            <div style={{ paddingBottom: '2rem', position: 'relative' }}>
+                {/* Toast Notification */}
+                {toast && (
+                    <div className="animate-fade-in-down" style={{
+                        position: 'fixed',
+                        top: '20px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'var(--bg-card)',
+                        padding: '12px 24px',
+                        borderRadius: '50px',
+                        boxShadow: 'var(--shadow-lg)',
+                        zIndex: 2000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        border: '1px solid var(--border-default)',
+                        minWidth: '300px',
+                        justifyContent: 'center'
+                    }}>
+                        {toast.type === 'success' ? <Check size={18} color="var(--accent-success)" /> : <Info size={18} color="var(--accent-primary)" />}
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{toast.message}</span>
+                    </div>
+                )}
                 <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                     <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--text-primary)' }}>
                         Encontre o Profissional Ideal

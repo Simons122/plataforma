@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, addDoc, query, where, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
-import { Clock, Check, ChevronLeft, ChevronRight, Calendar, Heart } from 'lucide-react';
+import { Clock, Check, ChevronLeft, ChevronRight, Calendar, Heart, Info } from 'lucide-react';
 import { format, addMinutes, setHours, setMinutes, isBefore, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import Layout from '../components/Layout';
@@ -25,18 +25,15 @@ export default function ClientBooking() {
     const [submitting, setSubmitting] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [toast, setToast] = useState(null);
 
     // Verificar se está logado
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (!user) {
-                // Se não estiver logado, continua como guest, mas save o returnTo caso queira logar depois
                 sessionStorage.setItem('returnTo', `/book/${slug}`);
                 setCurrentUser(null);
-                // Não força redirect, permite booking guest (ou força no step 3 se desejado)
-                // Mas aqui queremos carregar os dados se tiver logado
             } else {
-                // Carregar dados do cliente e verificar favoritos
                 const clientDoc = await getDoc(doc(db, 'clients', user.uid));
                 if (clientDoc.exists()) {
                     const clientInfo = clientDoc.data();
@@ -46,10 +43,6 @@ export default function ClientBooking() {
                         phone: clientInfo.phone || ''
                     });
                     setCurrentUser(user);
-
-                    // Check favorites - PRECISA ESPERAR O PRO SER CARREGADO
-                    // Mas como pro depende do fetch, fazemos check no outro useEffect ou aqui se pro ja existir
-                    // Melhor: useEffect separado para favorites quando pro e user mudarem
                 }
             }
         });
@@ -62,7 +55,7 @@ export default function ClientBooking() {
         if (slug) fetchData();
     }, [slug]);
 
-    // Check favorites quando user e pro estiverem prontos
+    // Check favorites
     useEffect(() => {
         const checkFavorite = async () => {
             if (currentUser && pro) {
@@ -78,7 +71,6 @@ export default function ClientBooking() {
 
     const fetchData = async () => {
         try {
-            // Find Pro by Slug
             const q = query(collection(db, "professionals"), where("slug", "==", slug));
             const querySnapshot = await getDocs(q);
 
@@ -87,17 +79,14 @@ export default function ClientBooking() {
                 const proId = proDoc.id;
                 setPro({ id: proId, ...proDoc.data() });
 
-                // Fetch Services
                 const servicesSnap = await getDocs(collection(db, `professionals/${proId}/services`));
                 setServices(servicesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
 
-                // Fetch Schedule
                 const scheduleSnap = await getDoc(doc(db, `professionals/${proId}/settings`, 'schedule'));
                 if (scheduleSnap.exists()) {
                     setSchedule(scheduleSnap.data());
                 }
 
-                // Fetch Bookings (next 30 days)
                 const bookingsSnap = await getDocs(collection(db, `professionals/${proId}/bookings`));
                 setBookings(bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
             }
@@ -108,8 +97,8 @@ export default function ClientBooking() {
         }
     };
 
-    // Generate available time slots for selected date
-    const generateSlots = () => {
+    const slots = generateSlots();
+    function generateSlots() {
         if (!schedule || !selectedService) return [];
 
         const dayKey = DAY_MAP[selectedDate.getDay()];
@@ -125,7 +114,6 @@ export default function ClientBooking() {
         const endTime = setMinutes(setHours(selectedDate, endH), endM);
         const duration = selectedService.duration || 30;
 
-        // Check if a slot is already booked
         const isSlotBooked = (slotTime) => {
             return bookings.some(booking => {
                 const bookingDate = parseISO(booking.date);
@@ -136,7 +124,6 @@ export default function ClientBooking() {
         };
 
         while (isBefore(addMinutes(current, duration), endTime) || (isSameDay(addMinutes(current, duration), endTime) && addMinutes(current, duration).getTime() <= endTime.getTime())) {
-            // Only show future slots for today
             const now = new Date();
             if (isSameDay(selectedDate, now) && isBefore(current, now)) {
                 current = addMinutes(current, duration);
@@ -150,6 +137,11 @@ export default function ClientBooking() {
         }
 
         return slots;
+    }
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
     };
 
     const toggleFavorite = async () => {
@@ -157,17 +149,20 @@ export default function ClientBooking() {
 
         try {
             const clientRef = doc(db, 'clients', currentUser.uid);
+            const proName = pro.businessName || pro.name;
 
             if (isFavorite) {
                 await updateDoc(clientRef, {
                     favorites: arrayRemove(pro.id)
                 });
                 setIsFavorite(false);
+                showToast(`${proName} removido dos favoritos.`, 'info');
             } else {
                 await updateDoc(clientRef, {
                     favorites: arrayUnion(pro.id)
                 });
                 setIsFavorite(true);
+                showToast(`${proName} adicionado aos favoritos!`, 'success');
             }
         } catch (error) {
             console.error("Erro ao atualizar favoritos:", error);
@@ -178,7 +173,6 @@ export default function ClientBooking() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            // 1. Criar marcação no Firestore
             const bookingRef = await addDoc(collection(db, `professionals/${pro.id}/bookings`), {
                 serviceId: selectedService.id,
                 serviceName: selectedService.name,
@@ -192,24 +186,15 @@ export default function ClientBooking() {
                 createdAt: new Date().toISOString()
             });
 
-            // 2. Enviar email de confirmação profissional via Vercel API
             try {
-                // Formatar data para português
                 const bookingDate = new Date(selectedTime);
                 const formattedDate = format(bookingDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: pt });
                 const formattedTime = format(bookingDate, 'HH:mm');
+                const apiUrl = import.meta.env.PROD ? '/api/send-booking-email' : 'http://localhost:3001/api/send-booking-email';
 
-                // URL da API (Vercel em produção, localhost em dev)
-                const apiUrl = import.meta.env.PROD
-                    ? '/api/send-booking-email'  // Vercel
-                    : 'http://localhost:3001/api/send-booking-email';  // Local
-
-                // Chamar API
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         clientEmail: clientData.email,
                         clientName: clientData.name,
@@ -222,22 +207,13 @@ export default function ClientBooking() {
                         bookingId: bookingRef.id
                     })
                 });
-
                 const emailResult = await response.json();
-
-                // Log do resultado
-                if (emailResult.success) {
-                    console.log('✅ Email enviado com sucesso! ID:', emailResult.emailId);
-                } else {
-                    console.warn('⚠️ Erro ao enviar email:', emailResult.error);
-                }
+                if (emailResult.success) console.log('✅ Email enviado!');
+                else console.warn('⚠️ Erro ao enviar email:', emailResult.error);
             } catch (emailError) {
-                // Se o email falhar, não bloquear a marcação
                 console.error('Erro ao enviar email:', emailError);
-                // A marcação foi criada, apenas o email falhou
             }
 
-            // 3. Mostrar tela de sucesso
             setStep(4);
         } catch (e) {
             console.error(e);
@@ -247,7 +223,6 @@ export default function ClientBooking() {
         }
     };
 
-    // Get next 14 days for date picker
     const getDateOptions = () => {
         const dates = [];
         for (let i = 0; i < 14; i++) {
@@ -258,14 +233,7 @@ export default function ClientBooking() {
 
     if (loading) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--bg-primary)',
-                color: 'var(--text-primary)'
-            }}>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
                 <div className="spinner"></div>
             </div>
         );
@@ -273,24 +241,39 @@ export default function ClientBooking() {
 
     if (!pro) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--bg-primary)',
-                color: 'var(--text-primary)'
-            }}>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
                 Profissional não encontrado.
             </div>
         );
     }
 
-    const slots = generateSlots();
-
-    // MAIN CONTENT COMPONENT (To be used in both Layouts)
     const BookingContent = () => (
-        <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
+
+            {/* Toast Notification */}
+            {toast && (
+                <div className="animate-fade-in-down" style={{
+                    position: 'fixed',
+                    top: '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'var(--bg-card)',
+                    padding: '12px 24px',
+                    borderRadius: '50px',
+                    boxShadow: 'var(--shadow-lg)',
+                    zIndex: 2000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    border: '1px solid var(--border-default)',
+                    minWidth: '300px',
+                    justifyContent: 'center'
+                }}>
+                    {toast.type === 'success' ? <Check size={18} color="var(--accent-success)" /> : <Info size={18} color="var(--accent-primary)" />}
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{toast.message}</span>
+                </div>
+            )}
+
             {/* Header with pro info */}
             <div style={{ textAlign: 'center', marginBottom: '2rem' }} className="animate-fade-in">
                 <div style={{
