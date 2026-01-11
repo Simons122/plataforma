@@ -302,157 +302,150 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
     const isCancelled = booking.status === 'cancelled';
 
     return (
-        <div
-            className="booking-card"
-            style={{
-                background: 'var(--bg-card)',
-                borderRadius: '20px',
-                padding: '1.5rem',
-                border: '1px solid var(--border-default)',
-                position: 'relative',
-                overflow: 'hidden',
+        <div className="booking-ticket" style={{
+            display: 'flex',
+            background: 'var(--bg-card)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-default)',
+            overflow: 'hidden',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            minHeight: '100px',
+            position: 'relative'
+        }}>
+            {/* Left: Date Block */}
+            <div style={{
+                width: '85px',
+                background: isCancelled ? 'var(--bg-secondary)' : 'color-mix(in srgb, var(--accent-primary), transparent 95%)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1.25rem'
-            }}
-        >
-            {/* Status Indicator Bar */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                bottom: 0,
-                width: '4px',
-                background: isCancelled ? 'var(--accent-danger)' : (isPast ? 'var(--text-muted)' : 'var(--accent-success)')
-            }} />
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRight: '1px solid var(--border-subtle)',
+                padding: '0.5rem',
+                flexShrink: 0
+            }}>
+                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 700, color: isCancelled ? 'var(--text-muted)' : 'var(--accent-primary)', marginBottom: '-2px' }}>
+                    {format(bookingDate, 'MMM', { locale: pt }).replace('.', '')}
+                </span>
+                <span style={{ fontSize: '1.75rem', fontWeight: 800, color: isCancelled ? 'var(--text-muted)' : 'var(--text-primary)', lineHeight: 1 }}>
+                    {format(bookingDate, 'd')}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>
+                    {format(bookingDate, 'EEE', { locale: pt })}
+                </span>
+            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingLeft: '0.5rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    {/* Avatar / Logo */}
-                    <div style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '16px',
-                        background: booking.logoUrl ? 'transparent' : 'linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated))',
-                        border: '1px solid var(--border-default)',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                    }}>
-                        {booking.logoUrl ? (
-                            <img src={booking.logoUrl} alt={booking.businessName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                                {(booking.businessName || booking.professionalName || '?').charAt(0).toUpperCase()}
-                            </span>
-                        )}
-                    </div>
-
-                    <div>
-                        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-                            {booking.businessName || booking.professionalName}
-                        </h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                            {booking.profession && <span style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>{booking.profession}</span>}
-                            <span>{booking.serviceName}</span>
-                        </p>
-                    </div>
+            {/* Center: Info */}
+            <div style={{ flex: 1, padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px', minWidth: 0 }}>
+                {/* Header Row: Business & Status (Mobile) */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {booking.businessName || booking.professionalName}
+                    </span>
+                    {/* Status Mobile only if needed, otherwise rely on desktop right col */}
                 </div>
 
+                {/* Service Name */}
+                <h3 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 700,
+                    color: isCancelled ? 'var(--text-muted)' : 'var(--text-primary)',
+                    margin: 0,
+                    lineHeight: 1.3
+                }}>
+                    {booking.serviceName}
+                </h3>
+
+                {/* Meta Row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Clock size={14} className={isUpcoming ? "text-accent" : ""} />
+                        <span style={{ color: isUpcoming ? 'var(--text-primary)' : 'inherit' }}>{format(bookingDate, 'HH:mm')}</span>
+                    </div>
+
+                    <div style={{ width: '1px', height: '12px', background: 'var(--border-default)' }}></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>{booking.duration || 30} min</span>
+                    </div>
+
+                    <div style={{ width: '1px', height: '12px', background: 'var(--border-default)' }}></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>{booking.price}€</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right: Actions / Status (Desktop) */}
+            <div style={{
+                padding: '1rem',
+                borderLeft: '1px dashed var(--border-default)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                minWidth: '100px',
+                background: 'var(--bg-secondary-alpha)'
+            }}>
                 {isCancelled ? (
-                    <span style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--accent-danger)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <AlertCircle size={14} /> Cancelada
-                    </span>
+                    <span className="badge-pill" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--accent-danger)', fontSize: '0.7rem' }}>Cancelada</span>
+                ) : isPast ? (
+                    <span className="badge-pill" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Concluída</span>
                 ) : (
-                    <span style={{
-                        padding: '6px 12px',
-                        background: isPast ? 'var(--bg-secondary)' : 'rgba(34, 197, 94, 0.1)',
-                        color: isPast ? 'var(--text-muted)' : 'var(--accent-success)',
-                        borderRadius: '20px',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}>
-                        {isPast ? 'Concluída' : <><CheckCircle2 size={14} /> Confirmada</>}
-                    </span>
+                    <span className="badge-pill" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--accent-success)', fontSize: '0.7rem' }}>Confirmada</span>
                 )}
-            </div>
 
-            <div style={{ height: '1px', background: 'var(--border-default)', margin: '0 0.5rem' }} />
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', paddingLeft: '0.5rem' }}>
-                <InfoItem
-                    icon={Calendar}
-                    label="Data"
-                    value={format(bookingDate, "EEEE, d MMM", { locale: pt })}
-                    highlight={isUpcoming}
-                />
-                <InfoItem
-                    icon={Clock}
-                    label="Horário"
-                    value={format(bookingDate, 'HH:mm')}
-                    highlight={isUpcoming}
-                />
-                <InfoItem
-                    icon={Euro}
-                    label="Preço"
-                    value={`${booking.price}€`}
-                />
-                <InfoItem
-                    icon={Clock}
-                    label="Duração"
-                    value={`${booking.duration || 30} min`}
-                    subtle
-                />
-            </div>
-
-            {isUpcoming && onCancel && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem', paddingLeft: '0.5rem' }}>
+                {isUpcoming && onCancel && (
                     <button
                         onClick={() => onCancel(booking)}
                         disabled={cancelling}
-                        className="cancel-btn"
+                        className="btn-icon-danger"
+                        title="Cancelar Marcação"
                         style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-default)',
+                            borderRadius: '8px',
+                            width: '32px',
+                            height: '32px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.625rem 1.25rem',
-                            background: 'transparent',
-                            borderRadius: '10px',
-                            color: 'var(--accent-danger)',
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
+                            justifyContent: 'center',
                             cursor: cancelling ? 'wait' : 'pointer',
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            color: 'var(--text-muted)',
                             transition: 'all 0.2s'
                         }}
                     >
-                        <X size={16} />
-                        {cancelling ? 'A cancelar...' : 'Cancelar Reserva'}
+                        {cancelling ? <div className="spinner-sm" /> : <X size={16} />}
                     </button>
-                </div>
-            )}
-        </div>
-    );
-}
+                )}
+            </div>
 
-function InfoItem({ icon: Icon, label, value, highlight, subtle }) {
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                <Icon size={12} /> {label}
-            </span>
-            <span style={{
-                fontSize: '1rem',
-                fontWeight: 600,
-                color: highlight ? 'var(--accent-primary)' : (subtle ? 'var(--text-secondary)' : 'var(--text-primary)')
-            }}>
-                {value}
-            </span>
+            <style>{`
+                .booking-ticket:hover {
+                    box-shadow: var(--shadow-md);
+                    transform: translateY(-2px);
+                    border-color: var(--accent-primary-dim);
+                }
+                .text-accent { color: var(--accent-primary); }
+                .badge-pill {
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+                .btn-icon-danger:hover {
+                    background: rgba(239, 68, 68, 0.1) !important;
+                    color: var(--accent-danger) !important;
+                    border-color: var(--accent-danger) !important;
+                }
+                .spinner-sm {
+                   width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;
+                }
+            `}</style>
         </div>
     );
 }
