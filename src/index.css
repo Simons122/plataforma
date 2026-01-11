@@ -1177,3 +1177,96 @@ select.input {
   background: var(--bg-card);
   color: var(--text-primary);
 }
+/* ============================================
+   COMPONENT: MODAL
+   ============================================ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 450px;
+  border-radius: 16px;
+  border: 1px solid var(--border-default);
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-lg);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ============================================
+   COMPONENT: AGENDA
+   ============================================ */
+.agenda-cell-month {
+    min-height: 80px;
+    padding: 0.375rem;
+    border-bottom: 1px solid var(--border-default);
+    border-right: 1px solid var(--border-default);
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.agenda-cell-month:hover {
+    background-color: var(--bg-elevated) !important;
+}
+
+.agenda-cell-month-inactive {
+    opacity: 0.5;
+    background: var(--bg-primary);
+}
+
+.agenda-btn-today {
+    padding: 0.375rem 0.875rem;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.agenda-btn-today:hover {
+    background: var(--accent-primary-hover);
+    transform: translateY(-1px);
+}
+
+.agenda-view-btn {
+    padding: 0.375rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.agenda-view-btn.active {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+.agenda-view-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+}
+

@@ -478,18 +478,11 @@ export default function AgendaPage() {
                                         <div
                                             key={i}
                                             onClick={() => { setSelectedDate(day); setViewMode('day'); }}
+                                            className={`agenda-cell-month ${!inCurrentMonth ? 'agenda-cell-month-inactive' : ''}`}
                                             style={{
-                                                minHeight: '80px',
-                                                padding: '0.375rem',
-                                                borderBottom: '1px solid var(--border-default)',
-                                                borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--border-default)' : 'none',
-                                                background: isToday(day) ? 'color-mix(in srgb, var(--accent-primary), transparent 95%)' : (!inCurrentMonth ? 'var(--bg-primary)' : 'transparent'),
-                                                cursor: 'pointer',
-                                                opacity: inCurrentMonth ? 1 : 0.5,
-                                                transition: 'background 0.2s ease'
+                                                background: isToday(day) ? 'color-mix(in srgb, var(--accent-primary), transparent 95%)' : undefined,
+                                                opacity: inCurrentMonth ? 1 : 0.5
                                             }}
-                                            onMouseOver={(e) => inCurrentMonth && (e.currentTarget.style.background = 'var(--bg-elevated)')}
-                                            onMouseOut={(e) => e.currentTarget.style.background = isToday(day) ? 'rgba(99,102,241,0.05)' : (!inCurrentMonth ? 'rgba(0,0,0,0.02)' : 'transparent')}
                                         >
                                             <div style={{
                                                 fontSize: '0.75rem',

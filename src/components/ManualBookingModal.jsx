@@ -84,39 +84,8 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
     if (!isOpen) return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-            background: 'rgba(0, 0, 0, 0.8)',
-            backdropFilter: 'blur(4px)',
-            animation: 'fadeIn 0.2s ease-out'
-        }}>
-            <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideUp {
-                    from { transform: translateY(20px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-            `}</style>
-
-            <div style={{
-                background: 'var(--bg-card)',
-                width: '100%',
-                maxWidth: '450px',
-                borderRadius: '16px',
-                border: '1px solid var(--border-default)',
-                overflow: 'hidden',
-                animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: 'var(--shadow-lg)'
-            }}>
+        <div className="modal-backdrop">
+            <div className="modal-content">
                 {/* Header */}
                 <div style={{
                     padding: '1.25rem',
