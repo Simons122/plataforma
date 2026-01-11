@@ -387,14 +387,14 @@ export default function ManageStaff() {
                     bottom: 0,
                     background: 'rgba(0, 0, 0, 0.7)',
                     display: 'flex',
-                    alignItems: 'flex-end',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 1000,
                     padding: '1rem'
                 }} onClick={() => setShowAddModal(false)}>
                     <div style={{
                         background: 'var(--bg-card)',
-                        borderRadius: '20px 20px 0 0',
+                        borderRadius: '20px',
                         padding: '2rem',
                         maxWidth: '500px',
                         width: '100%',
