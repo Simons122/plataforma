@@ -35,64 +35,79 @@ export default function ClientBookings() {
     }, [navigate]);
 
     const loadBookings = async (email) => {
-        console.log('🔍 Loading bookings for:', email);
-        if (!email) {
-            console.error('❌ No email provided to loadBookings');
-            return;
-        }
+        console.log("🔄 Starting Robust Search for:", email);
+        if (!email) return;
 
         try {
-            console.log('📡 Querying collectionGroup(bookings) where clientEmail ==', email);
-            const q = query(collectionGroup(db, 'bookings'), where('clientEmail', '==', email));
-            const querySnapshot = await getDocs(q);
+            const allBookings = [];
 
-            console.log(`✅ Found ${querySnapshot.size} booking documents.`);
+            // 1. Get All Professionals (Owners)
+            const prosSnap = await getDocs(collection(db, 'professionals'));
 
-            const bookingsData = [];
-            const professionalCache = {};
+            // Parallelize fetching for each professional
+            await Promise.all(prosSnap.docs.map(async (ownerDoc) => {
+                const ownerData = ownerDoc.data();
+                const ownerId = ownerDoc.id;
 
-            for (const docSnapshot of querySnapshot.docs) {
-                const booking = { id: docSnapshot.id, ...docSnapshot.data() };
-                console.log(`📄 Processing doc: ${docSnapshot.id} at ${docSnapshot.ref.path}`);
+                // A. Search Owner Bookings
+                const ownerBookingsPromise = getDocs(query(
+                    collection(db, 'professionals', ownerId, 'bookings'),
+                    where('clientEmail', '==', email)
+                ));
 
-                const pathSegments = docSnapshot.ref.path.split('/');
-                const ownerId = pathSegments[1];
+                // B. Get Staff List to search their bookings
+                const staffSnapPromise = getDocs(collection(db, 'professionals', ownerId, 'staff'));
 
-                let professionalData = professionalCache[ownerId];
-                if (!professionalData) {
-                    console.log(`👤 Fetching owner details: ${ownerId}`);
-                    const profDoc = await getDoc(doc(db, 'professionals', ownerId));
-                    if (profDoc.exists()) {
-                        professionalData = {
-                            professionalId: profDoc.id,
-                            businessName: profDoc.data().businessName,
-                            professionalName: profDoc.data().name,
-                            logoUrl: profDoc.data().logoUrl,
-                            profession: profDoc.data().profession
-                        };
-                        professionalCache[ownerId] = professionalData;
-                    } else {
-                        console.error(`❌ Owner not found: ${ownerId}`);
-                    }
-                }
+                const [ownerBookingsSnap, staffSnap] = await Promise.all([ownerBookingsPromise, staffSnapPromise]);
 
-                if (professionalData) {
-                    bookingsData.push({
-                        ...booking,
-                        ...professionalData,
-                        docPath: docSnapshot.ref.path
+                // Process Owner Bookings
+                ownerBookingsSnap.forEach(bookingDoc => {
+                    allBookings.push({
+                        id: bookingDoc.id,
+                        ...bookingDoc.data(),
+                        professionalId: ownerId,
+                        businessName: ownerData.businessName,
+                        professionalName: ownerData.name,
+                        logoUrl: ownerData.logoUrl,
+                        profession: ownerData.profession,
+                        docPath: bookingDoc.ref.path,
+                        isStaff: false
                     });
-                }
-            }
+                });
 
-            console.log(`🏁 Final processed bookings: ${bookingsData.length}`);
-            bookingsData.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
-            setBookings(bookingsData);
+                // C. Search Staff Bookings (if staff exists)
+                if (!staffSnap.empty) {
+                    await Promise.all(staffSnap.docs.map(async (staffDoc) => {
+                        const staffBookingsSnap = await getDocs(query(
+                            collection(db, 'professionals', ownerId, 'staff', staffDoc.id, 'bookings'),
+                            where('clientEmail', '==', email)
+                        ));
+
+                        staffBookingsSnap.forEach(bookingDoc => {
+                            allBookings.push({
+                                id: bookingDoc.id,
+                                ...bookingDoc.data(),
+                                professionalId: ownerId,
+                                businessName: ownerData.businessName,
+                                professionalName: ownerData.name,
+                                logoUrl: ownerData.logoUrl,
+                                profession: ownerData.profession,
+                                docPath: bookingDoc.ref.path,
+                                isStaff: true,
+                                staffId: staffDoc.id,
+                                staffName: staffDoc.data().name // Useful for display
+                            });
+                        });
+                    }));
+                }
+            }));
+
+            console.log(`✅ Loaded ${allBookings.length} bookings successfully.`);
+            allBookings.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
+            setBookings(allBookings);
         } catch (error) {
-            console.error('❌ Error in loadBookings:', error);
-            if (error.code === 'failed-precondition') {
-                console.error('💡 MISSING INDEX! Please check Firebase Console link in error message.');
-            }
+            console.error("Error loading bookings:", error);
+            alert("Erro ao carregar marcações. Por favor verifique a sua ligação.");
         }
     };
 
