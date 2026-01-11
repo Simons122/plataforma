@@ -137,7 +137,7 @@ export default function Layout({ children, role = 'professional', restricted = f
         { icon: Shield, label: 'Configurações', path: '/admin/settings' }
     ];
 
-    let proLinks = [
+    const proLinks = [
         { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
         { icon: CalendarDays, label: 'Agenda', path: '/dashboard/agenda' },
         { icon: Sparkles, label: 'Serviços', path: '/dashboard/services' },
@@ -146,12 +146,11 @@ export default function Layout({ children, role = 'professional', restricted = f
         { icon: User, label: 'Perfil', path: '/dashboard/profile' }
     ];
 
-    // Filter links for Staff
-    if (fetchedProfile?.isStaff) {
-        proLinks = proLinks.filter(link =>
-            ['/dashboard', '/dashboard/agenda', '/dashboard/profile'].includes(link.path)
-        );
-    }
+    const staffLinks = [
+        { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
+        { icon: CalendarDays, label: 'Agenda', path: '/dashboard/agenda' },
+        { icon: User, label: 'Perfil', path: '/dashboard/profile' }
+    ];
 
     const clientLinks = [
         { icon: Search, label: 'Explorar', path: '/client/explore' },
@@ -159,7 +158,12 @@ export default function Layout({ children, role = 'professional', restricted = f
         { icon: Heart, label: 'Meus Favoritos', path: '/client/favorites' }
     ];
 
-    const links = role === 'admin' ? adminLinks : (role === 'client' ? clientLinks : proLinks);
+    let links = [];
+    if (role === 'admin') links = adminLinks;
+    else if (role === 'client') links = clientLinks;
+    else if (role === 'professional') {
+        links = fetchedProfile?.isStaff ? staffLinks : proLinks;
+    }
 
     // Mobile Sidebar
     const MobileSidebar = () => (
@@ -302,7 +306,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 <div key={i} style={{ height: '48px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
                             ))}
                         </div>
-                    ) : (fetchedProfile && !restricted) && (
+                    ) : !restricted && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {links.map(link => (
                                 <NavItem
@@ -455,7 +459,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 <div key={i} style={{ height: '40px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
                             ))}
                         </div>
-                    ) : (fetchedProfile && !restricted) && (
+                    ) : !restricted && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                             {links.map(link => (
                                 <NavItem
