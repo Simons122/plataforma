@@ -282,7 +282,8 @@ export default function Layout({ children, role = 'professional', restricted = f
             }} className="hidden md:flex">
                 {/* Logo */}
                 <div style={{
-                    height: '220px',
+                    height: 'auto',
+                    minHeight: '180px',
                     padding: '1.5rem 1.25rem',
                     borderBottom: '1px solid var(--border-default)',
                     display: 'flex',
