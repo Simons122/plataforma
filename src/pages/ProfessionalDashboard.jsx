@@ -577,9 +577,8 @@ function StatCard({ icon: Icon, label, value, color, trend }) {
                 background: 'var(--bg-card)',
                 borderRadius: '16px',
                 border: '1px solid var(--border-default)',
-                boxShadow: hovered ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                boxShadow: 'var(--shadow-sm)',
                 transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.75rem',
@@ -659,7 +658,6 @@ function ActionCard({ icon: Icon, title, onClick, highlight = false }) {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 boxShadow: highlight ? 'var(--shadow-glow)' : 'var(--shadow-sm)',
-                transform: hovered ? 'translateY(-2px)' : 'translateY(0)'
             }}
         >
             <div style={{
