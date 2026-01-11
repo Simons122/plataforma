@@ -1,4 +1,6 @@
 import { useUser } from '../context/UserContext';
+import Layout from '../components/Layout';
+import ScheduleManager from '../components/ScheduleManager';
 
 export default function SchedulePage() {
     const { profile, loading } = useUser();
