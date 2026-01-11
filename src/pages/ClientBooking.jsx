@@ -103,7 +103,10 @@ export default function ClientBooking() {
                 navigate('/client/explore');
             }
         } catch (e) {
-            console.error(e);
+            console.error("Erro detalhado no fetchData:", e);
+            if (e.code === 'permission-denied') {
+                console.warn("⚠️ Permissão negada! Possível bloqueio de leitura em 'bookings' ou 'clients'. Verifique as regras de segurança do Firestore.");
+            }
         } finally {
             setLoading(false);
         }

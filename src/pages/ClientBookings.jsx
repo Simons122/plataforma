@@ -12,6 +12,7 @@ export default function ClientBookings() {
     const [bookings, setBookings] = useState([]);
     const [user, setUser] = useState(null);
     const [cancelling, setCancelling] = useState(null);
+    const [activeTab, setActiveTab] = useState('upcoming');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -102,7 +103,7 @@ export default function ClientBookings() {
         );
     }
 
-    const [activeTab, setActiveTab] = useState('upcoming');
+
 
     // Helper para data (compatibilidade com antigos)
     const getBookingDate = (b) => new Date(b.date || b.selectedTime);
