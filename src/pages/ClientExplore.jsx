@@ -152,42 +152,72 @@ export default function ClientExplore() {
 
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                     gap: '1.5rem'
                 }}>
                     {filteredPros.map(pro => (
-                        <div key={pro.id} style={{
+                        <div key={pro.id} className="pro-card" style={{
                             background: 'var(--bg-card)',
-                            borderRadius: '20px',
+                            borderRadius: '24px',
                             overflow: 'hidden',
                             border: '1px solid var(--border-default)',
-                            transition: 'all 0.2s',
+                            display: 'flex',
+                            flexDirection: 'column',
                             position: 'relative'
-                        }}
-                            className="hover-card"
-                        >
+                        }}>
                             {/* Header Image / Pattern */}
                             <div style={{
-                                height: '100px',
-                                background: pro.logoUrl ? `url(${pro.logoUrl}) center/cover blur(20px)` : 'linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated))',
+                                height: '120px',
+                                background: pro.logoUrl
+                                    ? `linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--bg-card) 100%), url(${pro.logoUrl}) center/cover`
+                                    : 'linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated))',
                                 position: 'relative',
-                                opacity: 0.8
-                            }}></div>
+                            }}>
+                                {/* Favorite Button - Top Right */}
+                                {user && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            toggleFavorite(pro.id);
+                                        }}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '12px',
+                                            right: '12px',
+                                            background: 'rgba(0,0,0,0.3)',
+                                            backdropFilter: 'blur(4px)',
+                                            border: 'none',
+                                            borderRadius: '50%',
+                                            width: '36px',
+                                            height: '36px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            color: favorites.includes(pro.id) ? 'var(--accent-danger)' : 'white',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title={favorites.includes(pro.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                    >
+                                        <Heart size={18} fill={favorites.includes(pro.id) ? "currentColor" : "none"} />
+                                    </button>
+                                )}
+                            </div>
 
-                            <div style={{ padding: '0 1.5rem 1.5rem', marginTop: '-40px', position: 'relative' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
-                                    {/* Logo */}
+                            <div style={{ padding: '0 1.5rem 1.5rem', marginTop: '-50px', position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                {/* Logo Wrapper */}
+                                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                     <div style={{
-                                        width: '80px',
-                                        height: '80px',
-                                        borderRadius: '50%',
+                                        width: '88px',
+                                        height: '88px',
+                                        borderRadius: '20px',
                                         border: '4px solid var(--bg-card)',
                                         background: 'var(--bg-card)',
                                         overflow: 'hidden',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        boxShadow: 'var(--shadow-sm)'
+                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                                     }}>
                                         {pro.logoUrl ? (
                                             <img src={pro.logoUrl} alt={pro.businessName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -196,77 +226,64 @@ export default function ClientExplore() {
                                                 width: '100%', height: '100%',
                                                 background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                color: 'white', fontWeight: 700, fontSize: '1.5rem'
+                                                color: 'white', fontWeight: 700, fontSize: '2rem'
                                             }}>
                                                 {(pro.businessName || pro.name || '?').charAt(0)}
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Favorite Button */}
-                                    {user && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                toggleFavorite(pro.id);
-                                            }}
-                                            style={{
-                                                background: 'var(--bg-elevated)',
-                                                border: '1px solid var(--border-default)',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                color: favorites.includes(pro.id) ? 'var(--accent-danger)' : 'var(--text-muted)',
-                                                marginBottom: '0.5rem',
-                                                transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            <Heart size={20} fill={favorites.includes(pro.id) ? "currentColor" : "none"} />
-                                        </button>
+                                    {/* Rating or Category Badge could go here */}
+                                    <span style={{
+                                        padding: '4px 10px',
+                                        background: 'var(--bg-secondary)',
+                                        borderRadius: '20px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        color: 'var(--text-secondary)',
+                                        border: '1px solid var(--border-default)'
+                                    }}>
+                                        {pro.profession || 'Serviços'}
+                                    </span>
+                                </div>
+
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', lineHeight: 1.2 }}>
+                                        {pro.businessName || pro.name}
+                                    </h3>
+                                    {pro.address && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                                            <MapPin size={14} style={{ flexShrink: 0 }} />
+                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pro.address}</span>
+                                        </div>
                                     )}
                                 </div>
 
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-                                    {pro.businessName || pro.name}
-                                </h3>
-                                <p style={{ color: 'var(--accent-primary)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                    {pro.profession || 'Profissional'}
-                                </p>
-
-                                {pro.address && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-                                        <MapPin size={14} />
-                                        {pro.address}
-                                    </div>
-                                )}
-
-                                <Link
-                                    to={`/book/${pro.slug}`}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.5rem',
-                                        width: '100%',
-                                        padding: '0.875rem',
-                                        background: 'var(--accent-primary)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '12px',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        textDecoration: 'none',
-                                        transition: 'background 0.2s'
-                                    }}
-                                    className="hover-btn"
-                                >
-                                    Fazer Marcação
-                                    <ArrowRight size={18} />
-                                </Link>
+                                <div style={{ marginTop: 'auto' }}>
+                                    <Link
+                                        to={`/book/${pro.slug}`}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem',
+                                            width: '100%',
+                                            padding: '0.875rem',
+                                            background: 'var(--text-primary)',
+                                            color: 'var(--bg-primary)',
+                                            border: 'none',
+                                            borderRadius: '12px',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            textDecoration: 'none',
+                                            transition: 'transform 0.1s, opacity 0.2s'
+                                        }}
+                                        className="action-btn"
+                                    >
+                                        Agendar
+                                        <ArrowRight size={18} />
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -279,8 +296,10 @@ export default function ClientExplore() {
                 )}
             </div>
             <style>{`
-                .hover-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg) !important; }
-                .hover-btn:hover { background: var(--accent-primary-hover) !important; }
+                .pro-card { transition: border-color 0.2s; }
+                .pro-card:hover { border-color: var(--border-hover); }
+                .action-btn:hover { opacity: 0.9; }
+                .action-btn:active { transform: scale(0.98); }
             `}</style>
         </Layout>
     );
