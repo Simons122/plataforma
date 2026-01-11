@@ -351,6 +351,52 @@ export default function Auth() {
                         {isLogin ? "Registe-se agora" : "Inicie sessão"}
                     </button>
                 </div>
+
+                {/* Client Access Section */}
+                <div style={{
+                    marginTop: '2rem',
+                    paddingTop: '2rem',
+                    borderTop: '1px solid var(--border-default)',
+                    textAlign: 'center'
+                }}>
+                    <p style={{
+                        color: 'var(--text-muted)',
+                        fontSize: '0.875rem',
+                        marginBottom: '1rem',
+                        fontWeight: 500
+                    }}>
+                        É cliente e quer fazer uma marcação?
+                    </p>
+                    <button
+                        onClick={() => navigate('/client/explore')}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.75rem 1.5rem',
+                            fontSize: '0.9375rem',
+                            fontWeight: 600,
+                            color: 'var(--text-primary)',
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-default)',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'var(--accent-primary)';
+                            e.currentTarget.style.color = 'white';
+                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'var(--bg-secondary)';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                            e.currentTarget.style.borderColor = 'var(--border-default)';
+                        }}
+                    >
+                        🔍 Explorar Profissionais
+                    </button>
+                </div>
             </div>
         </div>
     );
