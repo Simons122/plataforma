@@ -14,6 +14,7 @@ import TestNotifications from './pages/TestNotifications';
 import ClientAuth from './pages/ClientAuth';
 import ClientBookings from './pages/ClientBookings';
 import ClientFavorites from './pages/ClientFavorites';
+import ClientExplore from './pages/ClientExplore';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -102,6 +103,7 @@ function App() {
 
           {/* Client Routes */}
           <Route path="/client/auth" element={<ClientAuth />} />
+          <Route path="/client/explore" element={<ClientExplore />} />
           <Route path="/client/bookings" element={<ClientBookings />} />
           <Route path="/client/favorites" element={<ClientFavorites />} />
 

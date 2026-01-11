@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, CalendarDays, Users, LayoutGrid, Clock, Sparkles, Menu, X, User, Sun, Moon, CalendarClock, Shield, Heart } from 'lucide-react';
+import { LogOut, CalendarDays, Users, LayoutGrid, Clock, Sparkles, Menu, X, User, Sun, Moon, CalendarClock, Shield, Heart, Search } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useTheme } from './ThemeContext';
@@ -55,6 +55,7 @@ export default function Layout({ children, role = 'professional', restricted = f
     ];
 
     const clientLinks = [
+        { icon: Search, label: 'Explorar', path: '/client/explore' },
         { icon: CalendarDays, label: 'Minhas Marcações', path: '/client/bookings' },
         { icon: Heart, label: 'Meus Favoritos', path: '/client/favorites' }
     ];

@@ -48,7 +48,14 @@ export default function ClientAuth() {
                 });
             }
 
-            navigate('/client/bookings');
+            // Verificar se deve voltar para página de marcação
+            const returnTo = sessionStorage.getItem('returnTo');
+            if (returnTo) {
+                sessionStorage.removeItem('returnTo');
+                navigate(returnTo);
+            } else {
+                navigate('/client/explore');
+            }
         } catch (err) {
             console.error(err);
             setError(err.message);
@@ -76,7 +83,14 @@ export default function ClientAuth() {
                     return;
                 }
 
-                navigate('/client/bookings');
+                // Verificar se deve voltar para página de marcação
+                const returnTo = sessionStorage.getItem('returnTo');
+                if (returnTo) {
+                    sessionStorage.removeItem('returnTo');
+                    navigate(returnTo);
+                } else {
+                    navigate('/client/explore');
+                }
             } else {
                 const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
                 const user = userCredential.user;
@@ -98,7 +112,7 @@ export default function ClientAuth() {
                     sessionStorage.removeItem('returnTo');
                     navigate(returnTo);
                 } else {
-                    navigate('/client/bookings');
+                    navigate('/client/explore');
                 }
             }
         } catch (err) {
