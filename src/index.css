@@ -1546,3 +1546,32 @@ select.input {
   filter: brightness(1.1);
   z-index: 5;
 }
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+.hidden { display: none !important; }
+
+@media (min-width: 768px) {
+  .md\:flex { display: flex !important; }
+  .md\:block { display: block !important; }
+  .md\:hidden { display: none !important; }
+}
+
+@media (max-width: 767px) {
+  /* Force sidebar hide on mobile if not active */
+  aside.hidden { display: none !important; }
+  
+  /* Global Layout Fixes */
+  .layout-content { padding: 1rem !important; }
+  
+  /* Modals */
+  .modal-overlay > div {
+     width: 95% !important;
+     max-width: 95% !important;
+     margin: 1rem auto !important;
+     max-height: 90vh;
+     overflow-y: auto;
+  }
+}
+
