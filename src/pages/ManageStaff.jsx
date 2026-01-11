@@ -251,7 +251,12 @@ export default function ManageStaff() {
             fetchStaff();
         } catch (error) {
             console.error("Erro ao salvar profissional:", error);
-            toast.error("Erro ao salvar: " + error.message);
+            if (error.code === 'auth/email-already-in-use') {
+                toast.error("Este email já está registado no sistema.");
+                alert("Erro: Este email já existe no Firebase Authentication.\n\nSe apagou este utilizador recentemente e o erro persiste, é porque a limpeza automática falhou. Terá de contactar o suporte ou usar outro email.");
+            } else {
+                toast.error("Erro ao salvar: " + error.message);
+            }
         } finally {
             setUploadingPhoto(false);
         }
@@ -269,8 +274,11 @@ export default function ManageStaff() {
                 try {
                     const deleteAccount = httpsCallable(functions, 'deleteStaffAccount');
                     await deleteAccount({ staffAuthId: staffMember.authUserId });
+                    toast.success("Conta de acesso removida.");
                 } catch (funcError) {
-                    console.error("Erro na Cloud Function (ignorado, apagar local):", funcError);
+                    console.error("Erro na Cloud Function:", funcError);
+                    toast.warning("Atenção: O login não foi apagado (Erro no Servidor).");
+                    alert("Aviso Técnico: A 'Cloud Function' de limpeza falhou ou não existe.\n\nO registo visual será apagado, mas o EMAIL deste funcionário continuará registado no sistema de Login.\n\nPara reutilizar este email, terá de o apagar manualmente na consola do Firebase Authentication.");
                     // Não parar, tentar apagar localmente mesmo assim
                 }
             }
