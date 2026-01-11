@@ -259,7 +259,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 <div key={i} style={{ height: '48px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
                             ))}
                         </div>
-                    ) : !restricted && (
+                    ) : (fetchedProfile && !restricted) && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {links.map(link => (
                                 <NavItem
@@ -412,7 +412,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 <div key={i} style={{ height: '40px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
                             ))}
                         </div>
-                    ) : !restricted && (
+                    ) : (fetchedProfile && !restricted) && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                             {links.map(link => (
                                 <NavItem
