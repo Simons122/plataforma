@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { db, auth, firebaseConfig } from '../lib/firebase';
+import { db, auth, firebaseConfig, functions } from '../lib/firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { httpsCallable } from 'firebase/functions';
 import Layout from '../components/Layout';
+import { useToast } from '../components/Toast';
 import { UserPlus, Trash2, Clock, Edit2, Save, X, Users, Upload, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -42,43 +44,6 @@ const Toggle = ({ checked, onChange }) => (
     </button>
 );
 
-const Toast = ({ message, type, onClose }) => {
-    useEffect(() => {
-        const timer = setTimeout(onClose, 3000);
-        return () => clearTimeout(timer);
-    }, [onClose]);
-
-    return (
-        <div style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            background: type === 'error' ? 'var(--accent-error)' : 'var(--accent-success)',
-            color: 'white',
-            padding: '12px 24px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            zIndex: 10000,
-            animation: 'slideIn 0.3s ease-out',
-            fontWeight: 500,
-            minWidth: '300px'
-        }}>
-            {type === 'error' ? <X size={20} /> : <Check size={20} />}
-            {message}
-        </div>
-    );
-};
-
-const styles = `
-@keyframes slideIn {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-`;
-
 export default function ManageStaff() {
     const [loading, setLoading] = useState(true);
     const [staff, setStaff] = useState([]);
@@ -91,7 +56,7 @@ export default function ManageStaff() {
     const [staffSchedule, setStaffSchedule] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [toast, setToast] = useState(null);
+    const toast = useToast();
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -279,29 +244,45 @@ export default function ManageStaff() {
             setIsEditing(false);
             setEditingId(null);
             setShowAddModal(false);
-            setToast({ message: isEditing ? "Profissional atualizado com sucesso!" : "Profissional adicionado com sucesso!", type: "success" });
+
+            if (isEditing) toast.success("Profissional atualizado com sucesso!");
+            else toast.success("Profissional adicionado com sucesso!");
+
             fetchStaff();
         } catch (error) {
             console.error("Erro ao salvar profissional:", error);
-            setToast({ message: "Erro ao salvar: " + error.message, type: "error" });
+            toast.error("Erro ao salvar: " + error.message);
         } finally {
             setUploadingPhoto(false);
         }
     };
 
-    const handleDeleteStaff = async (staffId) => {
-        if (!confirm("Tem certeza que deseja remover este profissional?")) return;
+    const handleDeleteStaff = async (staffMember) => {
+        if (!confirm("Tem certeza que deseja remover este profissional? Esta ação é irreversível.")) return;
 
         try {
             const user = auth.currentUser;
             if (!user) return;
 
-            await deleteDoc(doc(db, `professionals/${user.uid}/staff`, staffId));
-            setToast({ message: "Profissional removido com sucesso!", type: "success" });
+            // 1. Apagar conta Auth e Lookup (Cloud Function)
+            if (staffMember.authUserId) {
+                try {
+                    const deleteAccount = httpsCallable(functions, 'deleteStaffAccount');
+                    await deleteAccount({ staffAuthId: staffMember.authUserId });
+                } catch (funcError) {
+                    console.error("Erro na Cloud Function (ignorado, apagar local):", funcError);
+                    // Não parar, tentar apagar localmente mesmo assim
+                }
+            }
+
+            // 2. Apagar Documento do Profissional
+            await deleteDoc(doc(db, `professionals/${user.uid}/staff`, staffMember.id));
+
+            toast.success("Profissional removido com sucesso!");
             fetchStaff();
         } catch (error) {
             console.error("Erro ao remover profissional:", error);
-            setToast({ message: "Erro ao remover profissional!", type: "error" });
+            toast.error("Erro ao remover profissional.");
         }
     };
 
@@ -343,11 +324,11 @@ export default function ManageStaff() {
 
             setEditingSchedule(null);
             setStaffSchedule(null);
-            setToast({ message: "Horários atualizados!", type: "success" });
+            toast.success("Horários atualizados!");
             fetchStaff();
         } catch (error) {
             console.error("Erro ao salvar horário:", error);
-            setToast({ message: "Erro ao salvar horário!", type: "error" });
+            toast.error("Erro ao salvar horário!");
         }
     };
 
@@ -370,8 +351,6 @@ export default function ManageStaff() {
 
     return (
         <Layout role="professional">
-            <style>{styles}</style>
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <div style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div>
@@ -496,7 +475,7 @@ export default function ManageStaff() {
                                 <Edit2 size={16} />
                             </button>
                             <button
-                                onClick={() => handleDeleteStaff(member.id)}
+                                onClick={() => handleDeleteStaff(member)}
                                 style={{
                                     padding: '0.625rem',
                                     background: 'rgba(239, 68, 68, 0.1)',

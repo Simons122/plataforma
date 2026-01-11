@@ -4,6 +4,61 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 /**
+ * Cloud Function para apagar conta de Staff (Auth + Lookup)
+ * Garante que o email é libertado para ser usado novamente.
+ */
+exports.deleteStaffAccount = functions.https.onCall(async (data, context) => {
+    // Verificar autenticação
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Necessário autenticação.');
+    }
+
+    const { staffAuthId } = data;
+    if (!staffAuthId) {
+        throw new functions.https.HttpsError('invalid-argument', 'ID de conta necessário.');
+    }
+
+    const db = admin.firestore();
+    const lookupRef = db.collection('staff_lookup').doc(staffAuthId);
+
+    try {
+        // Verificar permissão (Owner)
+        const lookupSnap = await lookupRef.get();
+        if (lookupSnap.exists) {
+            const { ownerId } = lookupSnap.data();
+            // Apenas o Owner que criou pode apagar (ou Admins globais se implementado)
+            if (ownerId !== context.auth.uid) {
+                // Pequena salvaguarda: check se é admin
+                const adminRef = db.collection('admins').doc(context.auth.uid);
+                const adminSnap = await adminRef.get();
+                if (!adminSnap.exists) {
+                    throw new functions.https.HttpsError('permission-denied', 'Apenas o proprietário pode apagar esta conta.');
+                }
+            }
+            // Apagar lookup doc
+            await lookupRef.delete();
+        }
+
+        // Apagar utilizador do Firebase Authentication
+        await admin.auth().deleteUser(staffAuthId);
+
+        return { success: true, message: 'Conta apagada com sucesso.' };
+
+    } catch (error) {
+        console.error('Erro ao apagar staff:', error);
+
+        // Se utilizador não encontrado no Auth, considerar sucesso (já estava apagado)
+        if (error.code === 'auth/user-not-found') {
+            // Ainda tentar apagar o lookup se existir
+            await lookupRef.delete(); // Ignore error
+            return { success: true, message: 'Conta já não existia, registos limpos.' };
+        }
+
+        throw new functions.https.HttpsError('internal', 'Erro ao apagar conta de sistema: ' + error.message);
+    }
+});
+
+/**
  * Cloud Function para enviar emails via Resend
  * Endpoint: https://YOUR-PROJECT.cloudfunctions.net/sendBookingEmail
  */
@@ -143,24 +198,3 @@ exports.sendBookingEmail = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', 'Erro ao processar envio de email');
     }
 });
-
-/**
- * Exemplo de como chamar do frontend:
- * 
- * import { getFunctions, httpsCallable } from 'firebase/functions';
- * 
- * const functions = getFunctions();
- * const sendBookingEmail = httpsCallable(functions, 'sendBookingEmail');
- * 
- * const result = await sendBookingEmail({
- *     clientEmail: 'cliente@example.com',
- *     clientName: 'João Silva',
- *     professionalName: 'Maria Santos',
- *     businessName: 'Salão da Maria',
- *     serviceName: 'Corte de Cabelo',
- *     bookingDate: 'sexta-feira, 15 de janeiro de 2026',
- *     bookingTime: '14:30',
- *     price: 25,
- *     bookingId: 'abc123xyz'
- * });
- */
