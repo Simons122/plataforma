@@ -23,9 +23,44 @@ export default function AgendaPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    const fetchBookings = async (userId) => {
-        const bookingsSnap = await getDocs(collection(db, `professionals/${userId}/bookings`));
-        setBookings(bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const fetchBookings = async (userId, userProfile) => {
+        try {
+            const allBookings = [];
+
+            // 1. Fetch Owner Bookings
+            const ownerBookingsSnap = await getDocs(collection(db, `professionals/${userId}/bookings`));
+            ownerBookingsSnap.docs.forEach(d => {
+                allBookings.push({
+                    id: d.id,
+                    ...d.data(),
+                    responsibleName: userProfile.name.split(' ')[0],
+                    isStaff: false
+                });
+            });
+
+            // 2. Fetch Staff Bookings
+            const staffSnap = await getDocs(collection(db, `professionals/${userId}/staff`));
+
+            // Use Promise.all for parallel fetching
+            const staffPromises = staffSnap.docs.map(async (staffDoc) => {
+                const staffData = staffDoc.data();
+                const bookingsSnap = await getDocs(collection(db, `professionals/${userId}/staff/${staffDoc.id}/bookings`));
+                return bookingsSnap.docs.map(d => ({
+                    id: d.id,
+                    ...d.data(),
+                    responsibleName: staffData.name.split(' ')[0],
+                    isStaff: true,
+                    staffId: staffDoc.id
+                }));
+            });
+
+            const staffBookingsMatrix = await Promise.all(staffPromises);
+            staffBookingsMatrix.forEach(bookings => allBookings.push(...bookings));
+
+            setBookings(allBookings);
+        } catch (error) {
+            console.error("Error fetching bookings:", error);
+        }
     };
 
     useEffect(() => {
@@ -34,8 +69,9 @@ export default function AgendaPage() {
                 const docRef = doc(db, "professionals", user.uid);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    setProfile({ id: user.uid, ...docSnap.data() });
-                    await fetchBookings(user.uid);
+                    const profileData = { id: user.uid, ...docSnap.data() };
+                    setProfile(profileData);
+                    await fetchBookings(user.uid, profileData);
 
                     const scheduleSnap = await getDoc(doc(db, `professionals/${user.uid}/settings`, 'schedule'));
                     if (scheduleSnap.exists()) setSchedule(scheduleSnap.data());
@@ -46,7 +82,10 @@ export default function AgendaPage() {
         return () => unsubscribe();
     }, [refreshTrigger]);
 
-    const refetchBookings = () => setRefreshTrigger(prev => prev + 1);
+    const refetchBookings = () => {
+        if (profile) fetchBookings(profile.id, profile);
+        setRefreshTrigger(prev => prev + 1);
+    };
 
     // Navigation
     const navigate = (direction) => {
@@ -253,16 +292,24 @@ export default function AgendaPage() {
                                     <div style={{ flex: 1, position: 'relative', padding: '2px' }}>
                                         {hourBookings.map(b => (
                                             <div key={b.id} style={{
-                                                background: 'color-mix(in srgb, var(--accent-primary), transparent 92%)',
-                                                borderLeft: '3px solid var(--accent-primary)',
+                                                background: b.isStaff ? 'color-mix(in srgb, #ec4899, transparent 92%)' : 'color-mix(in srgb, var(--accent-primary), transparent 92%)',
+                                                borderLeft: `3px solid ${b.isStaff ? '#ec4899' : 'var(--accent-primary)'}`,
                                                 borderRadius: '4px',
                                                 padding: '0.25rem 0.5rem',
                                                 marginBottom: '2px',
-                                                fontSize: '0.75rem'
+                                                fontSize: '0.75rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between'
                                             }}>
-                                                <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>{format(parseISO(b.date), 'HH:mm')}</span>
-                                                <span style={{ marginLeft: '0.5rem', color: 'var(--text-primary)' }}>{b.clientName}</span>
-                                                <span style={{ marginLeft: '0.5rem', color: 'var(--text-secondary)' }}>{b.serviceName}</span>
+                                                <div>
+                                                    <span style={{ fontWeight: 600, color: b.isStaff ? '#ec4899' : 'var(--accent-primary)' }}>{format(parseISO(b.date), 'HH:mm')}</span>
+                                                    <span style={{ marginLeft: '0.5rem', color: 'var(--text-primary)' }}>{b.clientName}</span>
+                                                    <span style={{ marginLeft: '0.5rem', color: 'var(--text-secondary)' }}>{b.serviceName}</span>
+                                                </div>
+                                                <div style={{ fontSize: '0.625rem', fontWeight: 600, background: 'rgba(255,255,255,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                    {b.responsibleName}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -327,7 +374,7 @@ export default function AgendaPage() {
                                                 >
                                                     {dayBookings.map(b => (
                                                         <div key={b.id} style={{
-                                                            background: 'var(--accent-primary)',
+                                                            background: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
                                                             borderRadius: '3px',
                                                             padding: '2px 4px',
                                                             fontSize: '0.5625rem',
@@ -337,7 +384,7 @@ export default function AgendaPage() {
                                                             whiteSpace: 'nowrap',
                                                             marginBottom: '1px'
                                                         }}>
-                                                            {format(parseISO(b.date), 'HH:mm')} {b.clientName.split(' ')[0]}
+                                                            {format(parseISO(b.date), 'HH:mm')} • {b.responsibleName}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -396,7 +443,7 @@ export default function AgendaPage() {
                                             </div>
                                             {dayBookings.slice(0, 3).map(b => (
                                                 <div key={b.id} style={{
-                                                    background: 'var(--accent-primary)',
+                                                    background: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
                                                     borderRadius: '3px',
                                                     padding: '2px 4px',
                                                     fontSize: '0.5625rem',
@@ -406,7 +453,7 @@ export default function AgendaPage() {
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap'
                                                 }}>
-                                                    {format(parseISO(b.date), 'HH:mm')} {b.clientName.split(' ')[0]}
+                                                    {format(parseISO(b.date), 'HH:mm')} • {b.responsibleName}
                                                 </div>
                                             ))}
                                             {dayBookings.length > 3 && (
@@ -445,29 +492,46 @@ export default function AgendaPage() {
                                     gap: '1rem',
                                     padding: '1rem 1.25rem',
                                     borderBottom: idx < currentDayBookings.length - 1 ? '1px solid var(--border-default)' : 'none',
-                                    transition: 'background 0.2s ease'
+                                    transition: 'background 0.2s ease',
+                                    background: b.isStaff ? 'rgba(236, 72, 153, 0.02)' : 'transparent'
                                 }}
                                     onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                                    onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = b.isStaff ? 'rgba(236, 72, 153, 0.02)' : 'transparent'}
                                 >
                                     <div style={{
                                         width: '48px',
                                         height: '48px',
-                                        background: 'linear-gradient(135deg, var(--bg-elevated), var(--bg-card))',
-                                        border: '1px solid var(--border-default)',
+                                        background: b.isStaff
+                                            ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(236, 72, 153, 0.05))'
+                                            : 'linear-gradient(135deg, var(--bg-elevated), var(--bg-card))',
+                                        border: b.isStaff ? '1px solid rgba(236, 72, 153, 0.2)' : '1px solid var(--border-default)',
                                         borderRadius: '12px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         fontWeight: 700,
                                         fontSize: '0.875rem',
-                                        color: 'var(--accent-primary)',
+                                        color: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
                                         flexShrink: 0
                                     }}>
                                         {format(parseISO(b.date), 'HH:mm')}
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.125rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.clientName}</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.125rem' }}>
+                                            <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {b.clientName}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '0.625rem',
+                                                fontWeight: 600,
+                                                background: b.isStaff ? '#ec4899' : 'var(--accent-primary)',
+                                                color: 'white',
+                                                padding: '2px 6px',
+                                                borderRadius: '10px'
+                                            }}>
+                                                {b.responsibleName}
+                                            </div>
+                                        </div>
                                         <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                                             {b.serviceName} • {b.duration}min • <span style={{ color: 'var(--accent-success)', fontWeight: 600 }}>{b.price}€</span>
                                         </div>
