@@ -180,6 +180,7 @@ export default function ClientExplore() {
                                             e.preventDefault();
                                             toggleFavorite(pro.id);
                                         }}
+                                        className="fav-btn"
                                         style={{
                                             position: 'absolute',
                                             top: '12px',
@@ -301,6 +302,12 @@ export default function ClientExplore() {
                 .pro-card { transition: border-color 0.2s; }
                 .pro-card:hover { border-color: var(--border-hover); }
                 
+                .fav-btn:hover {
+                    transform: scale(1.1);
+                    background: rgba(0,0,0,0.5) !important;
+                    color: #ef4444 !important;
+                }
+
                 .action-btn:hover { 
                     transform: translateY(-2px);
                     background: var(--accent-primary-hover) !important;
@@ -308,6 +315,6 @@ export default function ClientExplore() {
                 }
                 .action-btn:active { transform: translateY(0); }
             `}</style>
-        </Layout>
+        </Layout >
     );
 }
