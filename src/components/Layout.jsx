@@ -555,7 +555,6 @@ export default function Layout({ children, role = 'professional', restricted = f
                         marginTop: 'auto',
                         textAlign: 'center',
                         padding: '1.5rem',
-                        borderTop: '1px solid var(--border-default)',
                     }}>
                         <p style={{
                             fontSize: '13px',
