@@ -35,38 +35,44 @@ export default function ClientBookings() {
     }, [navigate]);
 
     const loadBookings = async (email) => {
+        console.log('🔍 Loading bookings for:', email);
+        if (!email) {
+            console.error('❌ No email provided to loadBookings');
+            return;
+        }
+
         try {
-            // Use collectionGroup to find bookings across all collections named 'bookings'
-            // This includes both owner bookings and staff bookings
+            console.log('📡 Querying collectionGroup(bookings) where clientEmail ==', email);
             const q = query(collectionGroup(db, 'bookings'), where('clientEmail', '==', email));
             const querySnapshot = await getDocs(q);
 
+            console.log(`✅ Found ${querySnapshot.size} booking documents.`);
+
             const bookingsData = [];
-            const professionalCache = {}; // Cache to avoid refetching same professional data
+            const professionalCache = {};
 
             for (const docSnapshot of querySnapshot.docs) {
                 const booking = { id: docSnapshot.id, ...docSnapshot.data() };
+                console.log(`📄 Processing doc: ${docSnapshot.id} at ${docSnapshot.ref.path}`);
+
                 const pathSegments = docSnapshot.ref.path.split('/');
-
-                // Path format: 
-                // Owner: professionals/{ownerId}/bookings/{bookingId}
-                // Staff: professionals/{ownerId}/staff/{staffId}/bookings/{bookingId}
-
                 const ownerId = pathSegments[1];
-                let professionalData = professionalCache[ownerId];
 
+                let professionalData = professionalCache[ownerId];
                 if (!professionalData) {
-                    // Fetch professional/owner details if not in cache
+                    console.log(`👤 Fetching owner details: ${ownerId}`);
                     const profDoc = await getDoc(doc(db, 'professionals', ownerId));
                     if (profDoc.exists()) {
                         professionalData = {
                             professionalId: profDoc.id,
                             businessName: profDoc.data().businessName,
-                            professionalName: profDoc.data().name, // Fallback name
+                            professionalName: profDoc.data().name,
                             logoUrl: profDoc.data().logoUrl,
                             profession: profDoc.data().profession
                         };
                         professionalCache[ownerId] = professionalData;
+                    } else {
+                        console.error(`❌ Owner not found: ${ownerId}`);
                     }
                 }
 
@@ -79,10 +85,14 @@ export default function ClientBookings() {
                 }
             }
 
+            console.log(`🏁 Final processed bookings: ${bookingsData.length}`);
             bookingsData.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
             setBookings(bookingsData);
         } catch (error) {
-            console.error('Erro ao carregar marcações:', error);
+            console.error('❌ Error in loadBookings:', error);
+            if (error.code === 'failed-precondition') {
+                console.error('💡 MISSING INDEX! Please check Firebase Console link in error message.');
+            }
         }
     };
 
