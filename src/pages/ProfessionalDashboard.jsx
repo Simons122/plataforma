@@ -161,12 +161,17 @@ export default function ProfessionalDashboard() {
                             marginBottom: '1.5rem'
                         }}>
                             <div style={{
-                                padding: '1rem',
+                                width: '72px',
+                                height: '72px',
                                 background: 'rgba(234, 179, 8, 0.1)',
                                 borderRadius: '50%',
-                                color: '#eab308'
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#eab308',
+                                flexShrink: 0
                             }}>
-                                <Lock size={32} />
+                                <Lock size={32} strokeWidth={2} />
                             </div>
                         </div>
                         <h1 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
