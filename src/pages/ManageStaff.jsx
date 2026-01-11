@@ -318,112 +318,96 @@ export default function ManageStaff() {
                                 )}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                                <h3 style={{ fontWeight: 700, fontSize: '1.125rem', color: 'var(--text-primary)', marginBottom: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {member.name}
                                 </h3>
-                                {member.profession && (
-                                    <span style={{
-                                        fontSize: '0.75rem',
-                                        padding: '2px 8px',
-                                        background: 'var(--bg-elevated)',
-                                        borderRadius: '6px',
-                                        color: 'var(--text-secondary)',
-                                        fontWeight: 500
-                                    }}>
-                                        {member.profession}
-                                    </span>
-                                )}
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{member.email}</p>
+                                {member.phone && <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{member.phone}</p>}
                             </div>
                         </div>
 
-                        {/* Contact Info */}
-                        <div style={{
-                            background: 'var(--bg-elevated)',
-                            padding: '1rem',
-                            borderRadius: '12px',
-                            marginBottom: '1rem'
-                        }}>
-                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                📧 {member.email}
-                            </div>
-                            {member.phone && (
-                                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                                    📞 {member.phone}
-                                </div>
-                            )}
-                        </div>
+                        <div style={{ borderTop: '1px solid var(--border-default)', margin: '0.5rem 0' }} />
 
-                        {/* Schedule Info */}
-                        {member.schedule && (
-                            <div style={{
-                                background: 'var(--bg-elevated)',
-                                padding: '0.75rem',
-                                borderRadius: '10px',
-                                marginBottom: '1rem'
-                            }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    Horário
-                                </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                                    {Object.entries(member.schedule).filter(([_, s]) => s.enabled).map(([day, schedule]) => (
-                                        <span key={day} style={{
-                                            fontSize: '0.7rem',
-                                            padding: '3px 6px',
-                                            background: 'var(--accent-primary)',
-                                            color: 'white',
-                                            borderRadius: '4px',
-                                            fontWeight: 600
-                                        }}>
-                                            {DAY_MAP_PT[day]}: {schedule.start}-{schedule.end}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             <button
                                 onClick={() => handleEditSchedule(member)}
                                 style={{
-                                    flex: 1,
+                                    padding: '0.625rem',
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-default)',
+                                    borderRadius: '8px',
+                                    fontWeight: 600,
+                                    fontSize: '0.875rem',
+                                    cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '0.5rem',
-                                    padding: '0.625rem',
-                                    background: 'var(--bg-elevated)',
-                                    border: '1px solid var(--border-default)',
-                                    borderRadius: '8px',
-                                    color: 'var(--text-secondary)',
-                                    fontSize: '0.8125rem',
-                                    fontWeight: 500,
-                                    cursor: 'pointer',
                                     transition: 'all 0.2s ease'
                                 }}
-                                className="hover:bg-[var(--bg-card)] hover:border-[var(--accent-primary)] hover:color-[var(--accent-primary)]"
+                                onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                                onMouseOut={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                             >
-                                <Clock size={16} />
-                                Horário
+                                <Clock size={16} /> Horário
                             </button>
                             <button
                                 onClick={() => handleDeleteStaff(member.id)}
                                 style={{
                                     padding: '0.625rem',
-                                    background: 'var(--bg-elevated)',
-                                    border: '1px solid var(--border-default)',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    color: 'var(--accent-error)',
+                                    border: '1px solid transparent',
                                     borderRadius: '8px',
-                                    color: 'var(--text-muted)',
+                                    fontWeight: 600,
+                                    fontSize: '0.875rem',
                                     cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem',
                                     transition: 'all 0.2s ease'
                                 }}
-                                className="hover:bg-[var(--accent-danger)] hover:border-[var(--accent-danger)] hover:color-white"
+                                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
                             >
-                                <Trash2 size={16} />
+                                <Trash2 size={16} /> Remover
                             </button>
                         </div>
                     </div>
                 ))}
+
+                {staff.length === 0 && !loading && (
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        textAlign: 'center',
+                        padding: '4rem 2rem',
+                        background: 'var(--bg-card)',
+                        borderRadius: '16px',
+                        border: '1px dashed var(--border-default)',
+                        color: 'var(--text-muted)'
+                    }}>
+                        <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                            Ainda não tem profissionais
+                        </h3>
+                        <p style={{ maxWidth: '400px', margin: '0 auto', marginBottom: '1.5rem' }}>
+                            Adicione membros à sua equipa para que os clientes possam marcar serviços com eles.
+                        </p>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            style={{
+                                color: 'var(--accent-primary)',
+                                background: 'transparent',
+                                border: 'none',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            + Adicionar o primeiro profissional
+                        </button>
+                    </div>
+                )}
             </div>
 
 
@@ -614,83 +598,84 @@ export default function ManageStaff() {
                         width: '100%',
                         border: '1px solid var(--border-default)',
                         boxShadow: 'var(--shadow-xl)',
-                        maxHeight: '90vh',
-                        overflowY: 'auto'
+                        margin: 'auto'
                     }} onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                Definir Horário
-                            </h2>
-                            <button onClick={() => setEditingSchedule(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                                <X size={24} />
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                            <div>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                    Horário de Trabalho
+                                </h2>
+                                <p style={{ color: 'var(--text-muted)' }}>
+                                    Defina a disponibilidade de {staff.find(s => s.id === editingSchedule)?.name}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setEditingSchedule(null)}
+                                style={{
+                                    background: 'var(--bg-elevated)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '36px',
+                                    height: '36px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <X size={20} />
                             </button>
                         </div>
 
-                        {establishmentSchedule && (
-                            <div style={{
-                                background: 'var(--bg-elevated)',
-                                padding: '0.75rem 1rem',
-                                borderRadius: '10px',
-                                marginBottom: '1.5rem',
-                                border: '1px solid var(--border-default)'
-                            }}>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontWeight: 600 }}>
-                                    ℹ️ Horário do Estabelecimento
-                                </p>
-                                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                                    O horário do profissional deve estar dentro do horário do estabelecimento.
-                                </p>
-                            </div>
-                        )}
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {Object.entries(DAY_MAP_PT).map(([dayKey, dayName]) => (
-                                <div key={dayKey} style={{
-                                    background: 'var(--bg-elevated)',
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                            {['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((day) => (
+                                <div key={day} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1rem',
                                     padding: '1rem',
+                                    background: staffSchedule[day].enabled ? 'var(--bg-secondary)' : 'var(--bg-card)',
                                     borderRadius: '12px',
-                                    border: '1px solid var(--border-default)'
+                                    border: '1px solid',
+                                    borderColor: staffSchedule[day].enabled ? 'var(--border-default)' : 'var(--border-default)',
+                                    opacity: staffSchedule[day].enabled ? 1 : 0.6,
+                                    transition: 'all 0.2s ease'
                                 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{dayName}</span>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <Toggle
+                                        checked={staffSchedule[day].enabled}
+                                        onChange={() => updateStaffSchedule(day, 'enabled', !staffSchedule[day].enabled)}
+                                    />
+
+                                    <span style={{
+                                        width: '80px',
+                                        fontWeight: 600,
+                                        color: staffSchedule[day].enabled ? 'var(--text-primary)' : 'var(--text-muted)'
+                                    }}>
+                                        {DAY_MAP_PT[day]}
+                                    </span>
+
+                                    {staffSchedule[day].enabled ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
                                             <input
-                                                type="checkbox"
-                                                checked={staffSchedule[dayKey]?.enabled || false}
-                                                onChange={e => updateStaffSchedule(dayKey, 'enabled', e.target.checked)}
-                                                style={{ cursor: 'pointer' }}
+                                                type="time"
+                                                className="input"
+                                                value={staffSchedule[day].start}
+                                                onChange={(e) => updateStaffSchedule(day, 'start', e.target.value)}
+                                                style={{ padding: '0.5rem', borderRadius: '8px', minWidth: '100px' }}
                                             />
-                                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Ativo</span>
-                                        </label>
-                                    </div>
-                                    {staffSchedule[dayKey]?.enabled && (
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                            <div>
-                                                <label className="label" style={{ fontSize: '0.75rem', marginBottom: '0.375rem' }}>Início</label>
-                                                <input
-                                                    type="time"
-                                                    value={staffSchedule[dayKey].start}
-                                                    onChange={e => updateStaffSchedule(dayKey, 'start', e.target.value)}
-                                                    className="input"
-                                                    style={{ fontSize: '0.875rem' }}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="label" style={{ fontSize: '0.75rem', marginBottom: '0.375rem' }}>Fim</label>
-                                                <input
-                                                    type="time"
-                                                    value={staffSchedule[dayKey].end}
-                                                    onChange={e => updateStaffSchedule(dayKey, 'end', e.target.value)}
-                                                    className="input"
-                                                    style={{ fontSize: '0.875rem' }}
-                                                />
-                                            </div>
+                                            <span style={{ color: 'var(--text-muted)' }}>até</span>
+                                            <input
+                                                type="time"
+                                                className="input"
+                                                value={staffSchedule[day].end}
+                                                onChange={(e) => updateStaffSchedule(day, 'end', e.target.value)}
+                                                style={{ padding: '0.5rem', borderRadius: '8px', minWidth: '100px' }}
+                                            />
                                         </div>
-                                    )}
-                                    {establishmentSchedule?.[dayKey] && (
-                                        <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                            Estabelecimento: {establishmentSchedule[dayKey].enabled ? `${establishmentSchedule[dayKey].start} - ${establishmentSchedule[dayKey].end}` : 'Fechado'}
-                                        </div>
+                                    ) : (
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Folga</span>
                                     )}
                                 </div>
                             ))}
