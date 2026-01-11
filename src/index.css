@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ============================================
    DESIGN TOKENS
@@ -1407,7 +1407,7 @@ select.input {
 .agenda-time-row {
     display: flex;
     border-bottom: 1px solid var(--border-default);
-    min-height: 80px; /* Altura confort�vel para eventos */
+    min-height: 80px; /* Altura confortável para eventos */
 }
 
 .agenda-time-col-min {
@@ -1442,10 +1442,7 @@ select.input {
 }
 
 /* Week View Styles */
-.agenda-week-grid-layout {
-    display: grid;
-    grid-template-columns: 60px repeat(7, 1fr);
-}
+.agenda-week-grid-layout { display: grid; grid-template-columns: 60px repeat(7, 1fr); padding-right: 8px; }
 
 .agenda-week-header-cell {
     padding: 0.75rem 0.25rem;
@@ -1535,4 +1532,5 @@ select.input {
     transform: scale(1.02);
     z-index: 5;
 }
+
 
