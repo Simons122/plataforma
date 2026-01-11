@@ -360,7 +360,7 @@ export default function ClientBooking() {
                                 <div className="animate-fade-in">
                                     {/* Professional Selector - Inside Card */}
 
-                                    {/* Professional Selector - Horizontal Scroll */}
+                                    {/* Professional Selector - Horizontal Minimalist */}
                                     {staff.length > 0 && (
                                         <div style={{ marginBottom: '2rem' }}>
                                             <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-primary)' }}>
@@ -368,9 +368,9 @@ export default function ClientBooking() {
                                             </h3>
                                             <div style={{
                                                 display: 'flex',
-                                                gap: '1rem',
+                                                gap: '1.25rem',
                                                 overflowX: 'auto',
-                                                paddingBottom: '0.5rem',
+                                                padding: '0.5rem 0.25rem 1rem 0.25rem', // Padding para o anel/sombra não cortar
                                                 scrollBehavior: 'smooth',
                                                 msOverflowStyle: 'none',
                                                 scrollbarWidth: 'none'
@@ -385,48 +385,73 @@ export default function ClientBooking() {
                                                 <button
                                                     onClick={() => setSelectedStaff(null)}
                                                     style={{
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
                                                         display: 'flex',
                                                         flexDirection: 'column',
                                                         alignItems: 'center',
-                                                        gap: '0.75rem',
-                                                        minWidth: '100px',
-                                                        padding: '1rem',
-                                                        background: !selectedStaff ? 'var(--bg-elevated)' : 'var(--bg-card)',
-                                                        border: !selectedStaff ? '2px solid var(--accent-primary)' : '1px solid var(--border-default)',
-                                                        borderRadius: '16px',
-                                                        cursor: 'pointer',
-                                                        transition: 'all 0.2s ease',
-                                                        boxShadow: !selectedStaff ? '0 4px 12px rgba(124, 58, 237, 0.15)' : 'none',
-                                                        transform: !selectedStaff ? 'scale(1.05)' : 'scale(1)'
+                                                        gap: '0.5rem',
+                                                        minWidth: '72px',
+                                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                                     }}
                                                 >
                                                     <div style={{
-                                                        width: '56px',
-                                                        height: '56px',
+                                                        width: '64px',
+                                                        height: '64px',
                                                         borderRadius: '50%',
-                                                        background: pro.logoUrl ? 'transparent' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                                                        padding: '3px', // Espaço para a borda
+                                                        background: !selectedStaff
+                                                            ? 'linear-gradient(135deg, var(--accent-primary), #d946ef)'
+                                                            : 'transparent',
+                                                        border: !selectedStaff
+                                                            ? 'none'
+                                                            : '2px solid var(--border-default)',
+                                                        transition: 'all 0.2s ease',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        fontSize: '1.5rem',
-                                                        fontWeight: 700,
-                                                        color: 'white',
-                                                        overflow: 'hidden',
-                                                        border: '2px solid var(--bg-card)',
-                                                        boxShadow: 'var(--shadow-sm)'
+                                                        transform: !selectedStaff ? 'scale(1.1)' : 'scale(1)'
                                                     }}>
-                                                        {pro.logoUrl ? (
-                                                            <img src={pro.logoUrl} alt={pro.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        ) : (
-                                                            pro.name?.charAt(0).toUpperCase()
-                                                        )}
-                                                    </div>
-                                                    <div style={{ textAlign: 'center' }}>
-                                                        <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>
-                                                            {pro.name}
+                                                        <div style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: '50%',
+                                                            overflow: 'hidden',
+                                                            background: 'var(--bg-card)',
+                                                            border: '2px solid var(--bg-card)'
+                                                        }}>
+                                                            {pro.logoUrl ? (
+                                                                <img src={pro.logoUrl} alt={pro.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            ) : (
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    background: 'var(--bg-secondary)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    color: 'var(--text-secondary)',
+                                                                    fontWeight: 700,
+                                                                    fontSize: '1.25rem'
+                                                                }}>
+                                                                    {pro.name?.charAt(0).toUpperCase()}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Principal</div>
                                                     </div>
+                                                    <span style={{
+                                                        fontSize: '0.8125rem',
+                                                        fontWeight: !selectedStaff ? 600 : 500,
+                                                        color: !selectedStaff ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                        textAlign: 'center',
+                                                        maxWidth: '80px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {pro.name.split(' ')[0]}
+                                                    </span>
                                                 </button>
 
                                                 {/* Staff Members */}
@@ -435,48 +460,73 @@ export default function ClientBooking() {
                                                         key={member.id}
                                                         onClick={() => setSelectedStaff(member)}
                                                         style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
                                                             display: 'flex',
                                                             flexDirection: 'column',
                                                             alignItems: 'center',
-                                                            gap: '0.75rem',
-                                                            minWidth: '100px',
-                                                            padding: '1rem',
-                                                            background: selectedStaff?.id === member.id ? 'var(--bg-elevated)' : 'var(--bg-card)',
-                                                            border: selectedStaff?.id === member.id ? '2px solid var(--accent-primary)' : '1px solid var(--border-default)',
-                                                            borderRadius: '16px',
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.2s ease',
-                                                            boxShadow: selectedStaff?.id === member.id ? '0 4px 12px rgba(124, 58, 237, 0.15)' : 'none',
-                                                            transform: selectedStaff?.id === member.id ? 'scale(1.05)' : 'scale(1)'
+                                                            gap: '0.5rem',
+                                                            minWidth: '72px',
+                                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                                         }}
                                                     >
                                                         <div style={{
-                                                            width: '56px',
-                                                            height: '56px',
+                                                            width: '64px',
+                                                            height: '64px',
                                                             borderRadius: '50%',
-                                                            background: member.photoUrl ? 'transparent' : 'linear-gradient(135deg, #a855f7, #ec4899)',
+                                                            padding: '3px',
+                                                            background: selectedStaff?.id === member.id
+                                                                ? 'linear-gradient(135deg, var(--accent-primary), #d946ef)'
+                                                                : 'transparent',
+                                                            border: selectedStaff?.id === member.id
+                                                                ? 'none'
+                                                                : '2px solid var(--border-default)',
+                                                            transition: 'all 0.2s ease',
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
-                                                            fontSize: '1.5rem',
-                                                            fontWeight: 700,
-                                                            color: 'white',
-                                                            overflow: 'hidden',
-                                                            border: '2px solid var(--bg-card)',
-                                                            boxShadow: 'var(--shadow-sm)'
+                                                            transform: selectedStaff?.id === member.id ? 'scale(1.1)' : 'scale(1)'
                                                         }}>
-                                                            {member.photoUrl ? (
-                                                                <img src={member.photoUrl} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                            ) : (
-                                                                member.name?.charAt(0).toUpperCase()
-                                                            )}
-                                                        </div>
-                                                        <div style={{ textAlign: 'center' }}>
-                                                            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>
-                                                                {member.name}
+                                                            <div style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                borderRadius: '50%',
+                                                                overflow: 'hidden',
+                                                                background: 'var(--bg-card)',
+                                                                border: '2px solid var(--bg-card)'
+                                                            }}>
+                                                                {member.photoUrl ? (
+                                                                    <img src={member.photoUrl} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                ) : (
+                                                                    <div style={{
+                                                                        width: '100%',
+                                                                        height: '100%',
+                                                                        background: 'var(--bg-secondary)',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        color: 'var(--text-secondary)',
+                                                                        fontWeight: 700,
+                                                                        fontSize: '1.25rem'
+                                                                    }}>
+                                                                        {member.name?.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Profissional</div>
                                                         </div>
+                                                        <span style={{
+                                                            fontSize: '0.8125rem',
+                                                            fontWeight: selectedStaff?.id === member.id ? 600 : 500,
+                                                            color: selectedStaff?.id === member.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                            textAlign: 'center',
+                                                            maxWidth: '80px',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {member.name.split(' ')[0]}
+                                                        </span>
                                                     </button>
                                                 ))}
                                             </div>
