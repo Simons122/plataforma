@@ -56,6 +56,18 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isAdmin();
     }
 
+    // STAFF (Sub-collection of professionals)
+    match /professionals/{userId}/staff/{staffId} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // STAFF SETTINGS (e.g. schedule for specific staff)
+    match /professionals/{userId}/staff/{staffId}/settings/{docId} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
     // BOOKINGS
     match /professionals/{userId}/bookings/{bookingId} {
       // Clients create bookings (public write, for now)
