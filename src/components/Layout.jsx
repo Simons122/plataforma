@@ -4,23 +4,29 @@ import { LogOut, CalendarDays, Users, LayoutGrid, Clock, Sparkles, Menu, X, User
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useTheme } from './ThemeContext';
+import { useUser } from '../context/UserContext';
 
 export default function Layout({ children, role = 'professional', restricted = false, brandName: propBrandName }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [fetchedProfile, setFetchedProfile] = useState(null);
-    const [loadingProfile, setLoadingProfile] = useState(true);
 
-    const isProfessionalPending = (role === 'professional' || role === 'staff') && (!fetchedProfile || fetchedProfile.paymentStatus === 'pending' || fetchedProfile.paymentStatus === 'expired');
+    // Use UserContext instead of local fetch
+    const { profile: fetchedProfile, loading: loadingProfile, role: contextRole } = useUser();
+
+    // Use contextRole if available and relevant, otherwise fallback to prop role
+    // This helps when Role is 'staff' but prop is 'professional'
+    const currentRole = (contextRole === 'staff') ? 'staff' : role;
+
+    const isProfessionalPending = (currentRole === 'professional' || currentRole === 'staff') && (!fetchedProfile || fetchedProfile.paymentStatus === 'pending' || fetchedProfile.paymentStatus === 'expired');
     const APP_NAME = "Booklyo";
 
     let businessName = propBrandName;
     if (!businessName) {
-        if (role === 'admin') businessName = 'Admin Portal';
-        else if (role === 'client') businessName = 'Área Cliente';
-        else if (role === 'professional' || role === 'staff') {
+        if (currentRole === 'admin') businessName = 'Admin Portal';
+        else if (currentRole === 'client') businessName = 'Área Cliente';
+        else if (currentRole === 'professional' || currentRole === 'staff') {
             businessName = isProfessionalPending ? APP_NAME : (fetchedProfile?.businessName || fetchedProfile?.name || APP_NAME);
         } else {
             businessName = APP_NAME;
@@ -29,66 +35,8 @@ export default function Layout({ children, role = 'professional', restricted = f
 
     const logoUrl = (!isProfessionalPending ? fetchedProfile?.logoUrl : null);
 
-    useEffect(() => {
-        if (role === 'professional') {
-            const unsubscribe = auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    try {
-                        // 1. Check Staff Lookup FIRST (Priority Rule)
-                        console.log("Checking Staff Lookup for:", user.uid);
-                        const lookupRef = doc(db, "staff_lookup", user.uid);
-                        const lookupSnap = await getDoc(lookupRef);
-
-                        if (lookupSnap.exists()) {
-                            console.log("Staff Lookup Found:", lookupSnap.data());
-                            // User is Staff
-                            const { ownerId, staffId } = lookupSnap.data();
-                            const staffRef = doc(db, `professionals/${ownerId}/staff/${staffId}`);
-                            const staffSnap = await getDoc(staffRef);
-
-                            if (staffSnap.exists()) {
-                                console.log("Staff Profile Found");
-                                const sData = staffSnap.data();
-                                setFetchedProfile({
-                                    ...sData,
-                                    isStaff: true,
-                                    ownerId: ownerId,
-                                    id: staffId,
-                                    logoUrl: sData.photoUrl,
-                                    businessName: sData.name,
-                                    paymentStatus: 'active'
-                                });
-                            } else {
-                                console.error("Staff Profile Document MISSING at:", staffRef.path);
-                            }
-                        } else {
-                            console.log("Staff Lookup Not Found. Checking Owner...");
-                            // 2. If not Staff, check Professional (Owner)
-                            const proDoc = await getDoc(doc(db, "professionals", user.uid));
-                            if (proDoc.exists()) {
-                                console.log("Owner Profile Found");
-                                setFetchedProfile({ ...proDoc.data(), isStaff: false });
-                            } else {
-                                console.log("Owner Profile Not Found");
-                            }
-                        }
-                    } catch (err) {
-                        console.error("Layout Profile Fetch Error", err);
-                    } finally {
-                        setLoadingProfile(false);
-                    }
-                } else {
-                    setLoadingProfile(false);
-                }
-            });
-            return () => unsubscribe();
-        } else {
-            setLoadingProfile(false);
-        }
-    }, [role]);
-
     // Fallback UI for Missing Profile
-    if (!loadingProfile && !fetchedProfile && (role === 'professional' || role === undefined)) {
+    if (!loadingProfile && !fetchedProfile && (currentRole === 'professional' || currentRole === undefined)) {
         return (
             <div style={{
                 height: '100vh',
@@ -159,10 +107,10 @@ export default function Layout({ children, role = 'professional', restricted = f
     ];
 
     let links = [];
-    if (role === 'admin') links = adminLinks;
-    else if (role === 'client') links = clientLinks;
-    else if (role === 'professional' || role === 'staff') {
-        links = (fetchedProfile?.isStaff || role === 'staff') ? staffLinks : proLinks;
+    if (currentRole === 'admin') links = adminLinks;
+    else if (currentRole === 'client') links = clientLinks;
+    else if (currentRole === 'professional' || currentRole === 'staff') {
+        links = (fetchedProfile?.isStaff || currentRole === 'staff') ? staffLinks : proLinks;
     }
 
     // Mobile Sidebar
