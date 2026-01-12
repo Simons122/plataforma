@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     createUserWithEmailAndPassword,
@@ -9,12 +9,62 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { User, Mail, Lock, Phone, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, Phone, ArrowRight, Loader2, ArrowLeft, Check, X, Eye, EyeOff } from 'lucide-react';
+
+// Função para calcular a força da palavra-passe
+const calculatePasswordStrength = (password) => {
+    if (!password) return { score: 0, label: '', color: '#ef4444' };
+
+    let score = 0;
+    const checks = {
+        length: password.length >= 8,
+        lowercase: /[a-z]/.test(password),
+        uppercase: /[A-Z]/.test(password),
+        numbers: /[0-9]/.test(password),
+        special: /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]/.test(password)
+    };
+
+    // Pontuação base pelo comprimento
+    if (password.length >= 6) score += 1;
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+
+    // Pontuação pela complexidade
+    if (checks.lowercase) score += 1;
+    if (checks.uppercase) score += 1;
+    if (checks.numbers) score += 1;
+    if (checks.special) score += 2;
+
+    // Normalizar para 0-100%
+    const percentage = Math.min(100, (score / 9) * 100);
+
+    // Determinar nível e cor
+    let label, color;
+    if (percentage < 25) {
+        label = 'Muito fraca';
+        color = '#ef4444'; // Vermelho
+    } else if (percentage < 50) {
+        label = 'Fraca';
+        color = '#f97316'; // Laranja
+    } else if (percentage < 75) {
+        label = 'Média';
+        color = '#eab308'; // Amarelo
+    } else if (percentage < 90) {
+        label = 'Forte';
+        color = '#22c55e'; // Verde claro
+    } else {
+        label = 'Muito forte';
+        color = '#10b981'; // Verde
+    }
+
+    return { score: percentage, label, color, checks };
+};
 
 export default function ClientAuth() {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -23,6 +73,12 @@ export default function ClientAuth() {
         phone: '',
         password: ''
     });
+
+    // Calcular força da palavra-passe em tempo real
+    const passwordStrength = useMemo(() =>
+        calculatePasswordStrength(formData.password),
+        [formData.password]
+    );
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -258,15 +314,146 @@ export default function ClientAuth() {
                         <Lock style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
                         <input
                             name="password"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="Password"
                             className="input"
-                            style={{ paddingLeft: '2.75rem' }}
+                            style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem' }}
                             value={formData.password}
                             onChange={handleChange}
                             required
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'none',
+                                border: 'none',
+                                padding: '4px',
+                                cursor: 'pointer',
+                                color: 'var(--text-muted)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'color 0.2s ease'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                            onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                            aria-label={showPassword ? "Esconder password" : "Mostrar password"}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
+
+                    {/* Indicador de Força da Password - apenas no registo */}
+                    {!isLogin && formData.password && (
+                        <div style={{
+                            marginTop: '-0.5rem',
+                            animation: 'fadeIn 0.3s ease'
+                        }}>
+                            {/* Barra de progresso */}
+                            <div style={{
+                                width: '100%',
+                                height: '6px',
+                                background: 'var(--bg-secondary)',
+                                borderRadius: '999px',
+                                overflow: 'hidden',
+                                marginBottom: '0.5rem'
+                            }}>
+                                <div style={{
+                                    width: `${passwordStrength.score}%`,
+                                    height: '100%',
+                                    background: passwordStrength.color,
+                                    borderRadius: '999px',
+                                    transition: 'all 0.3s ease'
+                                }} />
+                            </div>
+
+                            {/* Label da força */}
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '0.75rem'
+                            }}>
+                                <span style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    color: passwordStrength.color,
+                                    transition: 'color 0.3s ease'
+                                }}>
+                                    {passwordStrength.label}
+                                </span>
+                                <span style={{
+                                    fontSize: '0.75rem',
+                                    color: 'var(--text-muted)'
+                                }}>
+                                    {Math.round(passwordStrength.score)}%
+                                </span>
+                            </div>
+
+                            {/* Requisitos da password */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '0.375rem',
+                                padding: '0.75rem',
+                                background: 'var(--bg-secondary)',
+                                borderRadius: '10px',
+                                fontSize: '0.75rem'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.375rem',
+                                    color: passwordStrength.checks?.length ? '#22c55e' : 'var(--text-muted)'
+                                }}>
+                                    {passwordStrength.checks?.length ? <Check size={12} /> : <X size={12} />}
+                                    8+ caracteres
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.375rem',
+                                    color: passwordStrength.checks?.lowercase ? '#22c55e' : 'var(--text-muted)'
+                                }}>
+                                    {passwordStrength.checks?.lowercase ? <Check size={12} /> : <X size={12} />}
+                                    Minúsculas (a-z)
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.375rem',
+                                    color: passwordStrength.checks?.uppercase ? '#22c55e' : 'var(--text-muted)'
+                                }}>
+                                    {passwordStrength.checks?.uppercase ? <Check size={12} /> : <X size={12} />}
+                                    Maiúsculas (A-Z)
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.375rem',
+                                    color: passwordStrength.checks?.numbers ? '#22c55e' : 'var(--text-muted)'
+                                }}>
+                                    {passwordStrength.checks?.numbers ? <Check size={12} /> : <X size={12} />}
+                                    Números (0-9)
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.375rem',
+                                    gridColumn: 'span 2',
+                                    color: passwordStrength.checks?.special ? '#22c55e' : 'var(--text-muted)'
+                                }}>
+                                    {passwordStrength.checks?.special ? <Check size={12} /> : <X size={12} />}
+                                    Caracteres especiais (!@#$%...)
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <button
                         type="submit"
