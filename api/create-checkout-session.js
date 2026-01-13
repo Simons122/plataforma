@@ -1,13 +1,14 @@
 import Stripe from 'stripe';
 
-export const config = {
-    runtime: 'edge',
-};
+// Check for required environment variable
+if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('❌ STRIPE_SECRET_KEY is not configured');
+}
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16',
-});
+const stripe = process.env.STRIPE_SECRET_KEY
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
+    : null;
 
 // Booklyo Pro Plan Configuration
 const BOOKLYO_PRO = {
@@ -22,6 +23,15 @@ export default async function handler(req) {
         return new Response(
             JSON.stringify({ error: 'Method not allowed' }),
             { status: 405, headers: { 'Content-Type': 'application/json' } }
+        );
+    }
+
+    // Check if Stripe is configured
+    if (!stripe) {
+        console.error('❌ Stripe not initialized - STRIPE_SECRET_KEY missing');
+        return new Response(
+            JSON.stringify({ error: 'Payment system not configured. Please add STRIPE_SECRET_KEY to environment variables.' }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
     }
 
