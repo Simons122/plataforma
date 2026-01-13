@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -9,7 +9,8 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { User, Mail, Lock, Briefcase, ArrowRight, Loader2, Check, X, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, ArrowRight, Loader2, Check, X, Eye, EyeOff, Crown } from 'lucide-react';
+import { createCheckoutSession } from '../lib/stripe';
 
 const PROFESSIONS = [
     "Barbeiro",
@@ -88,6 +89,15 @@ export default function Auth() {
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const redirectToPricing = searchParams.get('redirect') === 'pricing';
+
+    // Switch to registration mode when coming from pricing
+    useEffect(() => {
+        if (redirectToPricing) {
+            setIsLogin(false);
+        }
+    }, [redirectToPricing]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -132,11 +142,35 @@ export default function Auth() {
                     role: 'professional',
                     slug: slugify(user.displayName || "utilizador-google")
                 });
-                navigate('/pricing'); // Redirect to pricing to show trial info
+                // Check if coming from pricing - go to Stripe
+                if (redirectToPricing) {
+                    const result = await createCheckoutSession({
+                        userId: user.uid,
+                        userEmail: user.email,
+                        userName: user.displayName || 'Utilizador Google'
+                    });
+                    if (!result.success) {
+                        navigate('/pricing');
+                    }
+                } else {
+                    navigate('/pricing');
+                }
             } else if (docSnap.data().role === 'admin') {
                 navigate('/admin/dashboard');
             } else {
-                navigate('/dashboard');
+                // Existing user - check if coming from pricing
+                if (redirectToPricing) {
+                    const result = await createCheckoutSession({
+                        userId: user.uid,
+                        userEmail: user.email,
+                        userName: user.displayName
+                    });
+                    if (!result.success) {
+                        navigate('/pricing');
+                    }
+                } else {
+                    navigate('/dashboard');
+                }
             }
         } catch (err) {
             console.error(err);
@@ -185,7 +219,17 @@ export default function Auth() {
                     slug: slugify(formData.name)
                 });
 
-                navigate('/pricing'); // Redirect to pricing to show trial info
+                // After registration, redirect to Stripe checkout
+                const result = await createCheckoutSession({
+                    userId: user.uid,
+                    userEmail: user.email,
+                    userName: formData.name
+                });
+
+                if (!result.success) {
+                    // If Stripe fails, go to pricing page
+                    navigate('/pricing');
+                }
             }
         } catch (err) {
             console.error(err);
@@ -254,6 +298,53 @@ export default function Auth() {
                         fontWeight: 500
                     }}>
                         {error}
+                    </div>
+                )}
+
+                {/* Selected Plan Card - Shows when coming from pricing */}
+                {redirectToPricing && !isLogin && (
+                    <div style={{
+                        padding: '1rem 1.25rem',
+                        marginBottom: '1.5rem',
+                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1))',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: '14px'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '0.5rem'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <Crown size={18} style={{ color: '#fbbf24' }} />
+                                <span style={{
+                                    fontWeight: 700,
+                                    color: 'var(--text-primary)',
+                                    fontSize: '0.95rem'
+                                }}>
+                                    Booklyo Pro
+                                </span>
+                            </div>
+                            <span style={{
+                                fontWeight: 800,
+                                color: '#3b82f6',
+                                fontSize: '1.1rem'
+                            }}>
+                                15€<span style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/mês</span>
+                            </span>
+                        </div>
+                        <p style={{
+                            fontSize: '0.8rem',
+                            color: 'var(--text-secondary)',
+                            margin: 0
+                        }}>
+                            Marcações ilimitadas • Confirmações automáticas • Painel completo
+                        </p>
                     </div>
                 )}
 
