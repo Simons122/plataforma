@@ -118,16 +118,21 @@ export default function Auth() {
             const docSnap = await getDoc(docRef);
 
             if (!docSnap.exists()) {
+                // Calculate trial end date (5 days from now)
+                const trialEndsAt = new Date();
+                trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+
                 await setDoc(docRef, {
                     name: user.displayName || "Utilizador Google",
                     email: user.email,
                     profession: "Por definir",
-                    paymentStatus: 'pending',
+                    paymentStatus: 'trial',
+                    trialEndsAt: trialEndsAt.toISOString(),
                     createdAt: new Date().toISOString(),
                     role: 'professional',
                     slug: slugify(user.displayName || "utilizador-google")
                 });
-                navigate('/dashboard');
+                navigate('/pricing'); // Redirect to pricing to show trial info
             } else if (docSnap.data().role === 'admin') {
                 navigate('/admin/dashboard');
             } else {
@@ -165,17 +170,22 @@ export default function Auth() {
                     displayName: formData.name
                 });
 
+                // Calculate trial end date (5 days from now)
+                const trialEndsAt = new Date();
+                trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+
                 await setDoc(doc(db, "professionals", user.uid), {
                     name: formData.name,
                     email: formData.email,
                     profession: formData.profession,
-                    paymentStatus: 'pending',
+                    paymentStatus: 'trial',
+                    trialEndsAt: trialEndsAt.toISOString(),
                     createdAt: new Date().toISOString(),
                     role: 'professional',
                     slug: slugify(formData.name)
                 });
 
-                navigate('/dashboard');
+                navigate('/pricing'); // Redirect to pricing to show trial info
             }
         } catch (err) {
             console.error(err);

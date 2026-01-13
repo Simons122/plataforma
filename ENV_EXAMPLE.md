@@ -34,6 +34,34 @@ VITE_META_PHONE_NUMBER_ID=123456789
 VITE_META_ACCESS_TOKEN=EAAxxxxx
 
 # ==========================================
+# STRIPE CONFIGURATION (Payments)
+# ==========================================
+
+# Sign up: https://stripe.com
+# Get keys from: https://dashboard.stripe.com/apikeys
+
+# Frontend (Publishable Key - safe to expose)
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
+
+# Optional: Use a specific Price ID for Booklyo Pro
+# Create in Stripe Dashboard > Products
+VITE_STRIPE_PRICE_ID=price_xxxxx
+
+# Backend (Secret Key - NEVER expose in frontend)
+# Add these in Vercel Environment Variables
+STRIPE_SECRET_KEY=sk_test_xxxxx
+
+# Webhook Secret (for Vercel webhook endpoint)
+# Get from: https://dashboard.stripe.com/webhooks
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+
+# ==========================================
 # FIREBASE CONFIGURATION (Already configured)
 # ==========================================
 # Your existing Firebase config...
+
+# For Vercel Webhook (Firebase Admin SDK)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+

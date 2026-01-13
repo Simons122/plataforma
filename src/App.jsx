@@ -16,6 +16,8 @@ import ClientAuth from './pages/ClientAuth';
 import ClientBookings from './pages/ClientBookings';
 import ClientFavorites from './pages/ClientFavorites';
 import ClientExplore from './pages/ClientExplore';
+import PricingPage from './pages/PricingPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -23,7 +25,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-[#0a0a0c] text-white font-sans">
         <Routes>
-          <Route path="/" element={<Navigate to="/auth" replace />} />
+          <Route path="/" element={<PricingPage />} />
           <Route path="/auth" element={<Auth />} />
 
           {/* Admin Routes */}
@@ -115,6 +117,10 @@ function App() {
           <Route path="/client/explore" element={<ClientExplore />} />
           <Route path="/client/bookings" element={<ClientBookings />} />
           <Route path="/client/favorites" element={<ClientFavorites />} />
+
+          {/* Pricing & Payment Routes */}
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
           {/* Public Client Booking Route */}
           <Route path="/book/:slug" element={<ClientBooking />} />
