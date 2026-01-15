@@ -5,7 +5,8 @@ import { db, auth } from '../lib/firebase';
 import { Clock, Check, ChevronLeft, ChevronRight, Calendar, Heart, Info } from 'lucide-react';
 import { format, addMinutes, setHours, setMinutes, isBefore, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
-import ClientLayout from '../components/ClientLayout';
+import Layout from '../components/Layout';
+import PendingReviewsPrompt from '../components/PendingReviewsPrompt';
 import { useLanguage } from '../i18n';
 
 const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -293,7 +294,7 @@ export default function ClientBooking() {
 
     // Se chegou aqui, temos currentUser E pro -> Renderiza Layout
     return (
-        <ClientLayout userName={currentUser.displayName || currentUser.email?.split('@')[0]}>
+        <Layout role="client" brandName={currentUser.displayName || currentUser.email?.split('@')[0]}>
             <div style={{ paddingBottom: '2rem' }}>
                 <div style={{ maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
 
@@ -613,7 +614,8 @@ export default function ClientBooking() {
                         </div>
                     </div>
                 </div>
-            </div >
-        </ClientLayout >
+            </div>
+            <PendingReviewsPrompt />
+        </Layout>
     );
 }

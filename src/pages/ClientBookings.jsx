@@ -5,7 +5,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Building2, Euro, X, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
-import ClientLayout from '../components/ClientLayout';
+import Layout from '../components/Layout';
+import PendingReviewsPrompt from '../components/PendingReviewsPrompt';
 import { useLanguage } from '../i18n';
 
 export default function ClientBookings() {
@@ -151,7 +152,7 @@ export default function ClientBookings() {
     const pastBookings = bookings.filter(b => b.status === 'cancelled' || getBookingDate(b) <= new Date());
 
     return (
-        <ClientLayout userName={user?.displayName || user?.email?.split('@')[0]}>
+        <Layout role="client" brandName={user?.displayName || user?.email?.split('@')[0]}>
             <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
 
                 {/* Header Section */}
@@ -257,7 +258,8 @@ export default function ClientBookings() {
                     background: rgba(239, 68, 68, 0.15) !important;
                 }
             `}</style>
-        </ClientLayout>
+            <PendingReviewsPrompt />
+        </Layout>
     );
 }
 
