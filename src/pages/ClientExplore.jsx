@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ClientLayout from '../components/ClientLayout';
 
-import ClientLayout from '../components/ClientLayout';
 import { useLanguage } from '../i18n';
 
 export default function ClientExplore() {
