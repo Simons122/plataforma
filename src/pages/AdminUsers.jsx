@@ -4,9 +4,11 @@ import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore'
 import Layout from '../components/Layout';
 import { Search, Shield, ShieldAlert, Mail, Phone, ExternalLink, Building2, Briefcase, UserCog } from 'lucide-react';
 import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { pt, enUS } from 'date-fns/locale';
+import { useLanguage } from '../i18n';
 
 export default function AdminDashboard() {
+    const { t, language } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [professionals, setProfessionals] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -115,10 +117,10 @@ export default function AdminDashboard() {
 
     const getStatusLabel = (status) => {
         switch (status) {
-            case 'paid': return 'Pago';
-            case 'active': return 'Ativo';
-            case 'pending': return 'Pendente';
-            case 'expired': return 'Expirado';
+            case 'paid': return t('adminUsers.statusPaid');
+            case 'active': return t('adminUsers.statusActive');
+            case 'pending': return t('adminUsers.statusPending');
+            case 'expired': return t('adminUsers.statusExpired');
             default: return status;
         }
     };
@@ -128,7 +130,7 @@ export default function AdminDashboard() {
         <Layout role="admin" brandName="Administração">
             <div style={{ marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                    Gestão de Utilizadores
+                    {t('adminUsers.title')}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>
                     {currentUserProfile?.superAdmin && (
@@ -148,10 +150,10 @@ export default function AdminDashboard() {
                             boxShadow: '0 4px 12px rgba(168, 85, 247, 0.5)'
                         }}>
                             <ShieldAlert size={14} />
-                            Super Admin
+                            {t('adminUsers.superAdmin')}
                         </span>
                     )}
-                    Gerencie profissionais, admins e permissões.
+                    {t('adminUsers.subtitle')}
                 </p>
             </div>
 
@@ -170,7 +172,7 @@ export default function AdminDashboard() {
                     <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                     <input
                         type="text"
-                        placeholder="Pesquisar por nome, email ou estabelecimento..."
+                        placeholder={t('adminUsers.searchPlaceholder')}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         className="input"
@@ -180,9 +182,9 @@ export default function AdminDashboard() {
 
                 <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '4px' }}>
                     {[
-                        { id: 'all', label: 'Todos' },
-                        { id: 'professional', label: 'Profissionais' },
-                        { id: 'admin', label: 'Admins' }
+                        { id: 'all', label: t('adminUsers.filterAll') },
+                        { id: 'professional', label: t('adminUsers.filterPros') },
+                        { id: 'admin', label: t('adminUsers.filterAdmins') }
                     ].map(filter => (
                         <button
                             key={filter.id}
@@ -282,7 +284,7 @@ export default function AdminDashboard() {
                                         boxShadow: '0 4px 12px rgba(168, 85, 247, 0.5)'
                                     }}>
                                         <ShieldAlert size={12} />
-                                        Super Admin
+                                        {t('adminUsers.superAdmin')}
                                     </div>
                                 ) : isAdmin && (
                                     <div style={{
@@ -408,7 +410,7 @@ export default function AdminDashboard() {
                                                     letterSpacing: '0.05em',
                                                     lineHeight: '16px'
                                                 }}>
-                                                    Estabelecimento
+                                                    {t('adminUsers.business')}
                                                 </span>
                                             </div>
                                             <div style={{
@@ -442,7 +444,7 @@ export default function AdminDashboard() {
                                                 letterSpacing: '0.05em',
                                                 lineHeight: '16px'
                                             }}>
-                                                Contacto
+                                                {t('adminUsers.contact')}
                                             </span>
                                         </div>
                                         <div style={{ paddingLeft: 'calc(16px + 0.5rem)', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
@@ -482,7 +484,7 @@ export default function AdminDashboard() {
                                             fontWeight: 500,
                                             lineHeight: '13px'
                                         }}>
-                                            Membro desde {pro.createdAt ? format(new Date(pro.createdAt), 'MMM yyyy', { locale: pt }) : 'N/A'}
+                                            {t('adminUsers.memberSince')} {pro.createdAt ? format(new Date(pro.createdAt), 'MMM yyyy', { locale: language === 'pt' ? pt : enUS }) : 'N/A'}
                                         </span>
                                     </div>
                                 </div>
@@ -509,7 +511,7 @@ export default function AdminDashboard() {
                                                         letterSpacing: '0.05em',
                                                         marginBottom: '0.375rem'
                                                     }}>
-                                                        Estado de Pagamento
+                                                        {t('adminUsers.paymentStatus')}
                                                     </div>
                                                     <button
                                                         onClick={() => updateStatus(pro.id, pro.paymentStatus === 'paid' ? 'pending' : 'paid')}
@@ -561,7 +563,7 @@ export default function AdminDashboard() {
                                                         letterSpacing: '0.05em',
                                                         marginBottom: '0.375rem'
                                                     }}>
-                                                        Permissões
+                                                        {t('adminUsers.permissions')}
                                                     </div>
                                                     <button
                                                         onClick={() => toggleAdminRole(pro.id, pro.role)}
@@ -594,12 +596,12 @@ export default function AdminDashboard() {
                                                         {pro.role === 'admin' ? (
                                                             <>
                                                                 <UserCog size={18} />
-                                                                Remover Admin
+                                                                {t('adminUsers.removeAdmin')}
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <Shield size={18} />
-                                                                Promover a Admin
+                                                                {t('adminUsers.promoteAdmin')}
                                                             </>
                                                         )}
                                                     </button>
@@ -621,7 +623,7 @@ export default function AdminDashboard() {
                                             letterSpacing: '0.05em',
                                             marginBottom: '0.5rem'
                                         }}>
-                                            Ações Rápidas
+                                            {t('adminUsers.quickActions')}
                                         </div>
                                         <div style={{
                                             display: 'grid',
@@ -658,7 +660,7 @@ export default function AdminDashboard() {
                                                 }}
                                             >
                                                 <Mail size={16} />
-                                                <span>Email</span>
+                                                <span>{t('adminUsers.email')}</span>
                                             </button>
                                             {pro.slug && pro.role !== 'admin' && (
                                                 <button
@@ -691,7 +693,7 @@ export default function AdminDashboard() {
                                                     }}
                                                 >
                                                     <ExternalLink size={16} />
-                                                    <span>Ver Página</span>
+                                                    <span>{t('adminUsers.viewPage')}</span>
                                                 </button>
                                             )}
                                         </div>
@@ -706,7 +708,7 @@ export default function AdminDashboard() {
                     filteredPros.length === 0 && (
                         <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
                             <Search size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                            <p>Nenhum utilizador encontrado.</p>
+                            <p>{t('adminUsers.noUsersFound')}</p>
                         </div>
                     )
                 }

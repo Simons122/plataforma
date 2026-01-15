@@ -303,6 +303,32 @@ export const translations = {
             serverError: 'Erro no servidor. Tente mais tarde.',
             profileNotFound: 'Perfil não encontrado.',
         },
+
+        // Admin Users
+        adminUsers: {
+            title: 'Gestão de Utilizadores',
+            subtitle: 'Gerencie profissionais, admins e permissões.',
+            superAdmin: 'Super Admin',
+            searchPlaceholder: 'Pesquisar por nome, email ou estabelecimento...',
+            filterAll: 'Todos',
+            filterPros: 'Profissionais',
+            filterAdmins: 'Admins',
+            memberSince: 'Membro desde',
+            paymentStatus: 'Estado de Pagamento',
+            permissions: 'Permissões',
+            removeAdmin: 'Remover Admin',
+            promoteAdmin: 'Promover a Admin',
+            quickActions: 'Ações Rápidas',
+            viewPage: 'Ver Página',
+            noUsersFound: 'Nenhum utilizador encontrado.',
+            business: 'Estabelecimento',
+            contact: 'Contacto',
+            statusPaid: 'Pago',
+            statusActive: 'Ativo',
+            statusPending: 'Pendente',
+            statusExpired: 'Expirado',
+            email: 'Email'
+        },
     },
 
     en: {
@@ -603,6 +629,32 @@ export const translations = {
             networkError: 'Network error. Check your connection.',
             serverError: 'Server error. Try again later.',
             profileNotFound: 'Profile not found.',
+        },
+
+        // Admin Users
+        adminUsers: {
+            title: 'User Management',
+            subtitle: 'Manage professionals, admins, and permissions.',
+            superAdmin: 'Super Admin',
+            searchPlaceholder: 'Search by name, email, or business...',
+            filterAll: 'All',
+            filterPros: 'Professionals',
+            filterAdmins: 'Admins',
+            memberSince: 'Member since',
+            paymentStatus: 'Payment Status',
+            permissions: 'Permissions',
+            removeAdmin: 'Remove Admin',
+            promoteAdmin: 'Promote to Admin',
+            quickActions: 'Quick Actions',
+            viewPage: 'View Page',
+            noUsersFound: 'No users found.',
+            business: 'Business',
+            contact: 'Contact',
+            statusPaid: 'Paid',
+            statusActive: 'Active',
+            statusPending: 'Pending',
+            statusExpired: 'Expired',
+            email: 'Email'
         },
     },
 };
