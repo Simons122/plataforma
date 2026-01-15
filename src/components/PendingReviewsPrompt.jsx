@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
 import ReviewModal from './ReviewModal';
 import { auth } from '../lib/firebase';
+import { useLocation } from 'react-router-dom';
 
 export default function PendingReviewsPrompt() {
     const { t, language } = useLanguage();
@@ -23,7 +24,15 @@ export default function PendingReviewsPrompt() {
 
     const dateLocale = language === 'pt' ? pt : enUS;
 
+    const location = useLocation();
+
     useEffect(() => {
+        // Check local session dismiss
+        const isDismissed = sessionStorage.getItem('pending_reviews_dismissed');
+        if (isDismissed === 'true') {
+            setDismissed(true);
+        }
+
         const checkPendingReviews = async () => {
             const user = auth.currentUser;
             if (!user?.email) return;
@@ -41,6 +50,11 @@ export default function PendingReviewsPrompt() {
         checkPendingReviews();
     }, []);
 
+    const handleDismiss = () => {
+        setDismissed(true);
+        sessionStorage.setItem('pending_reviews_dismissed', 'true');
+    };
+
     const handleReviewSubmitted = (reviewId) => {
         // Remove from pending list
         setPendingReviews(prev => prev.filter(p => p.id !== selectedBooking?.id));
@@ -48,7 +62,10 @@ export default function PendingReviewsPrompt() {
         setSelectedBooking(null);
     };
 
-    if (loading) return null;
+    const allowedPaths = ['/client/explore', '/client/bookings'];
+    const shouldShow = allowedPaths.some(path => location.pathname === path || location.pathname.startsWith(path + '/'));
+
+    if (loading || !shouldShow) return null;
 
     const firstPending = pendingReviews[0];
 
@@ -75,7 +92,7 @@ export default function PendingReviewsPrompt() {
                 }}>
                     {/* Close Button */}
                     <button
-                        onClick={() => setDismissed(true)}
+                        onClick={handleDismiss}
                         style={{
                             position: 'absolute',
                             top: '10px',
