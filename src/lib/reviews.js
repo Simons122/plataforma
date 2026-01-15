@@ -70,7 +70,7 @@ export async function submitReview({
         }
 
         // Verificar se já existe avaliação para esta marcação
-        const existingReview = await checkExistingReview(bookingId);
+        const existingReview = await checkExistingReview(bookingId, professionalId);
         if (existingReview) {
             return { success: false, error: 'already_reviewed', message: 'Esta marcação já foi avaliada' };
         }
@@ -117,13 +117,17 @@ export async function submitReview({
 // VERIFICAR AVALIAÇÃO EXISTENTE
 // ============================================
 
-/**
- * Verificar se já existe avaliação para uma marcação
- */
-async function checkExistingReview(bookingId) {
-    // Procurar em professionals/* /reviews onde bookingId == bookingId
-    // Por simplicidade, verificamos no booking diretamente
-    return false; // Por agora retorna false, a verificação é feita via campo 'reviewed' na booking
+async function checkExistingReview(bookingId, professionalId) {
+    if (!professionalId || !bookingId) return false;
+    try {
+        const reviewsRef = collection(db, `professionals/${professionalId}/reviews`);
+        const q = query(reviewsRef, where('bookingId', '==', bookingId));
+        const snapshot = await getDocs(q);
+        return !snapshot.empty;
+    } catch (error) {
+        console.error("Error checking existing review:", error);
+        return false;
+    }
 }
 
 /**
@@ -313,10 +317,11 @@ export async function getPendingReviews(clientEmail) {
                 allBookingsDocs = [...allBookingsDocs, ...staffBookingsSnap.docs];
             }
 
-            allBookingsDocs.forEach(bookingDoc => {
+            // Processar bookings em paralelo para verificação
+            const bookingChecks = allBookingsDocs.map(async (bookingDoc) => {
                 const booking = { id: bookingDoc.id, ...bookingDoc.data() };
-                const bookingDate = new Date(booking.date);
-                const validStatuses = ['confirmed', 'completed', 'paid', 'pending'];
+                const bookingDate = new Date(booking.date || booking.selectedTime); // Tratamento para diferentes formatos
+                const validStatuses = ['confirmed', 'completed', 'paid', 'pending']; // Incluir pending se já passou da data
                 const isPast = bookingDate < new Date();
 
                 if (
@@ -325,14 +330,28 @@ export async function getPendingReviews(clientEmail) {
                     isPast &&
                     !booking.reviewed
                 ) {
-                    pendingReviews.push({
+                    // Verificação extra: Será que já existe review mas o booking não foi atualizado?
+                    const alreadyReviewed = await checkExistingReview(booking.id, proId);
+
+                    if (alreadyReviewed) {
+                        console.log(`🛠️ Auto-repair: Booking ${booking.id} already reviewed. Updating status.`);
+                        await markBookingAsReviewed(booking.id, proId, booking.staffId);
+                        return null; // Não adicionar aos pendentes
+                    }
+
+                    return {
                         ...booking,
                         professionalId: proId,
                         professionalName: proData.businessName || proData.name,
                         professionalImage: proData.logoUrl
-                    });
+                    };
                 }
+                return null;
             });
+
+            const resolvedChecks = await Promise.all(bookingChecks);
+            const validPending = resolvedChecks.filter(b => b !== null);
+            pendingReviews.push(...validPending);
         }
 
         return pendingReviews;
