@@ -7,9 +7,9 @@ service firebase.storage {
       return request.auth != null;
     }
     
-    // Função para verificar tamanho máximo (2MB)
+    // Função para verificar tamanho máximo (5MB)
     function isValidSize() {
-      return request.resource.size < 2 * 1024 * 1024;
+      return request.resource.size < 5 * 1024 * 1024;
     }
     
     // Função para verificar tipo de ficheiro (apenas imagens)
@@ -24,35 +24,27 @@ service firebase.storage {
     
     // LOGOS DOS PROFISSIONAIS
     match /professionals/{userId}/logo/{fileName} {
-      // Leitura pública (logo aparece no perfil público)
       allow read: if true;
-      
-      // Escrita: apenas owner, imagem válida, max 2MB
-      allow write: if isAuthenticated() 
-        && request.auth.uid == userId
-        && isImage()
-        && isValidSize();
+      allow write: if isAuthenticated() && request.auth.uid == userId && isImage() && isValidSize();
     }
     
     // FOTOS DO STAFF
     match /professionals/{ownerId}/staff/{staffId}/photo/{fileName} {
-      // Leitura pública
       allow read: if true;
-      
-      // Escrita: owner do estabelecimento ou próprio staff
-      allow write: if isAuthenticated()
-        && isImage()
-        && isValidSize()
+      allow write: if isAuthenticated() && isImage() && isValidSize()
         && (request.auth.uid == ownerId || request.auth.uid == staffId);
     }
     
-    // IMAGENS DE SERVIÇOS (se implementado no futuro)
+    // IMAGENS DE SERVIÇOS
     match /professionals/{userId}/services/{serviceId}/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() 
-        && request.auth.uid == userId
-        && isImage()
-        && isValidSize();
+      allow write: if isAuthenticated() && request.auth.uid == userId && isImage() && isValidSize();
+    }
+
+    // FOTOS DE PERFIL DE CLIENTES
+    match /clients/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && request.auth.uid == userId && isImage() && isValidSize();
     }
   }
 }

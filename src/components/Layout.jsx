@@ -108,7 +108,8 @@ export default function Layout({ children, role = 'professional', restricted = f
     const clientLinks = [
         { icon: Search, label: t('nav.explore', 'Explore'), path: '/client/explore' },
         { icon: CalendarDays, label: t('nav.bookings', 'Bookings'), path: '/client/bookings' },
-        { icon: Heart, label: t('nav.favorites', 'Favorites'), path: '/client/favorites' }
+        { icon: Heart, label: t('nav.favorites', 'Favorites'), path: '/client/favorites' },
+        { icon: User, label: t('nav.profile', 'Profile'), path: '/client/profile' }
     ];
 
     let links = [];

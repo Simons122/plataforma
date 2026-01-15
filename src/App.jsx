@@ -17,6 +17,7 @@ import ClientAuth from './pages/ClientAuth';
 import ClientBookings from './pages/ClientBookings';
 import ClientFavorites from './pages/ClientFavorites';
 import ClientExplore from './pages/ClientExplore';
+import ClientProfile from './pages/ClientProfile';
 import PricingPage from './pages/PricingPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -126,6 +127,7 @@ function App() {
           <Route path="/client/explore" element={<ClientExplore />} />
           <Route path="/client/bookings" element={<ClientBookings />} />
           <Route path="/client/favorites" element={<ClientFavorites />} />
+          <Route path="/client/profile" element={<ClientProfile />} />
 
           {/* Pricing & Payment Routes */}
           <Route path="/pricing" element={<PricingPage />} />
