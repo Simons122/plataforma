@@ -53,21 +53,7 @@ export default function PendingReviewsPrompt() {
 
     return (
         <>
-            {/* DEBUG INDICATOR - REMOVE LATER */}
-            <div style={{
-                position: 'fixed',
-                bottom: '5px',
-                right: '5px',
-                background: 'rgba(0,0,0,0.8)',
-                color: pendingReviews.length > 0 ? '#4ade80' : '#f87171',
-                fontSize: '10px',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                zIndex: 9999,
-                pointerEvents: 'none'
-            }}>
-                Debug: {pendingReviews.length} reviews found
-            </div>
+
 
             {(pendingReviews.length > 0 && !dismissed) && (
                 <div style={{
