@@ -4,8 +4,7 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     GoogleAuthProvider,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     updateProfile
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -107,83 +106,12 @@ export default function Auth() {
         profession: PROFESSIONS[0]
     });
 
+
     // Calcular força da palavra-passe em tempo real
     const passwordStrength = useMemo(() =>
         calculatePasswordStrength(formData.password),
         [formData.password]
     );
-
-    // Processar resultado do redirect do Google
-    useEffect(() => {
-        const handleRedirectResult = async () => {
-            try {
-                console.log('🔍 Verificando resultado do redirect...');
-                const result = await getRedirectResult(auth);
-                console.log('📋 Resultado do redirect:', result);
-
-                if (result) {
-                    console.log('✅ Login com Google bem sucedido:', result.user.email);
-                    const user = result.user;
-                    const docRef = doc(db, "professionals", user.uid);
-                    const docSnap = await getDoc(docRef);
-
-                    if (!docSnap.exists()) {
-                        // Calculate trial end date (5 days from now)
-                        const trialEndsAt = new Date();
-                        trialEndsAt.setDate(trialEndsAt.getDate() + 5);
-
-                        await setDoc(docRef, {
-                            name: user.displayName || "Utilizador Google",
-                            email: user.email,
-                            profession: "Por definir",
-                            paymentStatus: 'trial',
-                            trialEndsAt: trialEndsAt.toISOString(),
-                            createdAt: new Date().toISOString(),
-                            role: 'professional',
-                            slug: slugify(user.displayName || "utilizador-google")
-                        });
-
-                        if (redirectToPricing) {
-                            const checkoutResult = await createCheckoutSession({
-                                userId: user.uid,
-                                userEmail: user.email,
-                                userName: user.displayName || 'Utilizador Google'
-                            });
-                            if (!checkoutResult.success) {
-                                navigate('/pricing');
-                            }
-                        } else {
-                            navigate('/pricing');
-                        }
-                    } else if (docSnap.data().role === 'admin') {
-                        navigate('/admin/dashboard');
-                    } else {
-                        if (redirectToPricing) {
-                            const checkoutResult = await createCheckoutSession({
-                                userId: user.uid,
-                                userEmail: user.email,
-                                userName: user.displayName
-                            });
-                            if (!checkoutResult.success) {
-                                navigate('/pricing');
-                            }
-                        } else {
-                            navigate('/dashboard');
-                        }
-                    }
-                } else {
-                    console.log('ℹ️ Nenhum resultado de redirect pendente');
-                }
-            } catch (error) {
-                console.error('❌ Erro no redirect:', error);
-                if (error.code !== 'auth/popup-closed-by-user') {
-                    setError(error.message);
-                }
-            }
-        };
-
-        handleRedirectResult();
-    }, [navigate, redirectToPricing]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -194,13 +122,61 @@ export default function Auth() {
             setLoading(true);
             setError("");
             const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
 
-            // Use redirect em vez de popup para evitar problemas com COOP
-            await signInWithRedirect(auth, provider);
-            // Nota: O código após o redirect será executado no useEffect abaixo
+            const docRef = doc(db, "professionals", user.uid);
+            const docSnap = await getDoc(docRef);
+
+            if (!docSnap.exists()) {
+                // Calculate trial end date (5 days from now)
+                const trialEndsAt = new Date();
+                trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+
+                await setDoc(docRef, {
+                    name: user.displayName || "Utilizador Google",
+                    email: user.email,
+                    profession: "Por definir",
+                    paymentStatus: 'trial',
+                    trialEndsAt: trialEndsAt.toISOString(),
+                    createdAt: new Date().toISOString(),
+                    role: 'professional',
+                    slug: slugify(user.displayName || "utilizador-google")
+                });
+                // Check if coming from pricing - go to Stripe
+                if (redirectToPricing) {
+                    const result = await createCheckoutSession({
+                        userId: user.uid,
+                        userEmail: user.email,
+                        userName: user.displayName || 'Utilizador Google'
+                    });
+                    if (!result.success) {
+                        navigate('/pricing');
+                    }
+                } else {
+                    navigate('/pricing');
+                }
+            } else if (docSnap.data().role === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                // Existing user - check if coming from pricing
+                if (redirectToPricing) {
+                    const result = await createCheckoutSession({
+                        userId: user.uid,
+                        userEmail: user.email,
+                        userName: user.displayName
+                    });
+                    if (!result.success) {
+                        navigate('/pricing');
+                    }
+                } else {
+                    navigate('/dashboard');
+                }
+            }
         } catch (err) {
             console.error(err);
             setError(err.message);
+        } finally {
             setLoading(false);
         }
     };
