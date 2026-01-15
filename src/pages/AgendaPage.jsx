@@ -6,12 +6,13 @@ import {
     startOfDay, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval,
     isSameDay, isSameMonth, isToday, getDay
 } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { pt, enUS } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, CalendarDays, User2, Phone, Clock4, ListFilter, Plus } from 'lucide-react';
 import Layout from '../components/Layout';
 import ManualBookingModal from '../components/ManualBookingModal';
 import BookingDetailsModal from '../components/BookingDetailsModal';
 import { updateDoc } from 'firebase/firestore';
+import { useLanguage } from '../i18n';
 
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8:00 to 21:00
 
@@ -25,9 +26,13 @@ export default function AgendaPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const { t, language } = useLanguage();
+    const dateLocale = language === 'pt' ? pt : enUS;
 
     const handleCancelBooking = async (booking) => {
-        if (!window.confirm("Tem a certeza que deseja cancelar esta marcação?")) return;
+        if (!window.confirm(language === 'pt'
+            ? "Tem a certeza que deseja cancelar esta marcação?"
+            : "Are you sure you want to cancel this booking?")) return;
 
         try {
             const currentOwnerId = profile.isStaff ? profile.ownerId : profile.id;
@@ -48,7 +53,7 @@ export default function AgendaPage() {
             setSelectedEvent(null);
         } catch (error) {
             console.error("Erro ao cancelar:", error);
-            alert("Erro ao cancelar marcação.");
+            alert(language === 'pt' ? "Erro ao cancelar marcação." : "Error canceling booking.");
         }
     };
 
@@ -270,7 +275,8 @@ export default function AgendaPage() {
                             e.currentTarget.style.transform = 'translateY(0)';
                         }}
                     >
-                        <Plus size={16} strokeWidth={2.5} /> Nova Marcação
+                        <Plus size={16} strokeWidth={2.5} />
+                        {t?.booking?.newBooking || 'New Booking'}
                     </button>
                 </div>
 
@@ -284,10 +290,10 @@ export default function AgendaPage() {
                         padding: '3px'
                     }}>
                         {[
-                            { id: 'day', label: 'Dia' },
-                            { id: 'week', label: 'Semana' },
-                            { id: 'month', label: 'Mês' },
-                            { id: 'list', label: 'Lista' }
+                            { id: 'day', label: t?.time?.day || 'Day' },
+                            { id: 'week', label: t?.time?.week || 'Week' },
+                            { id: 'month', label: t?.time?.month || 'Month' },
+                            { id: 'list', label: t?.nav?.list || 'List' }
                         ].map(v => (
                             <button
                                 key={v.id}
@@ -323,10 +329,10 @@ export default function AgendaPage() {
                         </button>
                         <span style={{ padding: '0 0.75rem', fontSize: '0.8125rem', fontWeight: 500, minWidth: '100px', textAlign: 'center', color: 'var(--text-primary)' }}>
                             {viewMode === 'month'
-                                ? format(selectedDate, "MMMM yyyy", { locale: pt })
+                                ? format(selectedDate, "MMMM yyyy", { locale: dateLocale })
                                 : viewMode === 'week'
-                                    ? `${format(getWeekDays()[0], "d MMM", { locale: pt })} - ${format(getWeekDays()[6], "d MMM", { locale: pt })}`
-                                    : format(selectedDate, "d MMM", { locale: pt })
+                                    ? `${format(getWeekDays()[0], "d MMM", { locale: dateLocale })} - ${format(getWeekDays()[6], "d MMM", { locale: dateLocale })}`
+                                    : format(selectedDate, "d MMM", { locale: dateLocale })
                             }
                         </span>
                         <button onClick={() => navigate('next')} style={{ padding: '0.375rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex' }}>
@@ -350,7 +356,7 @@ export default function AgendaPage() {
                         onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-primary-hover)'}
                         onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-primary)'}
                     >
-                        Hoje
+                        {t?.time?.today || 'Today'}
                     </button>
                 </div>
             </div>
@@ -361,10 +367,10 @@ export default function AgendaPage() {
                     <div className="agenda-grid-header">
                         <div className="agenda-day-header-content">
                             <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                {format(selectedDate, "EEEE, d 'de' MMMM", { locale: pt })}
+                                {format(selectedDate, language === 'pt' ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d", { locale: dateLocale })}
                             </span>
                             <span className="badge badge-success">
-                                {currentDayBookings.length} marcações
+                                {currentDayBookings.length} {t?.nav?.bookings?.toLowerCase() || 'bookings'}
                             </span>
                         </div>
                     </div>
@@ -423,7 +429,7 @@ export default function AgendaPage() {
                                         className="agenda-week-header-cell"
                                     >
                                         <div className="agenda-week-day-label">
-                                            {format(day, 'EEE', { locale: pt })}
+                                            {format(day, 'EEE', { locale: dateLocale })}
                                         </div>
                                         <div className={`agenda-week-day-number ${isToday(day) ? 'today' : ''}`}>
                                             {format(day, 'd')}
@@ -472,12 +478,14 @@ export default function AgendaPage() {
                         <div style={{ minWidth: '700px' }}>
                             {/* Month Header */}
                             <div className="calendar-header">
-                                {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => (
+                                {(language === 'pt'
+                                    ? ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+                                    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                                ).map(d => (
                                     <div key={d} className="calendar-header-cell">
                                         {d}
                                     </div>
-                                ))}
-                            </div>
+                                ))}                            </div>
                             {/* Month Grid */}
                             <div className="calendar-grid-body">
                                 {getMonthDays().map((day, i) => {
@@ -503,7 +511,7 @@ export default function AgendaPage() {
                                             ))}
                                             {dayBookings.length > 3 && (
                                                 <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>
-                                                    +{dayBookings.length - 3} mais
+                                                    +{dayBookings.length - 3} {language === 'pt' ? 'mais' : 'more'}
                                                 </div>
                                             )}
                                         </div>
@@ -520,13 +528,15 @@ export default function AgendaPage() {
                 <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-default)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
                     <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-secondary)' }}>
                         <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {format(selectedDate, "EEEE, d 'de' MMMM", { locale: pt })}
+                            {format(selectedDate, language === 'pt' ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d", { locale: dateLocale })}
                         </span>
                     </div>
                     {currentDayBookings.length === 0 ? (
                         <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                             <CalendarDays size={48} strokeWidth={1} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-                            <p style={{ fontSize: '0.9375rem' }}>Nenhuma marcação registada para este dia.</p>
+                            <p style={{ fontSize: '0.9375rem' }}>
+                                {t?.dashboard?.noBookingsToday || 'No bookings registered for this day.'}
+                            </p>
                         </div>
                     ) : (
                         <div>

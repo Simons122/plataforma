@@ -33,6 +33,8 @@ export const translations = {
             viewMore: 'Ver mais',
             viewLess: 'Ver menos',
             copiedToClipboard: 'Copiado para a área de transferência!',
+            public: 'Público',
+            copy: 'Copiar',
         },
 
         // Navigation
@@ -50,6 +52,7 @@ export const translations = {
             favorites: 'Favoritos',
             explore: 'Explorar',
             reviews: 'Avaliações',
+            list: 'Lista',
         },
 
         // Auth
@@ -99,6 +102,11 @@ export const translations = {
             pendingPaymentMessage: 'A sua conta foi criada com sucesso, mas o pagamento encontra-se pendente. Aguarde a aprovação do administrador.',
             profileNotFound: 'Perfil não encontrado.',
             backToLogin: 'Voltar ao Login',
+            accessPending: 'Acesso Pendente',
+            accessPendingDesc: 'A sua conta foi criada com sucesso, mas o pagamento encontra-se',
+            pending: 'pendente',
+            awaitingApproval: 'Aguarde a aprovação do administrador.',
+            todaysAgenda: 'Agenda de Hoje',
         },
 
         // Booking
@@ -124,6 +132,7 @@ export const translations = {
             minutes: 'min',
             addedToFavorites: 'adicionado aos favoritos!',
             removedFromFavorites: 'removido dos favoritos.',
+            newBooking: 'Nova Marcação',
         },
 
         // Services
@@ -278,6 +287,9 @@ export const translations = {
             minutes: 'minutos',
             hours: 'horas',
             days: 'dias',
+            day: 'Dia',
+            week: 'Semana',
+            month: 'Mês',
         },
 
         // Errors
@@ -289,6 +301,7 @@ export const translations = {
             forbidden: 'Acesso negado',
             networkError: 'Erro de rede. Verifique a sua ligação.',
             serverError: 'Erro no servidor. Tente mais tarde.',
+            profileNotFound: 'Perfil não encontrado.',
         },
     },
 
@@ -321,6 +334,8 @@ export const translations = {
             viewMore: 'View more',
             viewLess: 'View less',
             copiedToClipboard: 'Copied to clipboard!',
+            public: 'Public',
+            copy: 'Copy',
         },
 
         // Navigation
@@ -338,6 +353,7 @@ export const translations = {
             favorites: 'Favorites',
             explore: 'Explore',
             reviews: 'Reviews',
+            list: 'List',
         },
 
         // Auth
@@ -387,6 +403,11 @@ export const translations = {
             pendingPaymentMessage: 'Your account was created successfully, but payment is pending. Please wait for administrator approval.',
             profileNotFound: 'Profile not found.',
             backToLogin: 'Back to Login',
+            accessPending: 'Access Pending',
+            accessPendingDesc: 'Your account was created successfully, but payment is',
+            pending: 'pending',
+            awaitingApproval: 'Awaiting administrator approval.',
+            todaysAgenda: "Today's Agenda",
         },
 
         // Booking
@@ -412,6 +433,7 @@ export const translations = {
             minutes: 'min',
             addedToFavorites: 'added to favorites!',
             removedFromFavorites: 'removed from favorites.',
+            newBooking: 'New Booking',
         },
 
         // Services
@@ -566,6 +588,9 @@ export const translations = {
             minutes: 'minutes',
             hours: 'hours',
             days: 'days',
+            day: 'Day',
+            week: 'Week',
+            month: 'Month',
         },
 
         // Errors
@@ -577,6 +602,7 @@ export const translations = {
             forbidden: 'Access denied',
             networkError: 'Network error. Check your connection.',
             serverError: 'Server error. Try again later.',
+            profileNotFound: 'Profile not found.',
         },
     },
 };

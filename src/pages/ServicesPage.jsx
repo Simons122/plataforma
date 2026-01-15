@@ -3,10 +3,12 @@ import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import Layout from '../components/Layout';
 import ServiceManager from '../components/ServiceManager';
+import { useLanguage } from '../i18n';
 
 export default function ServicesPage() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
+    const { t } = useLanguage();
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -44,10 +46,10 @@ export default function ServicesPage() {
         <Layout role={profile.role || 'professional'}>
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                    Serviços
+                    {t?.services?.title || 'Services'}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                    Gerencie os serviços que oferece aos seus clientes.
+                    {t?.services?.manageDescription || 'Manage the services you offer to your clients.'}
                 </p>
             </div>
             <ServiceManager userId={profile.id} />
