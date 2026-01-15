@@ -72,14 +72,7 @@ export async function initializeSecuritySystems() {
         // 2. Configurar headers de segurança (para CSP)
         setupSecurityHeaders();
 
-        // 3. Registar evento de inicialização
-        await logAuditEvent(
-            'security.initialized',
-            { timestamp: new Date().toISOString() },
-            SEVERITY.INFO
-        );
-
-        // 4. Configurar deteção de ameaças
+        // 3. Configurar deteção de ameaças
         setupThreatDetection();
 
         securityInitialized = true;
@@ -103,12 +96,12 @@ function setupSecurityHeaders() {
     cspMeta.httpEquiv = 'Content-Security-Policy';
     cspMeta.content = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://www.google.com",
+        "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://www.google.com https://*.stripe.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: blob: https: http:",
-        "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebasestorage.app https://api.resend.com https://api.stripe.com wss://*.firebaseio.com",
-        "frame-src 'self' https://*.stripe.com https://www.google.com",
+        "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebasestorage.app https://api.resend.com https://api.stripe.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com",
+        "frame-src 'self' https://*.stripe.com https://www.google.com https://*.firebaseapp.com https://*.firebaseio.com",
         "object-src 'none'",
         "base-uri 'self'"
     ].join('; ');

@@ -68,13 +68,23 @@ export async function logAuditEvent(eventType, data = {}, severity = SEVERITY.IN
     try {
         const currentUser = auth.currentUser;
 
+        // Só escreve no Firestore se o utilizador estiver autenticado
+        // Isto evita erros de permissão antes do login
+        if (!currentUser) {
+            // Log apenas local se não autenticado
+            if (import.meta.env.DEV) {
+                console.log(`📋 [AUDIT-LOCAL] ${eventType}:`, { data, severity });
+            }
+            return true; // Não é erro, apenas não persiste
+        }
+
         const auditEntry = {
             eventType,
             severity,
             timestamp: serverTimestamp(),
             clientTimestamp: new Date().toISOString(),
-            userId: currentUser?.uid || 'anonymous',
-            userEmail: currentUser?.email || 'unknown',
+            userId: currentUser.uid,
+            userEmail: currentUser.email || 'unknown',
             data: sanitizeAuditData(data),
             metadata: {
                 userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
@@ -101,7 +111,10 @@ export async function logAuditEvent(eventType, data = {}, severity = SEVERITY.IN
 
         return true;
     } catch (error) {
-        console.error('❌ Erro ao registar evento de auditoria:', error);
+        // Silenciar erros de permissão em ambiente de produção
+        if (import.meta.env.DEV) {
+            console.warn('⚠️ Erro ao registar evento de auditoria:', error.message);
+        }
         return false;
     }
 }
