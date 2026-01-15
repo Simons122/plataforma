@@ -5,7 +5,7 @@ import { db, auth } from '../lib/firebase';
 import { Clock, Check, ChevronLeft, ChevronRight, Calendar, Heart, Info } from 'lucide-react';
 import { format, addMinutes, setHours, setMinutes, isBefore, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
-import Layout from '../components/Layout';
+import ClientLayout from '../components/ClientLayout';
 import { useLanguage } from '../i18n';
 
 const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -403,7 +403,7 @@ export default function ClientBooking() {
                                                         width: '64px',
                                                         height: '64px',
                                                         borderRadius: '50%',
-                                                        padding: '3px', // Espaço para a borda
+                                                        padding: '3px',
                                                         background: !selectedStaff
                                                             ? 'linear-gradient(135deg, var(--accent-primary), #d946ef)'
                                                             : 'transparent',
@@ -613,7 +613,7 @@ export default function ClientBooking() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </Layout>
+            </div >
+        </ClientLayout >
     );
 }

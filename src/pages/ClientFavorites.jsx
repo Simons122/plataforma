@@ -3,7 +3,7 @@ import { auth, db } from '../lib/firebase';
 import { doc, getDoc, getDocs, query, collection, where, documentId, updateDoc, arrayRemove } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { Heart, Star, MapPin, ArrowRight, Loader2, Info, Check } from 'lucide-react';
-import Layout from '../components/Layout';
+import ClientLayout from '../components/ClientLayout';
 import { useLanguage } from '../i18n';
 
 export default function ClientFavorites() {
@@ -103,7 +103,7 @@ export default function ClientFavorites() {
     }
 
     return (
-        <Layout role="client" brandName={user?.displayName || user?.email?.split('@')[0]}>
+        <ClientLayout userName={user?.displayName || user?.email?.split('@')[0]}>
             <div style={{ paddingBottom: '2rem', position: 'relative' }}>
                 {/* Toast Notification */}
                 {toast && (
@@ -320,6 +320,6 @@ export default function ClientFavorites() {
                 }
                 .action-btn:active { transform: translateY(0); }
             `}</style>
-        </Layout>
+        </ClientLayout>
     );
 }
