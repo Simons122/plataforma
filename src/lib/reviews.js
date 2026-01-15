@@ -285,7 +285,6 @@ export async function getRatingDistribution(professionalId) {
  * (Marcações passadas, não avaliadas, com mais de 1h desde a sessão)
  */
 export async function getPendingReviews(clientEmail) {
-    console.error('🔴 [ReviewCheck] START function for:', clientEmail);
     try {
         const pendingReviews = [];
         const now = new Date();
@@ -317,32 +316,25 @@ export async function getPendingReviews(clientEmail) {
                 const validStatuses = ['confirmed', 'completed', 'paid', 'pending'];
                 const isPast = bookingDate < new Date();
 
-                if (booking.clientEmail?.toLowerCase() === clientEmail.toLowerCase()) {
-                    console.error(`🔴 [ReviewCheck] Found matching booking ${booking.id}: Status=${booking.status}, Date=${booking.date}, IsPast=${isPast}, Reviewed=${booking.reviewed}`);
-                }
-
                 if (
                     booking.clientEmail?.toLowerCase() === clientEmail.toLowerCase() &&
+                    validStatuses.includes(booking.status) &&
                     isPast &&
-                    !booking.reviewed &&
-                    validStatuses.includes(booking.status)
+                    !booking.reviewed
                 ) {
                     pendingReviews.push({
                         ...booking,
                         professionalId: proId,
-                        professionalName: proData.name,
-                        businessName: proData.businessName || proData.name,
-                        logoUrl: proData.logoUrl
+                        professionalName: proData.businessName || proData.name,
+                        professionalImage: proData.logoUrl
                     });
                 }
             });
         }
 
-        // Ordenar por data (mais recentes primeiro)
-        return pendingReviews.sort((a, b) => new Date(b.date) - new Date(a.date));
-
+        return pendingReviews;
     } catch (error) {
-        console.error('Erro ao obter avaliações pendentes:', error);
+        console.error('Error fetching pending reviews:', error);
         return [];
     }
 }

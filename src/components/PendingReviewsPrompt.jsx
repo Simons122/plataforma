@@ -23,21 +23,15 @@ export default function PendingReviewsPrompt() {
     const dateLocale = language === 'pt' ? pt : enUS;
 
     useEffect(() => {
-        console.error('🔴 [PendingPrompt] MOUNTED');
         const checkPendingReviews = async () => {
             const user = auth.currentUser;
-            if (!user?.email) {
-                console.error('🔴 [PendingPrompt] No user email yet');
-                return;
-            }
+            if (!user?.email) return;
 
-            console.error('🔴 [PendingPrompt] Checking reviews for:', user.email);
             try {
                 const pending = await getPendingReviews(user.email);
-                console.error(`🔴 [PendingPrompt] Result: ${pending.length} reviews found`);
                 setPendingReviews(pending);
             } catch (error) {
-                console.error('🔴 [PendingPrompt] Error:', error);
+                console.error('Error checking reviews:', error);
             } finally {
                 setLoading(false);
             }
