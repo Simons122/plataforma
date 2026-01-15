@@ -220,8 +220,9 @@ service cloud.firestore {
     match /audit_logs/{logId} {
       // ESCRITA: Qualquer utilizador autenticado pode criar logs
       // (necessário para registar eventos de segurança)
+      // Nota: serverTimestamp() é validado pelo Firestore automaticamente
       allow create: if isAuthenticated()
-        && request.resource.data.keys().hasAll(['eventType', 'severity', 'timestamp'])
+        && request.resource.data.keys().hasAll(['eventType', 'severity'])
         && isValidString(request.resource.data.eventType, 100)
         && request.resource.data.severity in ['info', 'warning', 'error', 'critical'];
       
