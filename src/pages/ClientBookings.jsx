@@ -4,10 +4,13 @@ import { collection, query, where, getDocs, doc, updateDoc, collectionGroup, get
 import { useNavigate, Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Building2, Euro, X, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { pt, enUS } from 'date-fns/locale';
 import Layout from '../components/Layout';
+import { useLanguage } from '../i18n';
 
 export default function ClientBookings() {
+    const { t, language } = useLanguage();
+    const dateLocale = language === 'pt' ? pt : enUS;
     const [loading, setLoading] = useState(true);
     const [bookings, setBookings] = useState([]);
     const [user, setUser] = useState(null);
@@ -112,7 +115,7 @@ export default function ClientBookings() {
     };
 
     const handleCancelBooking = async (booking) => {
-        if (!confirm('Tem certeza que deseja cancelar esta marcação?')) return;
+        if (!confirm(t('clientBookings.confirmCancel', 'Tem a certeza que deseja cancelar esta marcação?'))) return;
 
         setCancelling(booking.id);
         try {
@@ -162,10 +165,10 @@ export default function ClientBookings() {
                         WebkitTextFillColor: 'transparent',
                         marginBottom: '0.5rem'
                     }}>
-                        Minhas Marcações
+                        {t('clientBookings.title', 'Minhas Marcações')}
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem' }}>
-                        Gerencie seus agendamentos e consulte seu histórico.
+                        {t('clientBookings.subtitle', 'Gerencie seus agendamentos e consulte seu histórico.')}
                     </p>
                 </div>
 
@@ -184,14 +187,14 @@ export default function ClientBookings() {
                         active={activeTab === 'upcoming'}
                         onClick={() => setActiveTab('upcoming')}
                         icon={Calendar}
-                        label="Próximas"
+                        label={t('clientBookings.upcoming', 'Próximas')}
                         count={upcomingBookings.length}
                     />
                     <TabButton
                         active={activeTab === 'history'}
                         onClick={() => setActiveTab('history')}
                         icon={Clock}
-                        label="Histórico"
+                        label={t('clientBookings.history', 'Histórico')}
                     />
                 </div>
 
@@ -206,15 +209,17 @@ export default function ClientBookings() {
                                         booking={booking}
                                         onCancel={handleCancelBooking}
                                         cancelling={cancelling === booking.id}
+                                        t={t}
+                                        locale={dateLocale}
                                     />
                                 ))}
                             </div>
                         ) : (
                             <EmptyState
-                                title="Sem agendamentos futuros"
-                                message="Que tal marcar algo novo para esta semana?"
+                                title={t('clientBookings.emptyUpcomingTitle', 'Sem agendamentos futuros')}
+                                message={t('clientBookings.emptyUpcomingMessage', 'Que tal marcar algo novo para esta semana?')}
                                 actionLink="/client/explore"
-                                actionText="Explorar Profissionais"
+                                actionText={t('clientBookings.explorePros', 'Explorar Profissionais')}
                             />
                         )
                     ) : (
@@ -225,13 +230,15 @@ export default function ClientBookings() {
                                         key={booking.id}
                                         booking={booking}
                                         isPast={true}
+                                        t={t}
+                                        locale={dateLocale}
                                     />
                                 ))}
                             </div>
                         ) : (
                             <EmptyState
-                                title="Histórico vazio"
-                                message="As suas marcações passadas aparecerão aqui."
+                                title={t('clientBookings.emptyHistoryTitle', 'Histórico vazio')}
+                                message={t('clientBookings.emptyHistoryMessage', 'As suas marcações passadas aparecerão aqui.')}
                             />
                         )
                     )}
@@ -295,7 +302,7 @@ function TabButton({ active, onClick, icon: Icon, label, count }) {
     );
 }
 
-function BookingCard({ booking, onCancel, isPast, cancelling }) {
+function BookingCard({ booking, onCancel, isPast, cancelling, t, locale }) {
     const dateStr = booking.date || booking.selectedTime;
     const bookingDate = parseISO(dateStr);
     const isUpcoming = new Date(dateStr) > new Date() && booking.status !== 'cancelled';
@@ -326,13 +333,13 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
                 flexShrink: 0
             }}>
                 <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 700, color: isCancelled ? 'var(--text-muted)' : 'var(--accent-primary)', marginBottom: '-2px' }}>
-                    {format(bookingDate, 'MMM', { locale: pt }).replace('.', '')}
+                    {format(bookingDate, 'MMM', { locale }).replace('.', '')}
                 </span>
                 <span style={{ fontSize: '1.75rem', fontWeight: 800, color: isCancelled ? 'var(--text-muted)' : 'var(--text-primary)', lineHeight: 1 }}>
                     {format(bookingDate, 'd')}
                 </span>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px', textTransform: 'capitalize' }}>
-                    {format(bookingDate, 'EEE', { locale: pt }).replace('.', '')}
+                    {format(bookingDate, 'EEE', { locale }).replace('.', '')}
                 </span>
             </div>
 
@@ -390,12 +397,13 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
                 minWidth: '100px',
                 background: 'var(--bg-secondary-alpha)'
             }}>
+
                 {isCancelled ? (
-                    <span className="badge-pill" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--accent-danger)', fontSize: '0.7rem' }}>Cancelada</span>
+                    <span className="badge-pill" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--accent-danger)', fontSize: '0.7rem' }}>{t('clientBookings.cancelled', 'Cancelada')}</span>
                 ) : isPast ? (
-                    <span className="badge-pill" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Concluída</span>
+                    <span className="badge-pill" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.7rem' }}>{t('clientBookings.completed', 'Concluída')}</span>
                 ) : (
-                    <span className="badge-pill" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--accent-success)', fontSize: '0.7rem' }}>Confirmada</span>
+                    <span className="badge-pill" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--accent-success)', fontSize: '0.7rem' }}>{t('clientBookings.confirmed', 'Confirmada')}</span>
                 )}
 
                 {isUpcoming && onCancel && (
@@ -432,7 +440,7 @@ function BookingCard({ booking, onCancel, isPast, cancelling }) {
                         {cancelling ? (
                             <div className="spinner-sm" style={{ borderColor: 'var(--accent-danger)', borderTopColor: 'transparent' }} />
                         ) : (
-                            <>Cancelar marcação</>
+                            <>{t('clientBookings.cancelBooking', 'Cancelar marcação')}</>
                         )}
                     </button>
                 )}

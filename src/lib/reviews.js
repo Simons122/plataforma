@@ -312,12 +312,15 @@ export async function getPendingReviews(clientEmail) {
 
             allBookingsDocs.forEach(bookingDoc => {
                 const booking = { id: bookingDoc.id, ...bookingDoc.data() };
-                const bookingDate = new Date(booking.date);
-                const validStatuses = ['confirmed', 'completed', 'paid'];
+                const validStatuses = ['confirmed', 'completed', 'paid', 'pending']; // Adicionado 'pending'
+                const isPast = bookingDate < new Date();
+
+                // Debug log (can be removed later)
+                // console.log(`[ReviewCheck] Booking ${booking.id}: Status=${booking.status}, IsPast=${isPast}, Reviewed=${booking.reviewed}`);
 
                 if (
                     booking.clientEmail?.toLowerCase() === clientEmail.toLowerCase() &&
-                    bookingDate < new Date() && // Data passada
+                    isPast &&
                     !booking.reviewed &&
                     validStatuses.includes(booking.status)
                 ) {

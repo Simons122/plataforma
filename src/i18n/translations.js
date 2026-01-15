@@ -327,7 +327,24 @@ export const translations = {
             statusActive: 'Ativo',
             statusPending: 'Pendente',
             statusExpired: 'Expirado',
-            email: 'Email'
+            email: 'Email',
+            trial: 'trial',
+        },
+        clientBookings: {
+            title: 'Minhas Marcações',
+            subtitle: 'Gerencie os seus agendamentos e consulte o histórico.',
+            upcoming: 'Próximas',
+            history: 'Histórico',
+            cancelBooking: 'Cancelar marcação',
+            cancelled: 'Cancelada',
+            completed: 'Concluída',
+            confirmed: 'Confirmada',
+            emptyUpcomingTitle: 'Sem agendamentos futuros',
+            emptyUpcomingMessage: 'Que tal marcar algo novo para esta semana?',
+            explorePros: 'Explorar Profissionais',
+            emptyHistoryTitle: 'Histórico vazio',
+            emptyHistoryMessage: 'As suas marcações passadas aparecerão aqui.',
+            confirmCancel: 'Tem a certeza que deseja cancelar esta marcação?'
         },
     },
 
@@ -654,7 +671,24 @@ export const translations = {
             statusActive: 'Active',
             statusPending: 'Pending',
             statusExpired: 'Expired',
-            email: 'Email'
+            email: 'Email',
+            trial: 'trial',
+        },
+        clientBookings: {
+            title: 'My Bookings',
+            subtitle: 'Manage your appointments and view history.',
+            upcoming: 'Upcoming',
+            history: 'History',
+            cancelBooking: 'Cancel booking',
+            cancelled: 'Cancelled',
+            completed: 'Completed',
+            confirmed: 'Confirmed',
+            emptyUpcomingTitle: 'No upcoming bookings',
+            emptyUpcomingMessage: 'How about booking something new for this week?',
+            explorePros: 'Explore Professionals',
+            emptyHistoryTitle: 'Empty history',
+            emptyHistoryMessage: 'Your past bookings will appear here.',
+            confirmCancel: 'Are you sure you want to cancel this booking?'
         },
     },
 };
