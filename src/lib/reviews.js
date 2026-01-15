@@ -285,7 +285,7 @@ export async function getRatingDistribution(professionalId) {
  * (Marcações passadas, não avaliadas, com mais de 1h desde a sessão)
  */
 export async function getPendingReviews(clientEmail) {
-    console.log('[ReviewCheck] START function for:', clientEmail);
+    console.error('🔴 [ReviewCheck] START function for:', clientEmail);
     try {
         const pendingReviews = [];
         const now = new Date();
@@ -318,7 +318,7 @@ export async function getPendingReviews(clientEmail) {
                 const isPast = bookingDate < new Date();
 
                 if (booking.clientEmail?.toLowerCase() === clientEmail.toLowerCase()) {
-                    console.log(`[ReviewCheck] Found matching booking ${booking.id}: Status=${booking.status}, Date=${booking.date}, IsPast=${isPast}, Reviewed=${booking.reviewed}`);
+                    console.error(`🔴 [ReviewCheck] Found matching booking ${booking.id}: Status=${booking.status}, Date=${booking.date}, IsPast=${isPast}, Reviewed=${booking.reviewed}`);
                 }
 
                 if (
