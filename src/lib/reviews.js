@@ -316,8 +316,9 @@ export async function getPendingReviews(clientEmail) {
                 const validStatuses = ['confirmed', 'completed', 'paid', 'pending'];
                 const isPast = bookingDate < new Date();
 
-                // Debug log (can be removed later)
-                // console.log(`[ReviewCheck] Booking ${booking.id}: Status=${booking.status}, IsPast=${isPast}, Reviewed=${booking.reviewed}`);
+                if (booking.clientEmail?.toLowerCase() === clientEmail.toLowerCase()) {
+                    console.log(`[ReviewCheck] Found matching booking ${booking.id}: Status=${booking.status}, Date=${booking.date}, IsPast=${isPast}, Reviewed=${booking.reviewed}`);
+                }
 
                 if (
                     booking.clientEmail?.toLowerCase() === clientEmail.toLowerCase() &&
