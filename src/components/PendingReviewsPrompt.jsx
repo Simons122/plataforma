@@ -19,6 +19,7 @@ export default function PendingReviewsPrompt() {
     const [dismissed, setDismissed] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [showListModal, setShowListModal] = useState(false);
 
     const dateLocale = language === 'pt' ? pt : enUS;
 
@@ -115,24 +116,32 @@ export default function PendingReviewsPrompt() {
                                 fontSize: '0.9375rem',
                                 marginBottom: '0.25rem'
                             }}>
-                                {t?.reviews?.rateExperience || 'How was your experience?'}
+                                {pendingReviews.length > 1
+                                    ? (language === 'pt' ? `${pendingReviews.length} avaliações pendentes` : `${pendingReviews.length} pending reviews`)
+                                    : (t?.reviews?.rateExperience || 'How was your experience?')}
                             </p>
                             <p style={{
                                 color: 'rgba(255, 255, 255, 0.7)',
                                 fontSize: '0.8125rem'
                             }}>
-                                {firstPending.serviceName} {language === 'pt' ? 'com' : 'with'} {firstPending.professionalName}
+                                {pendingReviews.length > 1
+                                    ? (language === 'pt' ? 'Toque para ver e avaliar.' : 'Tap to view and rate.')
+                                    : `${firstPending.serviceName} ${language === 'pt' ? 'com' : 'with'} ${firstPending.professionalName}`}
                             </p>
                         </div>
 
                         <button
                             onClick={() => {
-                                setSelectedBooking({
-                                    ...firstPending,
-                                    clientId: auth.currentUser?.uid,
-                                    clientName: firstPending.clientName
-                                });
-                                setShowModal(true);
+                                if (pendingReviews.length > 1) {
+                                    setShowListModal(true);
+                                } else {
+                                    setSelectedBooking({
+                                        ...firstPending,
+                                        clientId: auth.currentUser?.uid,
+                                        clientName: firstPending.clientName
+                                    });
+                                    setShowModal(true);
+                                }
                             }}
                             style={{
                                 padding: '0.625rem 1rem',
@@ -152,24 +161,14 @@ export default function PendingReviewsPrompt() {
                             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'}
                             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
                         >
-                            {t?.reviews?.leaveReview || 'Review'}
+                            {pendingReviews.length > 1
+                                ? (language === 'pt' ? 'Ver' : 'View')
+                                : (t?.reviews?.leaveReview || 'Review')}
                             <ChevronRight size={14} />
                         </button>
                     </div>
 
-                    {/* More reviews indicator */}
-                    {pendingReviews.length > 1 && (
-                        <p style={{
-                            marginTop: '0.75rem',
-                            paddingTop: '0.75rem',
-                            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                            fontSize: '0.75rem',
-                            color: 'rgba(255, 255, 255, 0.5)',
-                            textAlign: 'center'
-                        }}>
-                            + {pendingReviews.length - 1} {language === 'pt' ? 'mais por avaliar' : 'more to review'}
-                        </p>
-                    )}
+
                 </div>
             )}
 
@@ -196,6 +195,89 @@ export default function PendingReviewsPrompt() {
                     }
                 }
             `}</style>
+            {/* List Modal */}
+            <PendingListModal
+                isOpen={showListModal}
+                onClose={() => setShowListModal(false)}
+                reviews={pendingReviews}
+                onSelect={(review) => {
+                    setSelectedBooking({
+                        ...review,
+                        clientId: auth.currentUser?.uid,
+                        clientName: review.clientName
+                    });
+                    setShowListModal(false);
+                    setShowModal(true);
+                }}
+                language={language}
+            />
         </>
+    );
+}
+
+function PendingListModal({ isOpen, onClose, reviews, onSelect, language }) {
+    if (!isOpen) return null;
+
+    return (
+        <div style={{
+            position: 'fixed', inset: 0, zIndex: 2000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1rem'
+        }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
+            <div style={{
+                position: 'relative', width: '100%', maxWidth: '400px',
+                background: 'var(--bg-card)', borderRadius: '20px',
+                padding: '1.5rem', boxShadow: 'var(--shadow-xl)',
+                maxHeight: '80vh', overflowY: 'auto',
+                border: '1px solid var(--border-default)'
+            }} className="animate-scale-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                        {language === 'pt' ? 'Avaliações Pendentes' : 'Pending Reviews'}
+                    </h3>
+                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {reviews.map(review => (
+                        <div key={review.id} style={{
+                            padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '12px',
+                            display: 'flex', gap: '1rem', alignItems: 'center',
+                            border: '1px solid var(--border-subtle)'
+                        }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '8px', overflow: 'hidden', background: '#e5e7eb', flexShrink: 0 }}>
+                                {review.professionalImage ? (
+                                    <img src={review.professionalImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontWeight: 'bold' }}>
+                                        {review.professionalName?.[0]}
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{review.serviceName}</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0 }}>{review.professionalName}</p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    {format(new Date(review.date || review.selectedTime), 'd MMM', { locale: language === 'pt' ? pt : enUS })} • {review.price}€
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => onSelect(review)}
+                                style={{
+                                    padding: '0.5rem 1rem', background: 'var(--accent-primary)', color: 'white',
+                                    border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {language === 'pt' ? 'Avaliar' : 'Rate'}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 }
