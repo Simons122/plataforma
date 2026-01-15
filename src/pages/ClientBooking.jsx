@@ -293,7 +293,7 @@ export default function ClientBooking() {
 
     // Se chegou aqui, temos currentUser E pro -> Renderiza Layout
     return (
-        <Layout role="client" brandName={currentUser.displayName || currentUser.email?.split('@')[0]}>
+        <ClientLayout userName={currentUser.displayName || currentUser.email?.split('@')[0]}>
             <div style={{ paddingBottom: '2rem' }}>
                 <div style={{ maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
 
