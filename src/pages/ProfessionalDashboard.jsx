@@ -8,13 +8,14 @@ import { pt, enUS } from 'date-fns/locale';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 import ManualBookingModal from '../components/ManualBookingModal';
-import { Plus } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import { useLanguage } from '../i18n';
+import { getReviewStats } from '../lib/reviews';
 
 export default function ProfessionalDashboard() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
-    const [stats, setStats] = useState({ services: 0, bookingsToday: 0, bookingsMonth: 0, revenueMonth: 0 });
+    const [stats, setStats] = useState({ services: 0, bookingsToday: 0, bookingsMonth: 0, revenueMonth: 0, averageRating: 0, totalReviews: 0 });
     const [todayBookings, setTodayBookings] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -117,11 +118,16 @@ export default function ProfessionalDashboard() {
                         const bookingsMonth = bookingsThisMonth.length;
                         const revenueMonth = bookingsThisMonth.reduce((acc, b) => acc + (Number(b.price) || 0), 0);
 
+                        // Fetch Review Stats (Only owner has direct reviews, or maybe staff too? For now fetch owner's)
+                        const reviewStatsData = await getReviewStats(ownerId);
+
                         setStats({
                             services: servicesSnap.size,
                             bookingsToday: todaysBookings.length,
                             bookingsMonth,
-                            revenueMonth
+                            revenueMonth,
+                            averageRating: reviewStatsData?.averageRating || 0,
+                            totalReviews: reviewStatsData?.totalReviews || 0
                         });
                     }
                 } catch (e) {
@@ -250,6 +256,13 @@ export default function ProfessionalDashboard() {
                 <StatCard icon={LineChart} label={t('dashboard.monthlyVolume', 'Monthly Volume')} value={stats.bookingsMonth} color="var(--accent-success)" trend="+12%" />
                 <StatCard icon={Wallet} label={t('dashboard.monthlyRevenue', 'Monthly Revenue')} value={`${stats.revenueMonth}€`} color="var(--accent-warning)" trend={t('dashboard.expectedBalance', 'Expected balance')} />
                 <StatCard icon={Sparkles} label={t('dashboard.catalog', 'Catalog')} value={stats.services} color="var(--accent-info)" trend={t('dashboard.activeServices', 'Active services')} />
+                <StatCard
+                    icon={Star}
+                    label={t('nav.reviews', 'Reviews')}
+                    value={stats.averageRating ? stats.averageRating.toFixed(1) : '—'}
+                    color="#eab308"
+                    trend={`${stats.totalReviews} ${t('common.total', 'Total')}`}
+                />
             </div>
 
             {/* Today's Bookings Preview */}
