@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Star, MessageCircle, TrendingUp, ChevronDown, Send, X } from 'lucide-react';
 import Layout from '../components/Layout';
 import { ReviewStatsCard, ReviewsList } from '../components/ReviewsDisplay';
-import { StarRating, RatingDistribution } from '../components/StarRating';
+import StarRating, { RatingDistribution } from '../components/StarRating';
 import { getProfessionalReviews, getReviewStats, getRatingDistribution } from '../lib/reviews';
 import { useLanguage } from '../i18n';
 import { auth, db } from '../lib/firebase';
