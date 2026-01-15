@@ -13,8 +13,8 @@ export default function LanguageSelector({ minimal = false }) {
     const dropdownRef = useRef(null);
 
     const languages = [
-        { code: 'pt', name: 'Português', flag: '🇵🇹', shortName: 'PT' },
-        { code: 'en', name: 'English', flag: '🇬🇧', shortName: 'EN' },
+        { code: 'pt', name: 'Português', shortName: 'PT' },
+        { code: 'en', name: 'English', shortName: 'EN' },
     ];
 
     const currentLang = languages.find(l => l.code === language);
@@ -72,11 +72,10 @@ export default function LanguageSelector({ minimal = false }) {
                     }}
                 >
                     <Globe size={16} style={{ color: 'var(--accent-primary)' }} />
-                    <span style={{ fontSize: '1rem' }}>{currentLang?.flag}</span>
                     <span style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-secondary)',
-                        fontWeight: 500
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)'
                     }}>
                         {currentLang?.shortName}
                     </span>
@@ -134,7 +133,14 @@ export default function LanguageSelector({ minimal = false }) {
                                     }
                                 }}
                             >
-                                <span style={{ fontSize: '1.25rem' }}>{lang.flag}</span>
+                                <span style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    color: 'var(--accent-primary)',
+                                    background: 'rgba(99, 102, 241, 0.15)',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px'
+                                }}>{lang.shortName}</span>
                                 <span style={{ flex: 1 }}>{lang.name}</span>
                                 {language === lang.code && (
                                     <Check size={16} strokeWidth={2.5} style={{ color: 'var(--accent-primary)' }} />
@@ -210,7 +216,14 @@ export default function LanguageSelector({ minimal = false }) {
                         fontSize: '0.9375rem',
                         fontWeight: 600
                     }}>
-                        <span style={{ fontSize: '1.125rem' }}>{currentLang?.flag}</span>
+                        <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: 'var(--accent-primary)',
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            padding: '2px 6px',
+                            borderRadius: '4px'
+                        }}>{currentLang?.shortName}</span>
                         {currentLang?.name}
                     </div>
                     <p style={{
@@ -296,11 +309,13 @@ export default function LanguageSelector({ minimal = false }) {
                             }}
                         >
                             <span style={{
-                                fontSize: '1.5rem',
-                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-                            }}>
-                                {lang.flag}
-                            </span>
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                color: 'var(--accent-primary)',
+                                background: 'rgba(99, 102, 241, 0.15)',
+                                padding: '2px 8px',
+                                borderRadius: '4px'
+                            }}>{lang.shortName}</span>
                             <span style={{ flex: 1 }}>{lang.name}</span>
                             {language === lang.code && (
                                 <div style={{
