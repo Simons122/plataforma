@@ -10,7 +10,7 @@ import { useToast } from '../components/Toast';
 import ManualBookingModal from '../components/ManualBookingModal';
 import { Plus, Star } from 'lucide-react';
 import { useLanguage } from '../i18n';
-import { getReviewStats } from '../lib/reviews';
+import { getReviewStats, getProfessionalReviews } from '../lib/reviews';
 
 export default function ProfessionalDashboard() {
     const [loading, setLoading] = useState(true);
@@ -118,8 +118,22 @@ export default function ProfessionalDashboard() {
                         const bookingsMonth = bookingsThisMonth.length;
                         const revenueMonth = bookingsThisMonth.reduce((acc, b) => acc + (Number(b.price) || 0), 0);
 
-                        // Fetch Review Stats (Only owner has direct reviews, or maybe staff too? For now fetch owner's)
-                        const reviewStatsData = await getReviewStats(ownerId);
+                        // Fetch Review Stats
+                        let reviewStatsData = await getReviewStats(ownerId);
+
+                        // Fallback: Se stats estiverem vazios (0), calcular manualmente pelas últimas reviews
+                        if (!reviewStatsData || reviewStatsData.totalReviews === 0) {
+                            try {
+                                const latestReviews = await getProfessionalReviews(ownerId, { limitCount: 50 });
+                                if (latestReviews.length > 0) {
+                                    reviewStatsData = reviewStatsData || {};
+                                    reviewStatsData.totalReviews = latestReviews.length;
+                                    reviewStatsData.averageRating = latestReviews.reduce((acc, r) => acc + (r.rating || 0), 0) / latestReviews.length;
+                                }
+                            } catch (err) {
+                                console.error('Error fetching fallback reviews:', err);
+                            }
+                        }
 
                         setStats({
                             services: servicesSnap.size,
