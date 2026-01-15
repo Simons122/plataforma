@@ -346,6 +346,16 @@ export const translations = {
             emptyHistoryMessage: 'As suas marcações passadas aparecerão aqui.',
             confirmCancel: 'Tem a certeza que deseja cancelar esta marcação?'
         },
+        clientExplore: {
+            title: 'Encontre o Profissional Ideal',
+            subtitle: 'Barbeiros, Personal Trainers, Esteticistas e muito mais.',
+            searchPlaceholder: 'Pesquisar por nome ou categoria...',
+            book: 'Agendar',
+            services: 'Serviços',
+            noProsFound: 'Nenhum profissional encontrado.',
+            removedFromFav: 'removido dos favoritos.',
+            addedToFav: 'adicionado aos favoritos!',
+        },
     },
 
     en: {
@@ -689,6 +699,16 @@ export const translations = {
             emptyHistoryTitle: 'Empty history',
             emptyHistoryMessage: 'Your past bookings will appear here.',
             confirmCancel: 'Are you sure you want to cancel this booking?'
+        },
+        clientExplore: {
+            title: 'Find Your Ideal Professional',
+            subtitle: 'Barbers, Personal Trainers, Beauticians and much more.',
+            searchPlaceholder: 'Search by name or category...',
+            book: 'Book Now',
+            services: 'Services',
+            noProsFound: 'No professionals found.',
+            removedFromFav: 'removed from favorites.',
+            addedToFav: 'added to favorites!',
         },
     },
 };

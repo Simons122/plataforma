@@ -6,7 +6,11 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ClientLayout from '../components/ClientLayout';
 
+import ClientLayout from '../components/ClientLayout';
+import { useLanguage } from '../i18n';
+
 export default function ClientExplore() {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [professionals, setProfessionals] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -62,11 +66,11 @@ export default function ClientExplore() {
             if (favorites.includes(proId)) {
                 await updateDoc(clientRef, { favorites: arrayRemove(proId) });
                 setFavorites(prev => prev.filter(id => id !== proId));
-                showToast(`${proName} removido dos favoritos.`, 'info');
+                showToast(`${proName} ${t('clientExplore.removedFromFav', 'removido dos favoritos.')}`, 'info');
             } else {
                 await updateDoc(clientRef, { favorites: arrayUnion(proId) });
                 setFavorites(prev => [...prev, proId]);
-                showToast(`${proName} adicionado aos favoritos!`, 'success');
+                showToast(`${proName} ${t('clientExplore.addedToFav', 'adicionado aos favoritos!')}`, 'success');
             }
         } catch (error) {
             console.error("Erro ao atualizar favorito:", error);
@@ -124,10 +128,10 @@ export default function ClientExplore() {
                 )}
                 <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                     <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                        Encontre o Profissional Ideal
+                        {t('clientExplore.title', 'Encontre o Profissional Ideal')}
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto 2rem' }}>
-                        Barbeiros, Personal Trainers, Esteticistas e muito mais.
+                        {t('clientExplore.subtitle', 'Barbeiros, Personal Trainers, Esteticistas e muito mais.')}
                     </p>
 
                     {/* Search Bar */}
@@ -139,7 +143,7 @@ export default function ClientExplore() {
                         <Search style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                         <input
                             type="text"
-                            placeholder="Pesquisar por nome ou categoria..."
+                            placeholder={t('clientExplore.searchPlaceholder', 'Pesquisar por nome ou categoria...')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={{
@@ -251,7 +255,7 @@ export default function ClientExplore() {
                                         color: 'var(--text-secondary)',
                                         border: '1px solid var(--border-default)'
                                     }}>
-                                        {pro.profession || 'Serviços'}
+                                        {pro.profession || t('clientExplore.services', 'Serviços')}
                                     </span>
                                 </div>
 
@@ -288,9 +292,10 @@ export default function ClientExplore() {
                                             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                                             boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' // Sombra subtil azulada
                                         }}
+
                                         className="action-btn"
                                     >
-                                        Agendar
+                                        {t('clientExplore.book', 'Agendar')}
                                         <ArrowRight size={18} strokeWidth={2.5} />
                                     </Link>
                                 </div>
@@ -301,7 +306,7 @@ export default function ClientExplore() {
 
                 {filteredPros.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
-                        <p>Nenhum profissional encontrado.</p>
+                        <p>{t('clientExplore.noProsFound', 'Nenhum profissional encontrado.')}</p>
                     </div>
                 )}
             </div>
@@ -322,6 +327,6 @@ export default function ClientExplore() {
                 }
                 .action-btn:active { transform: translateY(0); }
             `}</style>
-        </LayoutWrapper>
+        </LayoutWrapper >
     );
 }
