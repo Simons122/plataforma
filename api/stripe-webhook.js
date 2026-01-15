@@ -33,7 +33,29 @@ async function getRawBody(req) {
     return Buffer.concat(chunks);
 }
 
+// 🛡️ Security: Log webhook event for audit
+async function logSecurityEvent(eventType, data) {
+    try {
+        await db.collection('audit_logs').add({
+            eventType: `payment.${eventType}`,
+            severity: 'info',
+            timestamp: new Date(),
+            data: {
+                stripeEventType: eventType,
+                ...data
+            },
+            source: 'stripe-webhook'
+        });
+    } catch (error) {
+        console.error('Failed to log security event:', error);
+    }
+}
+
 export default async function handler(req, res) {
+    // 🛡️ Security Headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -49,6 +71,11 @@ export default async function handler(req, res) {
         event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } catch (err) {
         console.error('Webhook signature verification failed:', err.message);
+        // 🛡️ Log failed webhook attempts (potential attack)
+        await logSecurityEvent('webhook.verification_failed', {
+            error: err.message,
+            ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress
+        });
         return res.status(400).json({ error: `Webhook Error: ${err.message}` });
     }
 
@@ -58,23 +85,34 @@ export default async function handler(req, res) {
         switch (event.type) {
             case 'checkout.session.completed':
                 await handleCheckoutCompleted(event.data.object);
+                await logSecurityEvent('checkout.completed', {
+                    userId: event.data.object.metadata?.firebaseUserId
+                });
                 break;
 
             case 'customer.subscription.created':
             case 'customer.subscription.updated':
                 await handleSubscriptionUpdate(event.data.object);
+                await logSecurityEvent('subscription.updated', {
+                    status: event.data.object.status
+                });
                 break;
 
             case 'customer.subscription.deleted':
                 await handleSubscriptionDeleted(event.data.object);
+                await logSecurityEvent('subscription.deleted', {});
                 break;
 
             case 'invoice.payment_succeeded':
                 await handlePaymentSucceeded(event.data.object);
+                await logSecurityEvent('payment.succeeded', {
+                    amount: event.data.object.amount_paid / 100
+                });
                 break;
 
             case 'invoice.payment_failed':
                 await handlePaymentFailed(event.data.object);
+                await logSecurityEvent('payment.failed', {});
                 break;
 
             default:
@@ -84,6 +122,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ received: true });
     } catch (error) {
         console.error('Error processing webhook:', error);
+        await logSecurityEvent('webhook.error', { error: error.message });
         return res.status(500).json({ error: 'Webhook processing failed' });
     }
 }

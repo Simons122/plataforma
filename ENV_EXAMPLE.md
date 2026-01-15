@@ -65,3 +65,33 @@ FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
+# ==========================================
+# 🛡️ SECURITY CONFIGURATION (MAXIMUM PROTECTION)
+# ==========================================
+
+# reCAPTCHA v3 for App Check (Anti-bot protection)
+# Get from: https://www.google.com/recaptcha/admin
+# Type: reCAPTCHA v3
+# Domains: localhost, booklyo.pt, your-project.vercel.app
+VITE_RECAPTCHA_SITE_KEY=6Lcxxxxx
+
+# Encryption key for sensitive data (min 32 characters)
+# Generate with: openssl rand -hex 32
+VITE_ENCRYPTION_KEY=your-super-secret-key-at-least-32-chars
+
+# ==========================================
+# VERCEL ENVIRONMENT VARIABLES
+# ==========================================
+# Add these in Vercel Dashboard > Settings > Environment Variables:
+#
+# Production:
+# - STRIPE_SECRET_KEY=sk_live_xxxxx
+# - STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+# - RESEND_API_KEY=re_xxxxx
+# - FIREBASE_PROJECT_ID=your-project-id
+# - FIREBASE_CLIENT_EMAIL=xxx@xxx.iam.gserviceaccount.com  
+# - FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----..."
+#
+# Preview/Development:
+# - STRIPE_SECRET_KEY=sk_test_xxxxx
+# - (same as above with test keys)

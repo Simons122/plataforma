@@ -3,10 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, LogOut, User, Search, Heart, LogIn } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useLanguage } from '../i18n';
+import LanguageSelector from './LanguageSelector';
+import PendingReviewsPrompt from './PendingReviewsPrompt';
 
 export default function ClientLayout({ children, userName }) {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t, language } = useLanguage();
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -88,7 +92,7 @@ export default function ClientLayout({ children, userName }) {
                                 margin: 0,
                                 fontWeight: 500
                             }}>
-                                Área do Cliente
+                                {t?.auth?.clientLogin || 'Client Area'}
                             </p>
                         </div>
                     </Link>
@@ -152,8 +156,10 @@ export default function ClientLayout({ children, userName }) {
                                     }}
                                 >
                                     <LogOut size={16} />
-                                    Sair
+                                    {t?.nav?.logout || 'Logout'}
                                 </button>
+
+                                <LanguageSelector minimal />
                             </>
                         ) : (
                             <button
@@ -176,7 +182,7 @@ export default function ClientLayout({ children, userName }) {
                                 onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-primary)'}
                             >
                                 <LogIn size={16} />
-                                Entrar
+                                {t?.auth?.login || 'Login'}
                             </button>
                         )}
                     </div>
@@ -211,7 +217,7 @@ export default function ClientLayout({ children, userName }) {
                         }}
                     >
                         <Search size={16} />
-                        Explorar
+                        {t?.nav?.explore || 'Explore'}
                     </Link>
 
                     {/* Only show these if logged in */}
@@ -232,7 +238,7 @@ export default function ClientLayout({ children, userName }) {
                                 }}
                             >
                                 <Calendar size={16} />
-                                Minhas Marcações
+                                {t?.nav?.bookings || 'My Bookings'}
                             </Link>
 
                             <Link
@@ -250,7 +256,7 @@ export default function ClientLayout({ children, userName }) {
                                 }}
                             >
                                 <Heart size={16} />
-                                Favoritos
+                                {t?.nav?.favorites || 'Favorites'}
                             </Link>
                         </>
                     )}
@@ -283,6 +289,9 @@ export default function ClientLayout({ children, userName }) {
                     Powered by <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Booklyo</span>
                 </p>
             </footer>
+
+            {/* Pending Reviews Prompt */}
+            {currentUser && <PendingReviewsPrompt />}
         </div>
     );
 }

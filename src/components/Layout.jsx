@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, CalendarDays, Users, LayoutGrid, Clock, Sparkles, Menu, X, User, Sun, Moon, CalendarClock, Shield, Heart, Search } from 'lucide-react';
+import { LogOut, CalendarDays, Users, LayoutGrid, Clock, Sparkles, Menu, X, User, Sun, Moon, CalendarClock, Shield, Heart, Search, Star } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useTheme } from './ThemeContext';
 import { useUser } from '../context/UserContext';
+import { useLanguage } from '../i18n';
+import LanguageSelector from './LanguageSelector';
 
 export default function Layout({ children, role = 'professional', restricted = false, brandName: propBrandName }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
+    const { t, language } = useLanguage();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Use UserContext instead of local fetch
@@ -80,31 +83,32 @@ export default function Layout({ children, role = 'professional', restricted = f
     const isActive = (path) => location.pathname === path;
 
     const adminLinks = [
-        { icon: LayoutGrid, label: 'Dashboard', path: '/admin/dashboard' },
-        { icon: Users, label: 'Utilizadores', path: '/admin/users' },
-        { icon: Shield, label: 'Configurações', path: '/admin/settings' }
+        { icon: LayoutGrid, label: t?.nav?.dashboard || 'Dashboard', path: '/admin/dashboard' },
+        { icon: Users, label: t?.admin?.users || 'Users', path: '/admin/users' },
+        { icon: Shield, label: t?.nav?.settings || 'Settings', path: '/admin/settings' }
     ];
 
     const proLinks = [
-        { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
-        { icon: CalendarDays, label: 'Agenda', path: '/dashboard/agenda' },
-        { icon: Sparkles, label: 'Serviços', path: '/dashboard/services' },
-        { icon: CalendarClock, label: 'Horários', path: '/dashboard/schedule' },
-        { icon: Users, label: 'Profissionais', path: '/dashboard/staff' },
-        { icon: User, label: 'Perfil', path: '/dashboard/profile' }
+        { icon: LayoutGrid, label: t?.nav?.dashboard || 'Dashboard', path: '/dashboard' },
+        { icon: CalendarDays, label: t?.nav?.agenda || 'Agenda', path: '/dashboard/agenda' },
+        { icon: Sparkles, label: t?.nav?.services || 'Services', path: '/dashboard/services' },
+        { icon: CalendarClock, label: t?.nav?.schedule || 'Schedule', path: '/dashboard/schedule' },
+        { icon: Users, label: t?.nav?.staff || 'Staff', path: '/dashboard/staff' },
+        { icon: Star, label: t?.nav?.reviews || 'Reviews', path: '/dashboard/reviews' },
+        { icon: User, label: t?.nav?.profile || 'Profile', path: '/dashboard/profile' }
     ];
 
     const staffLinks = [
-        { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
-        { icon: CalendarDays, label: 'Agenda', path: '/dashboard/agenda' },
-        { icon: CalendarClock, label: 'Horários', path: '/dashboard/schedule' },
-        { icon: User, label: 'Perfil', path: '/dashboard/profile' }
+        { icon: LayoutGrid, label: t?.nav?.dashboard || 'Dashboard', path: '/dashboard' },
+        { icon: CalendarDays, label: t?.nav?.agenda || 'Agenda', path: '/dashboard/agenda' },
+        { icon: CalendarClock, label: t?.nav?.schedule || 'Schedule', path: '/dashboard/schedule' },
+        { icon: User, label: t?.nav?.profile || 'Profile', path: '/dashboard/profile' }
     ];
 
     const clientLinks = [
-        { icon: Search, label: 'Explorar', path: '/client/explore' },
-        { icon: CalendarDays, label: 'Minhas Marcações', path: '/client/bookings' },
-        { icon: Heart, label: 'Meus Favoritos', path: '/client/favorites' }
+        { icon: Search, label: t?.nav?.explore || 'Explore', path: '/client/explore' },
+        { icon: CalendarDays, label: t?.nav?.bookings || 'Bookings', path: '/client/bookings' },
+        { icon: Heart, label: t?.nav?.favorites || 'Favorites', path: '/client/favorites' }
     ];
 
     let links = [];
@@ -451,7 +455,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                         }}
                     >
                         {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                        {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                        {theme === 'dark' ? (language === 'pt' ? 'Modo Claro' : 'Light Mode') : (language === 'pt' ? 'Modo Escuro' : 'Dark Mode')}
                     </button>
                     <button
                         onClick={handleLogout}
@@ -479,7 +483,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                         }}
                     >
                         <LogOut size={16} />
-                        Terminar Sessão
+                        {t?.nav?.logout || 'Logout'}
                     </button>
                 </div>
             </aside>
@@ -517,20 +521,26 @@ export default function Layout({ children, role = 'professional', restricted = f
                         </button>
                     </div>
 
-                    {/* Mobile Theme Toggle */}
-                    <button
-                        onClick={toggleTheme}
-                        style={{
-                            padding: '0.5rem',
-                            color: 'var(--text-primary)',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer'
-                        }}
-                        className="md:hidden"
-                    >
-                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                    </button>
+                    {/* Language Selector & Mobile Theme Toggle */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <LanguageSelector minimal />
+                        <button
+                            onClick={toggleTheme}
+                            style={{
+                                padding: '0.5rem',
+                                color: 'var(--text-primary)',
+                                background: 'var(--bg-elevated)',
+                                border: '1px solid var(--border-default)',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
+                    </div>
                 </header>
 
                 {/* Content Area */}

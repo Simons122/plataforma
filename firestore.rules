@@ -155,6 +155,28 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isOwner(userId) || isAdmin();
       }
+
+      // ⭐ REVIEWS (Avaliações)
+      match /reviews/{reviewId} {
+        // Leitura: pública (visível para todos)
+        allow read: if true;
+        
+        // Criação: utilizador autenticado pode criar avaliação
+        allow create: if isAuthenticated()
+          && request.resource.data.keys().hasAll(['bookingId', 'rating', 'clientId'])
+          && request.resource.data.rating is number
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isValidString(request.resource.data.clientName, 100);
+        
+        // Update: apenas owner pode responder (professionalResponse)
+        allow update: if (isOwner(userId) || isAdmin())
+          && request.resource.data.rating == resource.data.rating
+          && request.resource.data.clientId == resource.data.clientId;
+        
+        // Delete: apenas owner ou admin (casos de spam/abuso)
+        allow delete: if isOwner(userId) || isAdmin();
+      }
     }
     
     // ============================================
@@ -190,6 +212,49 @@ service cloud.firestore {
       // Update/Delete: apenas pelo owner do estabelecimento ou próprio
       allow update, delete: if isAuthenticated() 
         && (resource.data.ownerId == request.auth.uid || request.auth.uid == authUid);
+    }
+
+    // ============================================
+    // 🛡️ AUDIT LOGS - SEGURANÇA MÁXIMA
+    // ============================================
+    match /audit_logs/{logId} {
+      // ESCRITA: Qualquer utilizador autenticado pode criar logs
+      // (necessário para registar eventos de segurança)
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['eventType', 'severity', 'timestamp'])
+        && isValidString(request.resource.data.eventType, 100)
+        && request.resource.data.severity in ['info', 'warning', 'error', 'critical'];
+      
+      // LEITURA: Apenas admins podem ver os logs
+      allow read: if isAdmin();
+      
+      // UPDATE/DELETE: NUNCA PERMITIDO - Logs são imutáveis
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // 🔐 SECURITY EVENTS (Rate Limits, Blocks)
+    // ============================================
+    match /security_events/{eventId} {
+      // Apenas admins podem ver eventos de segurança
+      allow read: if isAdmin();
+      
+      // Sistema pode criar (via Cloud Functions)
+      allow create: if isAuthenticated();
+      
+      // Imutável
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // 📊 ANALYTICS (Dados agregados)
+    // ============================================
+    match /analytics/{docId} {
+      // Leitura: apenas admins
+      allow read: if isAdmin();
+      
+      // Escrita: apenas por Cloud Functions (owner pode atualizar seus próprios)
+      allow write: if isAdmin();
     }
   }
 }

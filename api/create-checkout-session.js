@@ -13,9 +13,40 @@ const BOOKLYO_PRO = {
     interval: 'month'
 };
 
+// 🛡️ Security: Validate and sanitize input
+function sanitizeEmail(email) {
+    if (typeof email !== 'string') return '';
+    const clean = email.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(clean) && clean.length <= 254 ? clean : '';
+}
+
+function sanitizeString(str, maxLen = 100) {
+    if (typeof str !== 'string') return '';
+    return str.trim().substring(0, maxLen).replace(/[<>]/g, '');
+}
+
 export default async function handler(req, res) {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // 🛡️ Security Headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+    // 🛡️ CORS - Restringir a origens conhecidas
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://booklyo.pt',
+        'https://www.booklyo.pt',
+        'https://plataforma-tau.vercel.app',
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
+    ].filter(Boolean);
+
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+        res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

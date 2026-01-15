@@ -10,6 +10,7 @@ import SchedulePage from './pages/SchedulePage';
 import AgendaPage from './pages/AgendaPage';
 import ProfilePage from './pages/ProfilePage';
 import ManageStaff from './pages/ManageStaff';
+import ReviewsPage from './pages/ReviewsPage';
 import ClientBooking from './pages/ClientBooking';
 import TestNotifications from './pages/TestNotifications';
 import ClientAuth from './pages/ClientAuth';
@@ -108,6 +109,14 @@ function App() {
             element={
               <ProtectedRoute roleRequired="professional">
                 <ManageStaff />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/reviews"
+            element={
+              <ProtectedRoute roleRequired="professional">
+                <ReviewsPage />
               </ProtectedRoute>
             }
           />
