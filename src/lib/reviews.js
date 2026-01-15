@@ -117,7 +117,7 @@ export async function submitReview({
 // VERIFICAR AVALIAÇÃO EXISTENTE
 // ============================================
 
-async function checkExistingReview(bookingId, professionalId) {
+export async function checkExistingReview(bookingId, professionalId) {
     if (!professionalId || !bookingId) return false;
     try {
         const reviewsRef = collection(db, `professionals/${professionalId}/reviews`);
@@ -133,7 +133,7 @@ async function checkExistingReview(bookingId, professionalId) {
 /**
  * Marcar marcação como avaliada
  */
-async function markBookingAsReviewed(bookingId, professionalId, staffId) {
+export async function markBookingAsReviewed(bookingId, professionalId, staffId) {
     try {
         const bookingPath = staffId
             ? `professionals/${professionalId}/staff/${staffId}/bookings/${bookingId}`

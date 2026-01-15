@@ -8,6 +8,7 @@ import { pt, enUS } from 'date-fns/locale';
 import Layout from '../components/Layout';
 import PendingReviewsPrompt from '../components/PendingReviewsPrompt';
 import { useLanguage } from '../i18n';
+import { checkExistingReview, markBookingAsReviewed } from '../lib/reviews';
 
 export default function ClientBookings() {
     const { t, language } = useLanguage();
@@ -107,8 +108,26 @@ export default function ClientBookings() {
             }));
 
             console.log(`✅ Loaded ${allBookings.length} bookings successfully.`);
-            allBookings.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
-            setBookings(allBookings);
+
+            // Auto-Check Reviews for Past Bookings (Fix for inconsistent state)
+            const processedBookings = await Promise.all(allBookings.map(async (booking) => {
+                const bookingDate = new Date(booking.date || booking.selectedTime);
+                const isPast = bookingDate < new Date();
+                const isValidStatus = ['confirmed', 'completed', 'paid'].includes(booking.status);
+
+                if (isPast && isValidStatus && !booking.reviewed && booking.professionalId) {
+                    const hasReview = await checkExistingReview(booking.id, booking.professionalId);
+                    if (hasReview) {
+                        // Auto-repair in background
+                        markBookingAsReviewed(booking.id, booking.professionalId, booking.staffId);
+                        return { ...booking, reviewed: true };
+                    }
+                }
+                return booking;
+            }));
+
+            processedBookings.sort((a, b) => new Date(b.date || b.selectedTime) - new Date(a.date || a.selectedTime));
+            setBookings(processedBookings);
         } catch (error) {
             console.error("Error loading bookings:", error);
             alert("Erro ao carregar marcações. Por favor verifique a sua ligação.");
