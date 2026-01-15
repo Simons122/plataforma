@@ -195,16 +195,19 @@ export async function getProfessionalReviews(professionalId, options = {}) {
             reviewsRef,
             where('rating', '>=', minRating),
             orderBy('rating', 'desc'),
-            orderBy('createdAt', 'desc'),
+            // orderBy('createdAt', 'desc'), // Removido para evitar necessidade de índice composto
             limit(limitCount)
         );
 
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({
+        const reviews = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
             createdAt: doc.data().createdAt?.toDate?.() || new Date()
         }));
+
+        // Ordenação secundária em memória por data (mais recentes primeiro)
+        return reviews.sort((a, b) => b.createdAt - a.createdAt);
     } catch (error) {
         console.error('Erro ao obter avaliações:', error);
 
