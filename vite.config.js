@@ -76,7 +76,7 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: true // Enable PWA in dev for testing
+        enabled: false // DESATIVADO - Service Worker interfere com Google Auth popup
       }
     })
   ],
