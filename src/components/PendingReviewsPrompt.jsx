@@ -59,18 +59,19 @@ export default function PendingReviewsPrompt() {
             {(pendingReviews.length > 0 && !dismissed) && (
                 <div style={{
                     position: 'fixed',
-                    bottom: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 'calc(100% - 2rem)',
-                    maxWidth: '440px',
-                    background: 'linear-gradient(135deg, #1e1b4b, #312e81)',
+                    top: '90px',
+                    right: '32px',
+                    width: 'auto',
+                    minWidth: '340px',
+                    maxWidth: '400px',
+                    background: 'rgba(30, 64, 175, 0.95)', // Azul Profissional (Royal Blue)
+                    backdropFilter: 'blur(8px)',
                     borderRadius: '16px',
                     padding: '1.25rem',
-                    boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+                    boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.4)',
                     zIndex: 1000,
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                    animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    animation: 'slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}>
                     {/* Close Button */}
                     <button
@@ -184,14 +185,14 @@ export default function PendingReviewsPrompt() {
             />
 
             <style>{`
-                @keyframes slideUp {
+                @keyframes slideInRight {
                     from {
                         opacity: 0;
-                        transform: translateX(-50%) translateY(20px);
+                        transform: translateX(20px);
                     }
                     to {
                         opacity: 1;
-                        transform: translateX(-50%) translateY(0);
+                        transform: translateX(0);
                     }
                 }
             `}</style>
