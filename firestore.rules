@@ -107,8 +107,11 @@ service cloud.firestore {
         // NOTA: Em produção crítica, mover para Cloud Function
         allow read: if true;
         
-        // Update/Delete: apenas owner ou admin
-        allow update: if isOwner(userId) || isAdmin();
+        // Update: owner, admin, ou cliente (apenas campo reviewed)
+        allow update: if isOwner(userId) || isAdmin()
+          || (isAuthenticated() && resource.data.clientEmail == request.auth.token.email
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed'])
+              && request.resource.data.reviewed == true);
         allow delete: if isOwner(userId) || isAdmin();
       }
 
@@ -145,7 +148,13 @@ service cloud.firestore {
             
           allow read: if true;
           
-          allow update, delete: if isOwner(userId) || isAdmin() 
+          allow update: if isOwner(userId) || isAdmin() 
+            || (isAuthenticated() && get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid)
+            || (isAuthenticated() && resource.data.clientEmail == request.auth.token.email
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed'])
+                && request.resource.data.reviewed == true);
+          
+          allow delete: if isOwner(userId) || isAdmin() 
             || (isAuthenticated() && get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid);
         }
       }

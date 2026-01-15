@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, collectionGroup, getDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Building2, Euro, X, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Building2, Euro, X, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Star } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
 import Layout from '../components/Layout';
@@ -403,7 +403,14 @@ function BookingCard({ booking, onCancel, isPast, cancelling, t, locale }) {
                 {isCancelled ? (
                     <span className="badge-pill" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--accent-danger)', fontSize: '0.7rem' }}>{t('clientBookings.cancelled', 'Cancelada')}</span>
                 ) : isPast ? (
-                    <span className="badge-pill" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.7rem' }}>{t('clientBookings.completed', 'Concluída')}</span>
+                    booking.reviewed ? (
+                        <span className="badge-pill" style={{ background: 'rgba(251, 191, 36, 0.15)', color: '#f59e0b', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                            <Star size={10} fill="#f59e0b" strokeWidth={0} />
+                            Avaliada
+                        </span>
+                    ) : (
+                        <span className="badge-pill" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.7rem' }}>{t('clientBookings.completed', 'Concluída')}</span>
+                    )
                 ) : (
                     <span className="badge-pill" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--accent-success)', fontSize: '0.7rem' }}>{t('clientBookings.confirmed', 'Confirmada')}</span>
                 )}
