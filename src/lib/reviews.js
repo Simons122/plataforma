@@ -298,20 +298,28 @@ export async function getPendingReviews(clientEmail) {
             const proId = proDoc.id;
             const proData = proDoc.data();
 
-            // Bookings do owner
-            const bookingsSnap = await getDocs(
-                collection(db, `professionals/${proId}/bookings`)
-            );
+            // 1. Procurar bookings do Owner
+            const ownerBookingsSnap = await getDocs(collection(db, `professionals/${proId}/bookings`));
 
-            bookingsSnap.docs.forEach(bookingDoc => {
+            // 2. Procurar bookings da Staff
+            const staffSnap = await getDocs(collection(db, `professionals/${proId}/staff`));
+            let allBookingsDocs = [...ownerBookingsSnap.docs];
+
+            for (const staffMember of staffSnap.docs) {
+                const staffBookingsSnap = await getDocs(collection(db, `professionals/${proId}/staff/${staffMember.id}/bookings`));
+                allBookingsDocs = [...allBookingsDocs, ...staffBookingsSnap.docs];
+            }
+
+            allBookingsDocs.forEach(bookingDoc => {
                 const booking = { id: bookingDoc.id, ...bookingDoc.data() };
                 const bookingDate = new Date(booking.date);
+                const validStatuses = ['confirmed', 'completed', 'paid'];
 
                 if (
                     booking.clientEmail?.toLowerCase() === clientEmail.toLowerCase() &&
-                    bookingDate < oneHourAgo &&
+                    bookingDate < new Date() && // Data passada
                     !booking.reviewed &&
-                    booking.status === 'confirmed'
+                    validStatuses.includes(booking.status)
                 ) {
                     pendingReviews.push({
                         ...booking,
