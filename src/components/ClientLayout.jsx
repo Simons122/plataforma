@@ -256,7 +256,7 @@ export default function ClientLayout({ children, userName }) {
                                 }}
                             >
                                 <Heart size={16} />
-                                {t?.nav?.favorites || 'Favorites'}
+                                {t('nav.favorites', 'Favorites')}
                             </Link>
                         </>
                     )}
