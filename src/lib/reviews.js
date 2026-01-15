@@ -312,7 +312,8 @@ export async function getPendingReviews(clientEmail) {
 
             allBookingsDocs.forEach(bookingDoc => {
                 const booking = { id: bookingDoc.id, ...bookingDoc.data() };
-                const validStatuses = ['confirmed', 'completed', 'paid', 'pending']; // Adicionado 'pending'
+                const bookingDate = new Date(booking.date);
+                const validStatuses = ['confirmed', 'completed', 'paid', 'pending'];
                 const isPast = bookingDate < new Date();
 
                 // Debug log (can be removed later)
