@@ -285,6 +285,7 @@ export async function getRatingDistribution(professionalId) {
  * (Marcações passadas, não avaliadas, com mais de 1h desde a sessão)
  */
 export async function getPendingReviews(clientEmail) {
+    console.log('[ReviewCheck] START function for:', clientEmail);
     try {
         const pendingReviews = [];
         const now = new Date();

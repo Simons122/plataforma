@@ -26,12 +26,15 @@ export default function PendingReviewsPrompt() {
         const checkPendingReviews = async () => {
             const user = auth.currentUser;
             if (!user?.email) {
+                console.log('[PendingPrompt] No user email, aborting check.');
                 setLoading(false);
                 return;
             }
 
+            console.log('[PendingPrompt] Checking reviews for:', user.email);
             try {
                 const pending = await getPendingReviews(user.email);
+                console.log('[PendingPrompt] Reviews found:', pending.length);
                 setPendingReviews(pending);
             } catch (error) {
                 console.error('Error fetching pending reviews:', error);
