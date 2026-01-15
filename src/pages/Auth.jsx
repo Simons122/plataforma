@@ -117,8 +117,12 @@ export default function Auth() {
     useEffect(() => {
         const handleRedirectResult = async () => {
             try {
+                console.log('🔍 Verificando resultado do redirect...');
                 const result = await getRedirectResult(auth);
+                console.log('📋 Resultado do redirect:', result);
+
                 if (result) {
+                    console.log('✅ Login com Google bem sucedido:', result.user.email);
                     const user = result.user;
                     const docRef = doc(db, "professionals", user.uid);
                     const docSnap = await getDoc(docRef);
@@ -167,9 +171,11 @@ export default function Auth() {
                             navigate('/dashboard');
                         }
                     }
+                } else {
+                    console.log('ℹ️ Nenhum resultado de redirect pendente');
                 }
             } catch (error) {
-                console.error('Erro no redirect:', error);
+                console.error('❌ Erro no redirect:', error);
                 if (error.code !== 'auth/popup-closed-by-user') {
                     setError(error.message);
                 }
