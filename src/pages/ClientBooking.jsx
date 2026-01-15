@@ -4,12 +4,15 @@ import { doc, getDoc, collection, getDocs, addDoc, query, where, updateDoc, arra
 import { db, auth } from '../lib/firebase';
 import { Clock, Check, ChevronLeft, ChevronRight, Calendar, Heart, Info } from 'lucide-react';
 import { format, addMinutes, setHours, setMinutes, isBefore, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { pt, enUS } from 'date-fns/locale';
 import Layout from '../components/Layout';
+import { useLanguage } from '../i18n';
 
 const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 export default function ClientBooking() {
+    const { t, language } = useLanguage();
+    const dateLocale = language === 'pt' ? pt : enUS;
     const { slug } = useParams();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
@@ -194,11 +197,11 @@ export default function ClientBooking() {
             if (isFavorite) {
                 await updateDoc(clientRef, { favorites: arrayRemove(pro.id) });
                 setIsFavorite(false);
-                showToast(`${proName} removido dos favoritos.`, 'info');
+                showToast(`${proName} ${t('clientExplore.removedFromFav', 'removido dos favoritos.')}`, 'info');
             } else {
                 await updateDoc(clientRef, { favorites: arrayUnion(pro.id) });
                 setIsFavorite(true);
-                showToast(`${proName} adicionado aos favoritos!`, 'success');
+                showToast(`${proName} ${t('clientExplore.addedToFav', 'adicionado aos favoritos!')}`, 'success');
             }
         } catch (error) {
             console.error("Erro ao atualizar favoritos:", error);
@@ -364,7 +367,7 @@ export default function ClientBooking() {
                                     {staff.length > 0 && (
                                         <div style={{ marginBottom: '2rem' }}>
                                             <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                                                Com quem deseja agendar?
+                                                {t('bookingPage.whoToBookWith', 'Com quem deseja agendar?')}
                                             </h3>
                                             <div style={{
                                                 display: 'flex',
@@ -533,17 +536,17 @@ export default function ClientBooking() {
                                         </div>
                                     )}
 
-                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Escolha um serviço</h2>
+                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>{t('bookingPage.chooseService', 'Escolha um serviço')}</h2>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                                         {services.length === 0 ? (
-                                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum serviço disponível.</p>
+                                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('bookingPage.noServices', 'Nenhum serviço disponível.')}</p>
                                         ) : services.map(service => (
                                             <button key={service.id} onClick={() => { setSelectedService(service); setStep(2); }} style={{ textAlign: 'left', padding: '1.125rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]">
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                                     <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{service.name}</span>
                                                     <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent-success)' }}>{service.price}€</span>
                                                 </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}><Clock size={14} />{service.duration} min</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}><Clock size={14} />{service.duration} {t('bookingPage.min', 'min')}</div>
                                             </button>
                                         ))}
                                     </div>
@@ -553,8 +556,8 @@ export default function ClientBooking() {
                             {/* Step 2: Choose Date and Time */}
                             {step === 2 && (
                                 <div className="animate-fade-in">
-                                    <button onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> Voltar</button>
-                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Escolha data e horário</h2>
+                                    <button onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> {t('bookingPage.back', 'Voltar')}</button>
+                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>{t('bookingPage.chooseDateTime', 'Escolha data e horário')}</h2>
                                     <div style={{ display: 'flex', gap: '0.625rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.5rem', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                         {getDateOptions().map((date, i) => {
                                             const isSelected = isSameDay(date, selectedDate);
@@ -562,14 +565,14 @@ export default function ClientBooking() {
                                             const isOpen = schedule && schedule[dayKey]?.enabled;
                                             return (
                                                 <button key={i} onClick={() => isOpen && setSelectedDate(date)} disabled={!isOpen} style={{ flexShrink: 0, padding: '0.875rem', minWidth: '64px', background: isSelected ? 'var(--accent-primary)' : 'var(--bg-secondary)', border: '1px solid', borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-default)', borderRadius: '12px', cursor: isOpen ? 'pointer' : 'not-allowed', opacity: isOpen ? 1 : 0.4, textAlign: 'center', transition: 'all 0.2s ease', boxShadow: isSelected ? 'var(--shadow-glow)' : 'none' }}>
-                                                    <div style={{ fontSize: '0.625rem', color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem', letterSpacing: '0.05em' }}>{format(date, 'EEE', { locale: pt })}</div>
+                                                    <div style={{ fontSize: '0.625rem', color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem', letterSpacing: '0.05em' }}>{format(date, 'EEE', { locale: dateLocale })}</div>
                                                     <div style={{ fontSize: '1.125rem', fontWeight: 700, color: isSelected ? '#fff' : 'var(--text-primary)' }}>{format(date, 'd')}</div>
                                                 </button>
                                             );
                                         })}
                                     </div>
-                                    <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Horários - {format(selectedDate, "d 'de' MMMM", { locale: pt })}</h3>
-                                    {!schedule ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>O profissional ainda não definiu os horários.</p> : slots.length === 0 ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum horário disponível neste dia.</p> : (
+                                    <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('bookingPage.schedule', 'Horários')} - {format(selectedDate, language === 'pt' ? "d 'de' MMMM" : "MMMM d", { locale: dateLocale })}</h3>
+                                    {!schedule ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('bookingPage.noSchedule', 'O profissional ainda não definiu os horários.')}</p> : slots.length === 0 ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('bookingPage.noSlots', 'Nenhum horário disponível neste dia.')}</p> : (
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.625rem' }}>
                                             {slots.map((slot, i) => (
                                                 <button key={i} onClick={() => { setSelectedTime(slot); setStep(3); }} style={{ padding: '0.875rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '0.9375rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease' }} className="hover:border-[var(--accent-primary)] hover:bg-[var(--bg-elevated)]">{format(slot, 'HH:mm')}</button>
@@ -582,30 +585,29 @@ export default function ClientBooking() {
                             {/* Step 3: Confirm Details */}
                             {step === 3 && (
                                 <div className="animate-fade-in">
-                                    <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> Voltar</button>
-                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Os seus dados</h2>
+                                    <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.875rem', padding: 0 }}><ChevronLeft size={16} /> {t('bookingPage.back', 'Voltar')}</button>
+                                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>{t('bookingPage.yourData', 'Os seus dados')}</h2>
                                     <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-default)', marginBottom: '1.75rem' }}>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Resumo da Marcação:</p>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('bookingPage.summary', 'Resumo da Marcação:')}</p>
                                         <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>{selectedService.name}</p>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}><Calendar size={14} style={{ color: 'var(--accent-primary)' }} /><p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>{format(selectedTime, "EEEE, d 'de' MMMM 'às' HH:mm", { locale: pt })}</p></div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}><Calendar size={14} style={{ color: 'var(--accent-primary)' }} /><p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>{format(selectedTime, "EEEE, d 'de' MMMM", { locale: dateLocale })} {t('common.at', 'às')} {format(selectedTime, 'HH:mm')}</p></div>
                                     </div>
                                     <form onSubmit={handleBooking} style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
-                                        <div><label className="label" style={{ marginBottom: '0.5rem' }}>Nome Completo</label><input type="text" required placeholder="Seu nome" value={clientData.name} onChange={e => setClientData({ ...clientData, name: e.target.value })} className="input" /></div>
-                                        <div><label className="label" style={{ marginBottom: '0.5rem' }}>Email</label><input type="email" required placeholder="seu@email.com" value={clientData.email} onChange={e => setClientData({ ...clientData, email: e.target.value })} className="input" /></div>
-                                        <div><label className="label" style={{ marginBottom: '0.5rem' }}>Telemóvel</label><input type="tel" required placeholder="9xx xxx xxx" value={clientData.phone} onChange={e => setClientData({ ...clientData, phone: e.target.value })} className="input" /></div>
-                                        <button type="submit" disabled={submitting} style={{ padding: '1rem', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', marginTop: '0.75rem', transition: 'all 0.2s ease', boxShadow: 'var(--shadow-md)' }} className="hover:bg-[var(--accent-primary-hover)]">{submitting ? 'A confirmar...' : 'Confirmar Reserva'}</button>
+                                        <div><label className="label" style={{ marginBottom: '0.5rem' }}>{t('bookingPage.fullName', 'Nome Completo')}</label><input type="text" required placeholder={t('bookingPage.yourName', 'Seu nome')} value={clientData.name} onChange={e => setClientData({ ...clientData, name: e.target.value })} className="input" /></div>
+                                        <div><label className="label" style={{ marginBottom: '0.5rem' }}>{t('adminUsers.email', 'Email')}</label><input type="email" required placeholder="seu@email.com" value={clientData.email} onChange={e => setClientData({ ...clientData, email: e.target.value })} className="input" /></div>
+                                        <div><label className="label" style={{ marginBottom: '0.5rem' }}>{t('bookingPage.phone', 'Telemóvel')}</label><input type="tel" required placeholder="9xx xxx xxx" value={clientData.phone} onChange={e => setClientData({ ...clientData, phone: e.target.value })} className="input" /></div>
+                                        <button type="submit" disabled={submitting} style={{ padding: '1rem', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', marginTop: '0.75rem', transition: 'all 0.2s ease', boxShadow: 'var(--shadow-md)' }} className="hover:bg-[var(--accent-primary-hover)]">{submitting ? t('bookingPage.confirming', 'A confirmar...') : t('bookingPage.confirm', 'Confirmar Reserva')}</button>
                                     </form>
                                 </div>
                             )}
-
 
                             {/* Step 4: Success */}
                             {step === 4 && (
                                 <div className="animate-fade-in" style={{ textAlign: 'center', padding: '1rem 0' }}>
                                     <div style={{ width: '72px', height: '72px', margin: '0 auto 1.5rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-success)' }}><Check size={36} strokeWidth={3} /></div>
-                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Reserva Confirmada!</h2>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.5 }}>Enviámos os detalhes para <strong>{clientData.email}</strong>.<br />Obrigado pela sua preferência!</p>
-                                    <button onClick={() => navigate('/client/bookings')} style={{ padding: '0.875rem 2rem', background: 'transparent', border: '1px solid var(--border-default)', borderRadius: '12px', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease' }} className="hover:bg-[var(--bg-elevated)]">Ver as minhas marcações</button>
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>{t('bookingPage.confirmedTitle', 'Reserva Confirmada!')}</h2>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.5 }}>{t('bookingPage.confirmedMsg', 'Enviámos os detalhes para')} <strong>{clientData.email}</strong>.<br />{t('bookingPage.thanks', 'Obrigado pela sua preferência!')}</p>
+                                    <button onClick={() => navigate('/client/bookings')} style={{ padding: '0.875rem 2rem', background: 'transparent', border: '1px solid var(--border-default)', borderRadius: '12px', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease' }} className="hover:bg-[var(--bg-elevated)]">{t('bookingPage.viewBookings', 'Ver as minhas marcações')}</button>
                                 </div>
                             )}
                         </div>
