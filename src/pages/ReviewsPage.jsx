@@ -7,8 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { Star, MessageCircle, TrendingUp, ChevronDown, Send, X } from 'lucide-react';
 import Layout from '../components/Layout';
 import { ReviewStatsCard, ReviewsList } from '../components/ReviewsDisplay';
-import StarRating, { RatingDistribution } from '../components/StarRating';
-import { getProfessionalReviews, getReviewStats, getRatingDistribution, respondToReview } from '../lib/reviews';
+import { StarRating, RatingDistribution } from '../components/StarRating';
+import { getProfessionalReviews, getReviewStats, getRatingDistribution } from '../lib/reviews';
 import { useLanguage } from '../i18n';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -22,9 +22,6 @@ export default function ReviewsPage() {
     const [reviews, setReviews] = useState([]);
     const [stats, setStats] = useState({ averageRating: 0, totalReviews: 0 });
     const [distribution, setDistribution] = useState({});
-    const [respondingTo, setRespondingTo] = useState(null);
-    const [responseText, setResponseText] = useState('');
-    const [submitting, setSubmitting] = useState(false);
 
     const dateLocale = language === 'pt' ? pt : enUS;
 
@@ -46,6 +43,14 @@ export default function ReviewsPage() {
                             getRatingDistribution(user.uid)
                         ]);
 
+                        // Recalcular stats localmente se a API retornar zeros (devido a erros de permissão anteriores)
+                        if (statsData.totalReviews === 0 && reviewsData.length > 0) {
+                            const total = reviewsData.length;
+                            const sum = reviewsData.reduce((acc, r) => acc + (r.rating || 0), 0);
+                            statsData.totalReviews = total;
+                            statsData.averageRating = sum / total;
+                        }
+
                         setReviews(reviewsData);
                         setStats(statsData);
                         setDistribution(distData);
@@ -60,28 +65,7 @@ export default function ReviewsPage() {
         return () => unsubscribe();
     }, []);
 
-    const handleRespond = async (reviewId) => {
-        if (!responseText.trim()) return;
 
-        setSubmitting(true);
-        try {
-            const result = await respondToReview(profile.id, reviewId, responseText);
-            if (result.success) {
-                // Update local state
-                setReviews(prev => prev.map(review =>
-                    review.id === reviewId
-                        ? { ...review, professionalResponse: responseText.trim() }
-                        : review
-                ));
-                setRespondingTo(null);
-                setResponseText('');
-            }
-        } catch (error) {
-            console.error('Error responding:', error);
-        } finally {
-            setSubmitting(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -107,8 +91,8 @@ export default function ReviewsPage() {
                 </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>
                     {language === 'pt'
-                        ? 'Veja e responda às avaliações dos seus clientes'
-                        : 'View and respond to your client reviews'
+                        ? 'Veja o feedback dos seus clientes'
+                        : 'View feedback from your clients'
                     }
                 </p>
             </div>
@@ -315,7 +299,8 @@ export default function ReviewsPage() {
                                 )}
 
                                 {/* Professional Response */}
-                                {review.professionalResponse ? (
+                                {/* Professional Response */}
+                                {review.professionalResponse && (
                                     <div style={{
                                         padding: '1rem',
                                         background: 'color-mix(in srgb, var(--accent-primary), transparent 95%)',
@@ -345,121 +330,12 @@ export default function ReviewsPage() {
                                             {review.professionalResponse}
                                         </p>
                                     </div>
-                                ) : respondingTo === review.id ? (
-                                    /* Response Form */
-                                    <div style={{
-                                        padding: '1rem',
-                                        background: 'var(--bg-secondary)',
-                                        borderRadius: '10px'
-                                    }}>
-                                        <textarea
-                                            value={responseText}
-                                            onChange={(e) => setResponseText(e.target.value)}
-                                            placeholder={language === 'pt'
-                                                ? 'Escreva a sua resposta...'
-                                                : 'Write your response...'
-                                            }
-                                            style={{
-                                                width: '100%',
-                                                minHeight: '80px',
-                                                padding: '0.75rem',
-                                                border: '1px solid var(--border-default)',
-                                                borderRadius: '8px',
-                                                background: 'var(--bg-card)',
-                                                color: 'var(--text-primary)',
-                                                fontSize: '0.875rem',
-                                                resize: 'vertical',
-                                                fontFamily: 'inherit'
-                                            }}
-                                        />
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'flex-end',
-                                            gap: '0.5rem',
-                                            marginTop: '0.75rem'
-                                        }}>
-                                            <button
-                                                onClick={() => {
-                                                    setRespondingTo(null);
-                                                    setResponseText('');
-                                                }}
-                                                style={{
-                                                    padding: '0.5rem 1rem',
-                                                    background: 'transparent',
-                                                    border: '1px solid var(--border-default)',
-                                                    borderRadius: '8px',
-                                                    color: 'var(--text-secondary)',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.375rem'
-                                                }}
-                                            >
-                                                <X size={14} />
-                                                {t?.common?.cancel || 'Cancel'}
-                                            </button>
-                                            <button
-                                                onClick={() => handleRespond(review.id)}
-                                                disabled={submitting || !responseText.trim()}
-                                                style={{
-                                                    padding: '0.5rem 1rem',
-                                                    background: 'var(--accent-primary)',
-                                                    border: 'none',
-                                                    borderRadius: '8px',
-                                                    color: 'white',
-                                                    fontWeight: 600,
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.375rem',
-                                                    opacity: !responseText.trim() ? 0.5 : 1
-                                                }}
-                                            >
-                                                {submitting ? (
-                                                    <div className="spinner" style={{ width: '14px', height: '14px' }} />
-                                                ) : (
-                                                    <Send size={14} />
-                                                )}
-                                                {language === 'pt' ? 'Enviar' : 'Send'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    /* Respond Button */
-                                    <button
-                                        onClick={() => setRespondingTo(review.id)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            padding: '0.625rem 1rem',
-                                            background: 'var(--bg-elevated)',
-                                            border: '1px solid var(--border-default)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-secondary)',
-                                            fontSize: '0.8125rem',
-                                            fontWeight: 500,
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                        onMouseOver={(e) => {
-                                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                            e.currentTarget.style.color = 'var(--accent-primary)';
-                                        }}
-                                        onMouseOut={(e) => {
-                                            e.currentTarget.style.borderColor = 'var(--border-default)';
-                                            e.currentTarget.style.color = 'var(--text-secondary)';
-                                        }}
-                                    >
-                                        <MessageCircle size={14} />
-                                        {language === 'pt' ? 'Responder' : 'Respond'}
-                                    </button>
                                 )}
                             </div>
                         ))}
                     </div>
                 )}
             </div>
-        </Layout>
+        </Layout >
     );
 }
