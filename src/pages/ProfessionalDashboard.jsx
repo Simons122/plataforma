@@ -212,12 +212,12 @@ export default function ProfessionalDashboard() {
                             </div>
                         </div>
                         <h1 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                            {t?.dashboard?.accessPending || 'Access Pending'}
+                            {t('dashboard.accessPending', 'Access Pending')}
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                            {t?.dashboard?.accessPendingDesc || 'Your account was created successfully, but payment is'}{' '}
-                            <span style={{ color: '#eab308', fontWeight: 600 }}>{t?.dashboard?.pending || 'pending'}</span>.
-                            <br />{t?.dashboard?.awaitingApproval || 'Awaiting administrator approval.'}
+                            {t('dashboard.accessPendingDesc', 'Your account was created successfully, but payment is')}{' '}
+                            <span style={{ color: '#eab308', fontWeight: 600 }}>{t('dashboard.pending', 'pending')}</span>.
+                            <br />{t('dashboard.awaitingApproval', 'Awaiting administrator approval.')}
                         </p>
                     </div>
                 </div>
@@ -232,10 +232,10 @@ export default function ProfessionalDashboard() {
             {/* Header */}
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                    {language === 'pt' ? 'Olá' : 'Hello'}, {profile.name?.split(' ')[0]} 👋
+                    {t('dashboard.hello', 'Hello')}, {profile.name?.split(' ')[0]} 👋
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-                    {t?.dashboard?.activitySummary || 'Here is your activity summary.'}
+                    {t('dashboard.activitySummary', 'Here is your activity summary.')}
                 </p>
             </div>
 
@@ -246,10 +246,10 @@ export default function ProfessionalDashboard() {
                 gap: '1rem',
                 marginBottom: '2rem'
             }}>
-                <StatCard icon={CalendarCheck2} label={t?.dashboard?.bookingsToday || 'Bookings Today'} value={stats.bookingsToday} color="var(--accent-primary)" trend={t?.dashboard?.activeAgenda || 'Active agenda'} />
-                <StatCard icon={LineChart} label={t?.dashboard?.monthlyVolume || 'Monthly Volume'} value={stats.bookingsMonth} color="var(--accent-success)" trend={language === 'pt' ? '+12% que ontem' : '+12% from yesterday'} />
-                <StatCard icon={Wallet} label={t?.dashboard?.monthlyRevenue || 'Monthly Revenue'} value={`${stats.revenueMonth}€`} color="var(--accent-warning)" trend={language === 'pt' ? 'Saldo previsto' : 'Expected balance'} />
-                <StatCard icon={Sparkles} label={t?.dashboard?.catalog || 'Catalog'} value={stats.services} color="var(--accent-info)" trend={t?.dashboard?.activeServices || 'Active services'} />
+                <StatCard icon={CalendarCheck2} label={t('dashboard.bookingsToday', 'Bookings Today')} value={stats.bookingsToday} color="var(--accent-primary)" trend={t('dashboard.activeAgenda', 'Active agenda')} />
+                <StatCard icon={LineChart} label={t('dashboard.monthlyVolume', 'Monthly Volume')} value={stats.bookingsMonth} color="var(--accent-success)" trend="+12%" />
+                <StatCard icon={Wallet} label={t('dashboard.monthlyRevenue', 'Monthly Revenue')} value={`${stats.revenueMonth}€`} color="var(--accent-warning)" trend={t('dashboard.expectedBalance', 'Expected balance')} />
+                <StatCard icon={Sparkles} label={t('dashboard.catalog', 'Catalog')} value={stats.services} color="var(--accent-info)" trend={t('dashboard.activeServices', 'Active services')} />
             </div>
 
             {/* Today's Bookings Preview */}
@@ -297,7 +297,7 @@ export default function ProfessionalDashboard() {
                             )}
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{t?.dashboard?.todaysAgenda || "Today's Agenda"}</h3>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{t('dashboard.todaysAgenda', "Today's Agenda")}</h3>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                                 {format(new Date(), language === 'pt' ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d", { locale: dateLocale })}
                             </p>
@@ -330,7 +330,7 @@ export default function ProfessionalDashboard() {
                             e.currentTarget.style.boxShadow = 'none';
                         }}
                     >
-                        {t?.dashboard?.viewFullAgenda || 'View full agenda'} <ChevronRight size={14} />
+                        {t('dashboard.viewFullAgenda', 'View full agenda')} <ChevronRight size={14} />
                     </button>
                 </div>
 
@@ -341,7 +341,7 @@ export default function ProfessionalDashboard() {
                         color: 'var(--text-muted)'
                     }}>
                         <Clock size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                        <p style={{ fontSize: '0.875rem' }}>{t?.dashboard?.noBookingsToday || 'No bookings for today.'}</p>
+                        <p style={{ fontSize: '0.875rem' }}>{t('dashboard.noBookingsToday', 'No bookings for today.')}</p>
                     </div>
                 ) : (
                     <div>
@@ -419,7 +419,7 @@ export default function ProfessionalDashboard() {
                                     cursor: 'pointer'
                                 }}
                             >
-                                + {todayBookings.length - 3} {t?.dashboard?.moreBookings || 'more bookings'}
+                                + {todayBookings.length - 3} {t('dashboard.moreBookings', 'more bookings')}
                             </div>
                         )}
                     </div>
@@ -435,7 +435,7 @@ export default function ProfessionalDashboard() {
             }}>
                 <ActionCard
                     icon={UserPlus}
-                    title={t?.dashboard?.bookClient || 'Book Client'}
+                    title={t('dashboard.bookClient', 'Book Client')}
                     onClick={() => setIsModalOpen(true)}
                     highlight={true}
                 />
@@ -444,7 +444,7 @@ export default function ProfessionalDashboard() {
                     <>
                         <ActionCard
                             icon={Sparkles}
-                            title={t?.nav?.services || 'Services'}
+                            title={t('nav.services', 'Services')}
                             onClick={() => navigate('/dashboard/services')}
                         />
                         <ActionCard
@@ -487,7 +487,7 @@ export default function ProfessionalDashboard() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                             <div style={{ width: '6px', height: '6px', background: 'var(--accent-primary)', borderRadius: '50%' }} />
                             <h4 style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800 }}>
-                                {t?.dashboard?.yourBookingLink || 'Your Booking Link'}
+                                {t('dashboard.yourBookingLink', 'Your Booking Link')}
                             </h4>
                         </div>
                         <div style={{
@@ -517,13 +517,13 @@ export default function ProfessionalDashboard() {
                                 background: 'var(--border-default)',
                                 borderRadius: '50%'
                             }} />
-                            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t?.common?.public || 'Public'}</span>
+                            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t('common.public', 'Public')}</span>
                         </div>
                     </div>
                     <button
                         onClick={() => {
                             navigator.clipboard.writeText(bookingLink);
-                            toast.success(t?.dashboard?.linkCopied || 'Link copied successfully!');
+                            toast.success(t('dashboard.linkCopied', 'Link copied successfully!'));
                         }}
                         style={{
                             padding: '0.875rem 2rem',
@@ -550,7 +550,7 @@ export default function ProfessionalDashboard() {
                             e.currentTarget.style.boxShadow = 'var(--shadow-md)';
                         }}
                     >
-                        Copiar Link
+                        {t('dashboard.copyLink', 'Copy Link')}
                     </button>
                 </div>
             )}

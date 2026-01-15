@@ -92,7 +92,7 @@ export default function ClientLayout({ children, userName }) {
                                 margin: 0,
                                 fontWeight: 500
                             }}>
-                                {t?.auth?.clientLogin || 'Client Area'}
+                                {t('auth.clientLogin', 'Client Area')}
                             </p>
                         </div>
                     </Link>
@@ -156,7 +156,7 @@ export default function ClientLayout({ children, userName }) {
                                     }}
                                 >
                                     <LogOut size={16} />
-                                    {t?.nav?.logout || 'Logout'}
+                                    {t('nav.logout', 'Logout')}
                                 </button>
 
                                 <LanguageSelector minimal />
@@ -182,7 +182,7 @@ export default function ClientLayout({ children, userName }) {
                                 onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-primary)'}
                             >
                                 <LogIn size={16} />
-                                {t?.auth?.login || 'Login'}
+                                {t('auth.login', 'Login')}
                             </button>
                         )}
                     </div>
@@ -217,7 +217,7 @@ export default function ClientLayout({ children, userName }) {
                         }}
                     >
                         <Search size={16} />
-                        {t?.nav?.explore || 'Explore'}
+                        {t('nav.explore', 'Explore')}
                     </Link>
 
                     {/* Only show these if logged in */}
@@ -238,7 +238,7 @@ export default function ClientLayout({ children, userName }) {
                                 }}
                             >
                                 <Calendar size={16} />
-                                {t?.nav?.bookings || 'My Bookings'}
+                                {t('nav.bookings', 'My Bookings')}
                             </Link>
 
                             <Link

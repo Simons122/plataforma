@@ -83,32 +83,32 @@ export default function Layout({ children, role = 'professional', restricted = f
     const isActive = (path) => location.pathname === path;
 
     const adminLinks = [
-        { icon: LayoutGrid, label: t?.nav?.dashboard || 'Dashboard', path: '/admin/dashboard' },
-        { icon: Users, label: t?.admin?.users || 'Users', path: '/admin/users' },
-        { icon: Shield, label: t?.nav?.settings || 'Settings', path: '/admin/settings' }
+        { icon: LayoutGrid, label: t('nav.dashboard', 'Dashboard'), path: '/admin/dashboard' },
+        { icon: Users, label: t('admin.users', 'Users'), path: '/admin/users' },
+        { icon: Shield, label: t('nav.settings', 'Settings'), path: '/admin/settings' }
     ];
 
     const proLinks = [
-        { icon: LayoutGrid, label: t?.nav?.dashboard || 'Dashboard', path: '/dashboard' },
-        { icon: CalendarDays, label: t?.nav?.agenda || 'Agenda', path: '/dashboard/agenda' },
-        { icon: Sparkles, label: t?.nav?.services || 'Services', path: '/dashboard/services' },
-        { icon: CalendarClock, label: t?.nav?.schedule || 'Schedule', path: '/dashboard/schedule' },
-        { icon: Users, label: t?.nav?.staff || 'Staff', path: '/dashboard/staff' },
-        { icon: Star, label: t?.nav?.reviews || 'Reviews', path: '/dashboard/reviews' },
-        { icon: User, label: t?.nav?.profile || 'Profile', path: '/dashboard/profile' }
+        { icon: LayoutGrid, label: t('nav.dashboard', 'Dashboard'), path: '/dashboard' },
+        { icon: CalendarDays, label: t('nav.agenda', 'Agenda'), path: '/dashboard/agenda' },
+        { icon: Sparkles, label: t('nav.services', 'Services'), path: '/dashboard/services' },
+        { icon: CalendarClock, label: t('nav.schedule', 'Schedule'), path: '/dashboard/schedule' },
+        { icon: Users, label: t('nav.staff', 'Staff'), path: '/dashboard/staff' },
+        { icon: Star, label: t('nav.reviews', 'Reviews'), path: '/dashboard/reviews' },
+        { icon: User, label: t('nav.profile', 'Profile'), path: '/dashboard/profile' }
     ];
 
     const staffLinks = [
-        { icon: LayoutGrid, label: t?.nav?.dashboard || 'Dashboard', path: '/dashboard' },
-        { icon: CalendarDays, label: t?.nav?.agenda || 'Agenda', path: '/dashboard/agenda' },
-        { icon: CalendarClock, label: t?.nav?.schedule || 'Schedule', path: '/dashboard/schedule' },
-        { icon: User, label: t?.nav?.profile || 'Profile', path: '/dashboard/profile' }
+        { icon: LayoutGrid, label: t('nav.dashboard', 'Dashboard'), path: '/dashboard' },
+        { icon: CalendarDays, label: t('nav.agenda', 'Agenda'), path: '/dashboard/agenda' },
+        { icon: CalendarClock, label: t('nav.schedule', 'Schedule'), path: '/dashboard/schedule' },
+        { icon: User, label: t('nav.profile', 'Profile'), path: '/dashboard/profile' }
     ];
 
     const clientLinks = [
-        { icon: Search, label: t?.nav?.explore || 'Explore', path: '/client/explore' },
-        { icon: CalendarDays, label: t?.nav?.bookings || 'Bookings', path: '/client/bookings' },
-        { icon: Heart, label: t?.nav?.favorites || 'Favorites', path: '/client/favorites' }
+        { icon: Search, label: t('nav.explore', 'Explore'), path: '/client/explore' },
+        { icon: CalendarDays, label: t('nav.bookings', 'Bookings'), path: '/client/bookings' },
+        { icon: Heart, label: t('nav.favorites', 'Favorites'), path: '/client/favorites' }
     ];
 
     let links = [];

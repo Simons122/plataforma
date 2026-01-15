@@ -80,8 +80,9 @@ export function LanguageProvider({ children }) {
         language,
         setLanguage: setLang,
         toggleLanguage,
-        t,          // Objeto de traduções completo
-        translate,  // Função para paths aninhados
+        translations: t, // Objeto de traduções completo
+        t: translate,    // Agora 't' é a função, como esperado em i18n
+        translate,       // Manter para compatibilidade
         isPortuguese: language === 'pt',
         isEnglish: language === 'en',
     };
