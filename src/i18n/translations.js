@@ -378,6 +378,18 @@ export const translations = {
             thanks: 'Obrigado pela sua preferência!',
             viewBookings: 'Ver as minhas marcações',
         },
+        clientFavorites: {
+            title: 'Meus Favoritos',
+            subtitle: 'Acesse rapidamente aos seus profissionais preferidos.',
+            removeFromFav: 'Remover dos favoritos',
+            removedMsg: 'Removido dos favoritos',
+            errorMsg: 'Erro ao remover',
+            emptyTitle: 'Sem Favoritos',
+            emptyMsg: 'Ainda não adicionou nenhum profissional aos favoritos.',
+            goToExplore: 'Ir para Explorar',
+            book: 'Agendar',
+            services: 'Serviços',
+        },
     },
 
     en: {
@@ -753,6 +765,18 @@ export const translations = {
             confirmedMsg: 'We sent the details to',
             thanks: 'Thank you for booking!',
             viewBookings: 'View my bookings',
+        },
+        clientFavorites: {
+            title: 'My Favorites',
+            subtitle: 'Quick access to your favorite professionals.',
+            removeFromFav: 'Remove from favorites',
+            removedMsg: 'Removed from favorites',
+            errorMsg: 'Error removing',
+            emptyTitle: 'No Favorites',
+            emptyMsg: 'You haven\'t added any professionals to favorites yet.',
+            goToExplore: 'Go to Explore',
+            book: 'Book Now',
+            services: 'Services',
         },
     },
 };

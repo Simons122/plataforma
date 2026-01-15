@@ -4,8 +4,10 @@ import { doc, getDoc, getDocs, query, collection, where, documentId, updateDoc, 
 import { useNavigate, Link } from 'react-router-dom';
 import { Heart, Star, MapPin, ArrowRight, Loader2, Info, Check } from 'lucide-react';
 import Layout from '../components/Layout';
+import { useLanguage } from '../i18n';
 
 export default function ClientFavorites() {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [favorites, setFavorites] = useState([]);
     const [user, setUser] = useState(null);
@@ -25,10 +27,10 @@ export default function ClientFavorites() {
 
             // Update local state immediately
             setFavorites(prev => prev.filter(p => p.id !== proId));
-            showToast('Removido dos favoritos', 'info');
+            showToast(t('clientFavorites.removedMsg', 'Removido dos favoritos'), 'info');
         } catch (error) {
             console.error("Erro ao remover favorito:", error);
-            showToast('Erro ao remover', 'error');
+            showToast(t('clientFavorites.errorMsg', 'Erro ao remover'), 'error');
         }
     };
 
@@ -137,10 +139,10 @@ export default function ClientFavorites() {
                     gap: '0.75rem'
                 }}>
                     <Heart style={{ color: 'var(--accent-danger)' }} fill="currentColor" />
-                    Meus Favoritos
+                    {t('clientFavorites.title', 'Meus Favoritos')}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-                    Acesse rapidamente aos seus profissionais preferidos.
+                    {t('clientFavorites.subtitle', 'Acesse rapidamente aos seus profissionais preferidos.')}
                 </p>
 
                 {favorites.length > 0 ? (
@@ -235,7 +237,7 @@ export default function ClientFavorites() {
                                             color: 'var(--text-secondary)',
                                             border: '1px solid var(--border-default)'
                                         }}>
-                                            {pro.profession || 'Serviços'}
+                                            {pro.profession || t('clientFavorites.services', 'Serviços')}
                                         </span>
                                     </div>
 
@@ -274,7 +276,7 @@ export default function ClientFavorites() {
                                             }}
                                             className="action-btn"
                                         >
-                                            Agendar
+                                            {t('clientFavorites.book', 'Agendar')}
                                             <ArrowRight size={18} strokeWidth={2.5} />
                                         </Link>
                                     </div>
@@ -292,12 +294,12 @@ export default function ClientFavorites() {
                     }}>
                         <Heart size={64} style={{ color: 'var(--text-muted)', margin: '0 auto 1.5rem', opacity: 0.5 }} />
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            Sem Favoritos
+                            {t('clientFavorites.emptyTitle', 'Sem Favoritos')}
                         </h3>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                            Você ainda não adicionou nenhum profissional aos favoritos.
+                            {t('clientFavorites.emptyMsg', 'Você ainda não adicionou nenhum profissional aos favoritos.')}
                         </p>
-                        <Link to="/explore" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Ir para Explorar &rarr;</Link>
+                        <Link to="/client/explore" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{t('clientFavorites.goToExplore', 'Ir para Explorar')} &rarr;</Link>
                     </div>
                 )}
             </div>
