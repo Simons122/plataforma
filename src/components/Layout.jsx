@@ -38,7 +38,7 @@ export default function Layout({ children, role = 'professional', restricted = f
 
     // Get logo URL - for clients and professionals
     const logoUrl = currentRole === 'client'
-        ? fetchedProfile?.logoUrl
+        ? (fetchedProfile?.logoUrl || fetchedProfile?.photoURL)
         : (!isProfessionalPending ? fetchedProfile?.logoUrl : null);
 
     // Fallback UI for Missing Profile

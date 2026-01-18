@@ -87,10 +87,13 @@ export function UserProvider({ children }) {
                                     cleanupSnapshot = onSnapshot(clientRef, (docSnap) => {
                                         if (docSnap.exists()) {
                                             const data = docSnap.data();
+                                            // Debug log
+                                            console.log("Client Update:", data);
                                             setProfile({
                                                 ...data,
                                                 id: currentUser.uid,
                                                 logoUrl: data.photoURL,
+                                                photoURL: data.photoURL, // Keep original too
                                                 businessName: data.name || currentUser.displayName || 'Cliente'
                                             });
                                         }
