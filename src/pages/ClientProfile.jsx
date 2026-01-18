@@ -38,7 +38,7 @@ export default function ClientProfile() {
                             name: data.name || currentUser.displayName || '',
                             email: currentUser.email || '',
                             phone: data.phone || '',
-                            photoURL: currentUser.photoURL || ''
+                            photoURL: data.photoURL || currentUser.photoURL || '' // Prioritize Firestore photo
                         });
                     } else {
                         // Fallback se não existir no Firestore
@@ -113,13 +113,10 @@ export default function ClientProfile() {
                     const base64 = canvas.toDataURL('image/jpeg', 0.85);
 
                     try {
-                        // Update Firestore with Base64
+                        // Update Firestore with Base64 (NOT Auth - Base64 is too long for Auth)
                         const docRef = doc(db, 'clients', user.uid);
                         const { setDoc } = await import('firebase/firestore');
                         await setDoc(docRef, { photoURL: base64 }, { merge: true });
-
-                        // Update Auth profile
-                        await updateProfile(user, { photoURL: base64 });
 
                         setFormData(prev => ({ ...prev, photoURL: base64 }));
                         setMessage({ type: 'success', text: language === 'pt' ? 'Foto de perfil atualizada!' : 'Profile photo updated!' });
