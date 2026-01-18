@@ -72,34 +72,40 @@ export function UserProvider({ children }) {
                                 setRole('admin');
                                 setProfile(adminSnap.data());
                             } else {
-                                // Try to load Client profile
-                                const clientRef = doc(db, "clients", currentUser.uid);
-                                const clientSnap = await getDoc(clientRef);
-                                if (clientSnap.exists()) {
-                                    const clientData = clientSnap.data();
-                                    setProfile({
-                                        ...clientData,
-                                        id: currentUser.uid,
-                                        logoUrl: clientData.photoURL, // Normalize photo for UI
-                                        businessName: clientData.name || currentUser.displayName || 'Cliente'
-                                    });
-                                    // Subscribe to real-time updates
-                                    cleanupSnapshot = onSnapshot(clientRef, (docSnap) => {
-                                        if (docSnap.exists()) {
-                                            const data = docSnap.data();
-                                            // Debug log
-                                            console.log("Client Update:", data);
-                                            setProfile({
-                                                ...data,
-                                                id: currentUser.uid,
-                                                logoUrl: data.photoURL,
-                                                photoURL: data.photoURL, // Keep original too
-                                                businessName: data.name || currentUser.displayName || 'Cliente'
-                                            });
-                                        }
-                                    });
-                                }
+                                // Default to Client role
                                 setRole('client');
+
+                                // Subscribe to Client profile updates ALWAYS (even if doc doesn't exist yet)
+                                const clientRef = doc(db, "clients", currentUser.uid);
+
+                                cleanupSnapshot = onSnapshot(clientRef, (docSnap) => {
+                                    if (docSnap.exists()) {
+                                        const data = docSnap.data();
+                                        // DEBUG CRÍTICO: Ver o que vem do Firestore
+                                        console.log("🔥 [UserContext] Client Raw Data:", data);
+                                        console.log("🔥 [UserContext] PhotoURL:", data.photoURL ? (data.photoURL.substring(0, 50) + "...") : "MISSING");
+                                        console.log("🔥 [UserContext] LogoUrl:", data.logoUrl ? (data.logoUrl.substring(0, 50) + "...") : "MISSING");
+
+                                        setProfile({
+                                            ...data,
+                                            id: currentUser.uid,
+                                            logoUrl: data.logoUrl || data.photoURL, // Tenta ambos
+                                            photoURL: data.photoURL,
+                                            businessName: data.name || currentUser.displayName || 'Cliente'
+                                        });
+                                    } else {
+                                        console.log("🔥 [UserContext] Cliente não encontrado no Firestore (ainda)");
+                                        // Set minimal profile from Auth if Firestore doc missing
+                                        setProfile({
+                                            id: currentUser.uid,
+                                            name: currentUser.displayName,
+                                            email: currentUser.email,
+                                            photoURL: currentUser.photoURL,
+                                            logoUrl: currentUser.photoURL,
+                                            businessName: currentUser.displayName || 'Cliente'
+                                        });
+                                    }
+                                });
                             }
                             setLoading(false);
                         }
