@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Camera, Save, Loader2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, db, storage } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import Layout from '../components/Layout';
 import { useLanguage } from '../i18n';
 import PendingReviewsPrompt from '../components/PendingReviewsPrompt';
@@ -70,31 +69,73 @@ export default function ClientProfile() {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validar tamanho/tipo se necessário
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage({ type: 'error', text: language === 'pt' ? 'A imagem deve ter menos de 5MB' : 'Image must be under 5MB' });
+        // Validations
+        if (!file.type.startsWith('image/')) {
+            setMessage({ type: 'error', text: language === 'pt' ? 'Por favor, selecione uma imagem.' : 'Please select an image.' });
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            setMessage({ type: 'error', text: language === 'pt' ? 'A imagem deve ter no máximo 2MB.' : 'Image must be under 2MB.' });
             return;
         }
 
         setSaving(true);
         try {
-            const storageRef = ref(storage, `clients/${user.uid}/profile_${Date.now()}`);
-            await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(storageRef);
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const img = new Image();
+                img.onload = async () => {
+                    // Create canvas for resizing
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 400;
+                    let width = img.width;
+                    let height = img.height;
 
-            // Atualizar Auth
-            await updateProfile(user, { photoURL: downloadURL });
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
 
-            // Atualizar Firestore
-            const docRef = doc(db, 'clients', user.uid);
-            await updateDoc(docRef, { photoURL: downloadURL }); // Assume que doc existe. Se não existir, devia ser setDoc com merge
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
 
-            setFormData(prev => ({ ...prev, photoURL: downloadURL }));
-            setMessage({ type: 'success', text: language === 'pt' ? 'Foto de perfil atualizada!' : 'Profile photo updated!' });
+                    // Get compressed Base64
+                    const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+                    try {
+                        // Update Firestore with Base64
+                        const docRef = doc(db, 'clients', user.uid);
+                        const { setDoc } = await import('firebase/firestore');
+                        await setDoc(docRef, { photoURL: base64 }, { merge: true });
+
+                        // Update Auth profile
+                        await updateProfile(user, { photoURL: base64 });
+
+                        setFormData(prev => ({ ...prev, photoURL: base64 }));
+                        setMessage({ type: 'success', text: language === 'pt' ? 'Foto de perfil atualizada!' : 'Profile photo updated!' });
+                    } catch (error) {
+                        console.error(error);
+                        setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao guardar foto' : 'Error saving photo' });
+                    } finally {
+                        setSaving(false);
+                    }
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
         } catch (error) {
             console.error(error);
-            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao carregar foto' : 'Error uploading photo' });
-        } finally {
+            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao processar imagem' : 'Error processing image' });
             setSaving(false);
         }
     };
