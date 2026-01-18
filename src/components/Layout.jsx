@@ -28,7 +28,7 @@ export default function Layout({ children, role = 'professional', restricted = f
     let businessName = propBrandName;
     if (!businessName) {
         if (currentRole === 'admin') businessName = 'Admin Portal';
-        else if (currentRole === 'client') businessName = 'Área Cliente';
+        else if (currentRole === 'client') businessName = fetchedProfile?.businessName || fetchedProfile?.name || 'Área Cliente';
         else if (currentRole === 'professional' || currentRole === 'staff') {
             businessName = isProfessionalPending ? APP_NAME : (fetchedProfile?.businessName || fetchedProfile?.name || APP_NAME);
         } else {
@@ -36,7 +36,10 @@ export default function Layout({ children, role = 'professional', restricted = f
         }
     }
 
-    const logoUrl = (!isProfessionalPending ? fetchedProfile?.logoUrl : null);
+    // Get logo URL - for clients and professionals
+    const logoUrl = currentRole === 'client'
+        ? fetchedProfile?.logoUrl
+        : (!isProfessionalPending ? fetchedProfile?.logoUrl : null);
 
     // Fallback UI for Missing Profile
     if (!loadingProfile && !fetchedProfile && (currentRole === 'professional' || currentRole === undefined)) {
