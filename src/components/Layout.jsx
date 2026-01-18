@@ -229,7 +229,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 width: '80px',
                                 height: '80px',
                                 borderRadius: '50%',
-                                background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                                background: currentRole === 'client' ? 'purple' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)', // Debug Color
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -251,57 +251,56 @@ export default function Layout({ children, role = 'professional', restricted = f
                             overflow: 'hidden',
                             whiteSpace: 'nowrap'
                         }}>
-                            {businessName}
+                            {businessName} {currentRole === 'client' ? '*' : ''}
                         </h1>
                     </div>
-                </div>
 
-                <nav style={{ flex: 1, padding: '1rem' }}>
-                    {loadingProfile ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', opacity: 0.5 }}>
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} style={{ height: '48px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
-                            ))}
-                        </div>
-                    ) : !restricted && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            {links.map(link => (
-                                <NavItem
-                                    key={link.path}
-                                    icon={link.icon}
-                                    label={link.label}
-                                    active={isActive(link.path)}
-                                    onClick={() => {
-                                        navigate(link.path);
-                                        setSidebarOpen(false);
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </nav>
+                    <nav style={{ flex: 1, padding: '1rem' }}>
+                        {loadingProfile ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', opacity: 0.5 }}>
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} style={{ height: '48px', background: 'var(--bg-elevated)', borderRadius: '8px' }} />
+                                ))}
+                            </div>
+                        ) : !restricted && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {links.map(link => (
+                                    <NavItem
+                                        key={link.path}
+                                        icon={link.icon}
+                                        label={link.label}
+                                        active={isActive(link.path)}
+                                        onClick={() => {
+                                            navigate(link.path);
+                                            setSidebarOpen(false);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </nav>
 
-                <div style={{ padding: '1rem', borderTop: '1px solid var(--border-default)' }}>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            width: '100%',
-                            padding: '0.75rem',
-                            fontSize: '0.875rem',
-                            color: 'var(--text-secondary)',
-                            background: 'rgba(255,255,255,0.03)',
-                            border: 'none',
-                            borderRadius: 'var(--radius-md)',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <LogOut size={18} />
-                        Terminar Sessão
-                    </button>
-                </div>
+                    <div style={{ padding: '1rem', borderTop: '1px solid var(--border-default)' }}>
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem',
+                                width: '100%',
+                                padding: '0.75rem',
+                                fontSize: '0.875rem',
+                                color: 'var(--text-secondary)',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: 'none',
+                                borderRadius: 'var(--radius-md)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <LogOut size={18} />
+                            Terminar Sessão
+                        </button>
+                    </div>
             </aside>
         </div>
     );
@@ -379,7 +378,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                             width: '72px',
                             height: '72px',
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                            background: currentRole === 'client' ? 'purple' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -404,7 +403,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                         whiteSpace: 'nowrap',
                         marginTop: '0.25rem'
                     }}>
-                        {businessName}
+                        {businessName} {currentRole === 'client' ? '*' : ''}
                     </h1>
                 </div>
 
