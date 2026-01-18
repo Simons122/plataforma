@@ -1,0 +1,270 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // FUNÇÕES DE SEGURANÇA
+    // ============================================
+    
+    // Verifica se está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verifica se é o dono do documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Verifica se é admin (role admin ou superAdmin)
+    function isAdmin() {
+       let docPath = /databases/$(database)/documents/professionals/$(request.auth.uid);
+       return isAuthenticated() && exists(docPath) && (get(docPath).data.role == 'admin' || get(docPath).data.superAdmin == true);
+    }
+    
+    // Valida tamanho de string (previne spam/overflow)
+    function isValidString(field, maxLen) {
+      return field is string && field.size() <= maxLen && field.size() > 0;
+    }
+    
+    // Valida email básico
+    function isValidEmail(email) {
+      return email is string && email.matches('.*@.*[.].*') && email.size() <= 254;
+    }
+    
+    // Valida data ISO
+    function isValidISODate(dateStr) {
+      return dateStr is string && dateStr.size() >= 10 && dateStr.size() <= 30;
+    }
+    
+    // Rate limiting básico (previne criação em massa)
+    function isRecentlyCreated() {
+      return request.time < resource.data.createdAt + duration.value(1, 's');
+    }
+
+    // ============================================
+    // REGRA GLOBAL DE BLOQUEIO (DEFAULT DENY)
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false; 
+    }
+
+    // ============================================
+    // PROFISSIONAIS
+    // ============================================
+    match /professionals/{userId} {
+      // Leitura pública (perfil visível para clientes)
+      allow read: if true;
+      
+      // Criação: apenas autenticado e criando próprio perfil
+      allow create: if isOwner(userId) 
+        && request.resource.data.keys().hasAll(['name', 'email'])
+        && isValidString(request.resource.data.name, 100)
+        && isValidEmail(request.resource.data.email);
+      
+      // Update: apenas owner ou admin
+      allow update: if (isOwner(userId) || isAdmin())
+        && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role || isAdmin())
+        && (!('superAdmin' in request.resource.data) || isAdmin());
+      
+      // Delete: apenas admin
+      allow delete: if isAdmin();
+
+      // SERVIÇOS
+      match /services/{serviceId} {
+        allow read: if true;
+        
+        allow create: if (isOwner(userId) || isAdmin())
+          && request.resource.data.keys().hasAll(['name', 'price', 'duration'])
+          && isValidString(request.resource.data.name, 100)
+          && request.resource.data.price is number
+          && request.resource.data.price >= 0
+          && request.resource.data.price <= 10000
+          && request.resource.data.duration is number
+          && request.resource.data.duration >= 5
+          && request.resource.data.duration <= 480;
+          
+        allow update: if (isOwner(userId) || isAdmin())
+          && request.resource.data.price >= 0
+          && request.resource.data.price <= 10000;
+          
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+      
+      // MARCAÇÕES (BOOKINGS)
+      match /bookings/{bookingId} {
+        // Criação: validação rigorosa
+        allow create: if true
+          && request.resource.data.keys().hasAll(['date', 'serviceId', 'clientName', 'status'])
+          && isValidISODate(request.resource.data.date)
+          && isValidString(request.resource.data.serviceId, 50)
+          && isValidString(request.resource.data.clientName, 100)
+          && request.resource.data.status == 'confirmed'
+          && (!('clientEmail' in request.resource.data) || isValidEmail(request.resource.data.clientEmail))
+          && (!('clientPhone' in request.resource.data) || request.resource.data.clientPhone.size() <= 20);
+        
+        // Leitura: pública (necessária para verificar disponibilidade)
+        // NOTA: Em produção crítica, mover para Cloud Function
+        allow read: if true;
+        
+        // Update: owner, admin, ou cliente (apenas campo reviewed)
+        allow update: if isOwner(userId) || isAdmin()
+          || (isAuthenticated() && resource.data.clientEmail == request.auth.token.email
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed'])
+              && request.resource.data.reviewed == true);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      // STAFF
+      match /staff/{staffId} {
+        allow read: if true;
+        
+        // Criação: apenas owner ou admin
+        allow create: if (isOwner(userId) || isAdmin())
+          && request.resource.data.keys().hasAll(['name', 'email'])
+          && isValidString(request.resource.data.name, 100)
+          && isValidEmail(request.resource.data.email);
+        
+        // Update: owner, admin, ou próprio staff
+        allow update: if isOwner(userId) || isAdmin() 
+          || (isAuthenticated() && resource.data.authUserId == request.auth.uid);
+        
+        // Delete: apenas owner ou admin
+        allow delete: if isOwner(userId) || isAdmin();
+
+        // Settings do Staff
+        match /settings/{docId} {
+          allow read: if true;
+          allow write: if isOwner(userId) || isAdmin() 
+            || (isAuthenticated() && get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid);
+        }
+
+        // Bookings do Staff
+        match /bookings/{bookingId} {
+          allow create: if true
+            && request.resource.data.keys().hasAll(['date', 'serviceId'])
+            && isValidISODate(request.resource.data.date)
+            && isValidString(request.resource.data.serviceId, 50);
+            
+          allow read: if true;
+          
+          allow update: if isOwner(userId) || isAdmin() 
+            || (isAuthenticated() && get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid)
+            || (isAuthenticated() && resource.data.clientEmail == request.auth.token.email
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed'])
+                && request.resource.data.reviewed == true);
+          
+          allow delete: if isOwner(userId) || isAdmin() 
+            || (isAuthenticated() && get(/databases/$(database)/documents/professionals/$(userId)/staff/$(staffId)).data.authUserId == request.auth.uid);
+        }
+      }
+      
+      // SETTINGS (Horários)
+      match /settings/{document=**} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
+      }
+
+      // ⭐ REVIEWS (Avaliações)
+      match /reviews/{reviewId} {
+        // Leitura: pública (visível para todos)
+        allow read: if true;
+        
+        // Criação: utilizador autenticado pode criar avaliação
+        allow create: if isAuthenticated()
+          && request.resource.data.keys().hasAll(['bookingId', 'rating', 'clientId'])
+          && request.resource.data.rating is number
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && isValidString(request.resource.data.clientName, 100);
+        
+        // Update: apenas owner pode responder (professionalResponse)
+        allow update: if (isOwner(userId) || isAdmin())
+          && request.resource.data.rating == resource.data.rating
+          && request.resource.data.clientId == resource.data.clientId;
+        
+        // Delete: apenas owner ou admin (casos de spam/abuso)
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+    
+    // ============================================
+    // CLIENTES
+    // ============================================
+    match /clients/{clientId} {
+      // Criação: autenticado e criando próprio documento
+      allow create: if isOwner(clientId)
+        && request.resource.data.keys().hasAll(['name', 'email'])
+        && isValidString(request.resource.data.name, 100)
+        && isValidEmail(request.resource.data.email);
+      
+      // Leitura/Update: apenas próprio cliente
+      allow read, update: if isOwner(clientId);
+      
+      // Delete: não permitido
+      allow delete: if false;
+    }
+
+    // ============================================
+    // STAFF LOOKUP (Mapeamento de login)
+    // ============================================
+    match /staff_lookup/{authUid} {
+      // Leitura: apenas autenticado
+      allow read: if isAuthenticated();
+      
+      // Criação: autenticado (para setup inicial)
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['ownerId', 'staffId'])
+        && isValidString(request.resource.data.ownerId, 50)
+        && isValidString(request.resource.data.staffId, 50);
+      
+      // Update/Delete: apenas pelo owner do estabelecimento ou próprio
+      allow update, delete: if isAuthenticated() 
+        && (resource.data.ownerId == request.auth.uid || request.auth.uid == authUid);
+    }
+
+    // ============================================
+    // 🛡️ AUDIT LOGS - SEGURANÇA MÁXIMA
+    // ============================================
+    match /audit_logs/{logId} {
+      // ESCRITA: Qualquer utilizador autenticado pode criar logs
+      // (necessário para registar eventos de segurança)
+      // Nota: serverTimestamp() é validado pelo Firestore automaticamente
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['eventType', 'severity'])
+        && isValidString(request.resource.data.eventType, 100)
+        && request.resource.data.severity in ['info', 'warning', 'error', 'critical'];
+      
+      // LEITURA: Apenas admins podem ver os logs
+      allow read: if isAdmin();
+      
+      // UPDATE/DELETE: NUNCA PERMITIDO - Logs são imutáveis
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // 🔐 SECURITY EVENTS (Rate Limits, Blocks)
+    // ============================================
+    match /security_events/{eventId} {
+      // Apenas admins podem ver eventos de segurança
+      allow read: if isAdmin();
+      
+      // Sistema pode criar (via Cloud Functions)
+      allow create: if isAuthenticated();
+      
+      // Imutável
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // 📊 ANALYTICS (Dados agregados)
+    // ============================================
+    match /analytics/{docId} {
+      // Leitura: apenas admins
+      allow read: if isAdmin();
+      
+      // Escrita: apenas por Cloud Functions (owner pode atualizar seus próprios)
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,6 @@
+﻿# EMAIL CONFIGURATION - Resend
+VITE_RESEND_API_KEY=re_sua_chave_aqui
+
+# WHATSAPP (Opcional)
+# VITE_TWILIO_ACCOUNT_SID=ACxxxxx
+# VITE_TWILIO_AUTH_TOKEN=xxxxx
