@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Camera, Save, Loader2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, db, storage } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import Layout from '../components/Layout';
 import { useLanguage } from '../i18n';
 import PendingReviewsPrompt from '../components/PendingReviewsPrompt';
@@ -39,7 +38,7 @@ export default function ClientProfile() {
                             name: data.name || currentUser.displayName || '',
                             email: currentUser.email || '',
                             phone: data.phone || '',
-                            photoURL: currentUser.photoURL || ''
+                            photoURL: data.photoURL || currentUser.photoURL || '' // Prioritize Firestore photo
                         });
                     } else {
                         // Fallback se não existir no Firestore
@@ -70,31 +69,70 @@ export default function ClientProfile() {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validar tamanho/tipo se necessário
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage({ type: 'error', text: language === 'pt' ? 'A imagem deve ter menos de 5MB' : 'Image must be under 5MB' });
+        // Validations
+        if (!file.type.startsWith('image/')) {
+            setMessage({ type: 'error', text: language === 'pt' ? 'Por favor, selecione uma imagem.' : 'Please select an image.' });
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            setMessage({ type: 'error', text: language === 'pt' ? 'A imagem deve ter no máximo 2MB.' : 'Image must be under 2MB.' });
             return;
         }
 
         setSaving(true);
         try {
-            const storageRef = ref(storage, `clients/${user.uid}/profile_${Date.now()}`);
-            await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(storageRef);
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const img = new Image();
+                img.onload = async () => {
+                    // Create canvas for resizing
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 400;
+                    let width = img.width;
+                    let height = img.height;
 
-            // Atualizar Auth
-            await updateProfile(user, { photoURL: downloadURL });
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
 
-            // Atualizar Firestore
-            const docRef = doc(db, 'clients', user.uid);
-            await updateDoc(docRef, { photoURL: downloadURL }); // Assume que doc existe. Se não existir, devia ser setDoc com merge
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
 
-            setFormData(prev => ({ ...prev, photoURL: downloadURL }));
-            setMessage({ type: 'success', text: language === 'pt' ? 'Foto de perfil atualizada!' : 'Profile photo updated!' });
+                    // Get compressed Base64
+                    const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+                    try {
+                        // Update Firestore with Base64 (NOT Auth - Base64 is too long for Auth)
+                        const docRef = doc(db, 'clients', user.uid);
+                        const { setDoc } = await import('firebase/firestore');
+                        await setDoc(docRef, { photoURL: base64 }, { merge: true });
+
+                        setFormData(prev => ({ ...prev, photoURL: base64 }));
+                        setMessage({ type: 'success', text: language === 'pt' ? 'Foto de perfil atualizada!' : 'Profile photo updated!' });
+                    } catch (error) {
+                        console.error(error);
+                        setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao guardar foto' : 'Error saving photo' });
+                    } finally {
+                        setSaving(false);
+                    }
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
         } catch (error) {
             console.error(error);
-            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao carregar foto' : 'Error uploading photo' });
-        } finally {
+            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao processar imagem' : 'Error processing image' });
             setSaving(false);
         }
     };
@@ -143,15 +181,14 @@ export default function ClientProfile() {
 
     return (
         <Layout role="client" brandName={user?.displayName || user?.email?.split('@')[0]}>
-            <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '3rem' }} className="animate-fade-in">
-
-                {/* Header */}
-                <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                {/* Header - Left aligned like ProfilePage */}
+                <div style={{ marginBottom: '2rem' }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
                         {language === 'pt' ? 'O Meu Perfil' : 'My Profile'}
                     </h1>
                     <p style={{ color: 'var(--text-secondary)' }}>
-                        {language === 'pt' ? 'Gerencie as suas informações pessoais' : 'Manage your personal information'}
+                        {language === 'pt' ? 'Gerencie as suas informações pessoais.' : 'Manage your personal information.'}
                     </p>
                 </div>
 
@@ -160,7 +197,7 @@ export default function ClientProfile() {
                     <div style={{
                         padding: '1rem',
                         borderRadius: '12px',
-                        marginBottom: '2rem',
+                        marginBottom: '1.5rem',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.75rem',
@@ -173,61 +210,116 @@ export default function ClientProfile() {
                     </div>
                 )}
 
-                <div style={{
-                    background: 'var(--bg-card)',
-                    borderRadius: '24px',
-                    border: '1px solid var(--border-default)',
-                    padding: '2rem',
-                    boxShadow: 'var(--shadow-sm)'
-                }}>
-                    {/* Avatar Upload */}
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* Image Upload Section - Separate Card */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        padding: '1.5rem',
+                        borderRadius: '16px',
+                        border: '1px solid var(--border-default)',
+                        boxShadow: 'var(--shadow-sm)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '1rem'
+                    }}>
                         <div style={{ position: 'relative' }}>
                             <div style={{
-                                width: '120px',
-                                height: '120px',
+                                width: '100px',
+                                height: '100px',
                                 borderRadius: '50%',
-                                background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
-                                padding: '3px',
-                                boxShadow: 'var(--shadow-lg)'
-                            }}>
-                                <div style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '50%',
-                                    overflow: 'hidden',
-                                    background: 'var(--bg-card)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    {formData.photoURL ? (
-                                        <img src={formData.photoURL} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <User size={48} style={{ color: 'var(--text-muted)' }} />
-                                    )}
-                                </div>
-                            </div>
-
-                            <label style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                right: '0',
-                                background: 'var(--accent-primary)',
-                                color: 'white',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '50%',
+                                background: 'var(--bg-secondary)',
+                                border: '2px dashed var(--border-default)',
+                                overflow: 'hidden',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                cursor: 'pointer',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                                transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                            }}
-                                className="hover:scale-110"
-                            >
-                                <Camera size={18} />
+                                position: 'relative'
+                            }}>
+                                {formData.photoURL ? (
+                                    <img
+                                        src={formData.photoURL}
+                                        alt="Profile"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <Camera size={24} strokeWidth={1.75} style={{ color: 'var(--text-muted)' }} />
+                                )}
+                                {saving && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        background: 'rgba(0,0,0,0.4)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white'
+                                    }}>
+                                        <Loader2 size={24} className="spinner" />
+                                    </div>
+                                )}
+                            </div>
+                            {formData.photoURL && !saving && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        setSaving(true);
+                                        try {
+                                            await updateProfile(user, { photoURL: '' });
+                                            const docRef = doc(db, 'clients', user.uid);
+                                            const { setDoc } = await import('firebase/firestore');
+                                            await setDoc(docRef, { photoURL: '' }, { merge: true });
+                                            setFormData(prev => ({ ...prev, photoURL: '' }));
+                                            setMessage({ type: 'success', text: language === 'pt' ? 'Foto removida!' : 'Photo removed!' });
+                                        } catch (error) {
+                                            console.error(error);
+                                            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao remover foto' : 'Error removing photo' });
+                                        } finally {
+                                            setSaving(false);
+                                        }
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: '-4px',
+                                        right: '-4px',
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '50%',
+                                        background: 'var(--accent-danger)',
+                                        color: 'white',
+                                        border: 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        boxShadow: 'var(--shadow-sm)'
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+
+                        <div style={{ textAlign: 'center' }}>
+                            <label className="label" style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.5rem 1rem',
+                                background: 'var(--bg-elevated)',
+                                borderRadius: '8px',
+                                cursor: saving ? 'wait' : 'pointer',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border-default)',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                <Camera size={16} />
+                                {formData.photoURL
+                                    ? (language === 'pt' ? 'Alterar Foto' : 'Change Photo')
+                                    : (language === 'pt' ? 'Carregar Foto' : 'Upload Photo')
+                                }
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -236,93 +328,102 @@ export default function ClientProfile() {
                                     disabled={saving}
                                 />
                             </label>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                                {language === 'pt' ? 'JPG ou PNG. Máximo 2MB.' : 'JPG or PNG. Max 2MB.'}
+                            </p>
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {/* Name Input */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>
-                                {language === 'pt' ? 'Nome Completo' : 'Full Name'}
+                    {/* Basic Info - Separate Card */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        padding: '1.5rem',
+                        borderRadius: '16px',
+                        border: '1px solid var(--border-default)',
+                        boxShadow: 'var(--shadow-sm)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1.25rem'
+                    }}>
+                        {/* Name */}
+                        <div>
+                            <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <User size={16} strokeWidth={1.75} /> {language === 'pt' ? 'Nome Completo' : 'Full Name'}
                             </label>
-                            <div style={{ position: 'relative' }}>
-                                <User style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
-                                <input
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    className="input"
-                                    style={{ paddingLeft: '3rem' }}
-                                    placeholder={language === 'pt' ? 'Seu nome' : 'Your name'}
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="text"
+                                name="name"
+                                className="input"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder={language === 'pt' ? 'Seu nome' : 'Your name'}
+                                required
+                            />
                         </div>
 
-                        {/* Email Input (Read Only) */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>
-                                Email
+                        {/* Email (Read-only) */}
+                        <div>
+                            <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Mail size={16} /> {language === 'pt' ? 'Email (Não editável)' : 'Email (Not editable)'}
                             </label>
-                            <div style={{ position: 'relative' }}>
-                                <Mail style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
-                                <input
-                                    name="email"
-                                    value={formData.email}
-                                    className="input"
-                                    style={{ paddingLeft: '3rem', opacity: 0.7, cursor: 'not-allowed', background: 'var(--bg-secondary)' }}
-                                    readOnly
-                                    title={language === 'pt' ? 'Não é possível alterar o email' : 'Email cannot be changed'}
-                                />
-                            </div>
+                            <input
+                                type="email"
+                                className="input"
+                                value={formData.email}
+                                readOnly
+                                style={{
+                                    background: 'var(--bg-primary)',
+                                    opacity: 0.6,
+                                    cursor: 'not-allowed'
+                                }}
+                            />
                         </div>
 
-                        {/* Phone Input */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>
-                                {language === 'pt' ? 'Telemóvel' : 'Phone'}
+                        {/* Phone */}
+                        <div>
+                            <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Phone size={16} /> {language === 'pt' ? 'Telefone' : 'Phone'}
                             </label>
-                            <div style={{ position: 'relative' }}>
-                                <Phone style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
-                                <input
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className="input"
-                                    style={{ paddingLeft: '3rem' }}
-                                    placeholder={language === 'pt' ? 'Seu contacto' : 'Your contact'}
-                                />
-                            </div>
+                            <input
+                                type="tel"
+                                name="phone"
+                                className="input"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                placeholder={language === 'pt' ? '(Opcional)' : '(Optional)'}
+                            />
                         </div>
+                    </div>
 
-                        <div style={{ height: '1rem' }}></div>
-
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.5rem',
-                                padding: '1rem',
-                                background: 'var(--accent-primary)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '12px',
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                                cursor: saving ? 'wait' : 'pointer',
-                                transition: 'all 0.2s ease',
-                                boxShadow: 'var(--shadow-md)'
-                            }}
-                            className="hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                            {saving ? <Loader2 className="spinner" size={20} /> : <Save size={20} />}
-                            {language === 'pt' ? 'Guardar Alterações' : 'Save Changes'}
-                        </button>
-                    </form>
-                </div>
+                    {/* Save Button */}
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        style={{
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.625rem',
+                            border: 'none',
+                            cursor: saving ? 'wait' : 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: 'var(--shadow-md)'
+                        }}
+                        onMouseOver={(e) => !saving && (e.currentTarget.style.background = 'var(--accent-primary-hover)')}
+                        onMouseOut={(e) => !saving && (e.currentTarget.style.background = 'var(--accent-primary)')}
+                    >
+                        {saving ? <Loader2 size={18} className="spinner" /> : <Save size={18} />}
+                        {saving
+                            ? (language === 'pt' ? 'A guardar...' : 'Saving...')
+                            : (language === 'pt' ? 'Guardar Alterações' : 'Save Changes')
+                        }
+                    </button>
+                </form>
             </div>
 
             <PendingReviewsPrompt />
