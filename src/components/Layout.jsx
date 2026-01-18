@@ -7,6 +7,7 @@ import { useTheme } from './ThemeContext';
 import { useUser } from '../context/UserContext';
 import { useLanguage } from '../i18n';
 import LanguageSelector from './LanguageSelector';
+import ClientAvatar from './ClientAvatar';
 
 export default function Layout({ children, role = 'professional', restricted = false, brandName: propBrandName }) {
     const navigate = useNavigate();
@@ -35,9 +36,9 @@ export default function Layout({ children, role = 'professional', restricted = f
         }
     }
 
-    // Get logo URL - for clients and professionals
+    // Get logo URL - for professionals ONLY (clients use ClientAvatar)
     const logoUrl = currentRole === 'client'
-        ? (fetchedProfile?.logoUrl || fetchedProfile?.photoURL)
+        ? null // Clients use <ClientAvatar> directly
         : (!isProfessionalPending ? fetchedProfile?.logoUrl : null);
 
     // Fallback UI for Missing Profile
@@ -197,7 +198,22 @@ export default function Layout({ children, role = 'professional', restricted = f
                         width: '100%',
                         paddingTop: '0.5rem'
                     }}>
-                        {logoUrl ? (
+                        {currentRole === 'client' && auth.currentUser ? (
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                borderRadius: '50%',
+                                padding: '2px',
+                                background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: 'var(--shadow-lg)',
+                                overflow: 'hidden' // Ensure avatar stays within circle
+                            }}>
+                                <ClientAvatar uid={auth.currentUser.uid} alt={businessName} size="76px" />
+                            </div>
+                        ) : logoUrl ? (
                             <div style={{
                                 width: '80px',
                                 height: '80px',
@@ -228,7 +244,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                                 width: '80px',
                                 height: '80px',
                                 borderRadius: '50%',
-                                background: currentRole === 'client' ? 'purple' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)', // Debug Color
+                                background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -250,7 +266,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                             overflow: 'hidden',
                             whiteSpace: 'nowrap'
                         }}>
-                            {businessName} {currentRole === 'client' ? '*' : ''}
+                            {businessName}
                         </h1>
                     </div>
                 </div>
@@ -347,7 +363,22 @@ export default function Layout({ children, role = 'professional', restricted = f
                     flexShrink: 0,
                     background: 'linear-gradient(to bottom, var(--bg-secondary), transparent)'
                 }}>
-                    {logoUrl ? (
+                    {currentRole === 'client' && auth.currentUser ? (
+                        <div style={{
+                            width: '72px',
+                            height: '72px',
+                            borderRadius: '50%',
+                            padding: '2px',
+                            background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 8px 16px -4px rgba(0,0,0,0.2)',
+                            overflow: 'hidden' // Ensure avatar stays within circle
+                        }}>
+                            <ClientAvatar uid={auth.currentUser.uid} alt={businessName} size="68px" />
+                        </div>
+                    ) : logoUrl ? (
                         <div style={{
                             width: '72px',
                             height: '72px',
@@ -378,7 +409,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                             width: '72px',
                             height: '72px',
                             borderRadius: '50%',
-                            background: currentRole === 'client' ? 'purple' : 'linear-gradient(135deg, var(--accent-primary), #60a5fa)', // Debug Color
+                            background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -403,7 +434,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                         whiteSpace: 'nowrap',
                         marginTop: '0.25rem'
                     }}>
-                        {businessName} {currentRole === 'client' ? '*' : ''}
+                        {businessName}
                     </h1>
                 </div>
 
