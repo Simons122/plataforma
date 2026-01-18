@@ -116,7 +116,8 @@ export default function ClientProfile() {
                         // Update Firestore with Base64 (NOT Auth - Base64 is too long for Auth)
                         const docRef = doc(db, 'clients', user.uid);
                         const { setDoc } = await import('firebase/firestore');
-                        await setDoc(docRef, { photoURL: base64 }, { merge: true });
+                        // Gravar photoURL e logoUrl para compatibilidade com Layout
+                        await setDoc(docRef, { photoURL: base64, logoUrl: base64 }, { merge: true });
 
                         setFormData(prev => ({ ...prev, photoURL: base64 }));
                         setMessage({ type: 'success', text: language === 'pt' ? 'Foto de perfil atualizada!' : 'Profile photo updated!' });
