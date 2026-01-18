@@ -72,7 +72,30 @@ export function UserProvider({ children }) {
                                 setRole('admin');
                                 setProfile(adminSnap.data());
                             } else {
-                                // Default Client ou Novo User
+                                // Try to load Client profile
+                                const clientRef = doc(db, "clients", currentUser.uid);
+                                const clientSnap = await getDoc(clientRef);
+                                if (clientSnap.exists()) {
+                                    const clientData = clientSnap.data();
+                                    setProfile({
+                                        ...clientData,
+                                        id: currentUser.uid,
+                                        logoUrl: clientData.photoURL, // Normalize photo for UI
+                                        businessName: clientData.name || currentUser.displayName || 'Cliente'
+                                    });
+                                    // Subscribe to real-time updates
+                                    cleanupSnapshot = onSnapshot(clientRef, (docSnap) => {
+                                        if (docSnap.exists()) {
+                                            const data = docSnap.data();
+                                            setProfile({
+                                                ...data,
+                                                id: currentUser.uid,
+                                                logoUrl: data.photoURL,
+                                                businessName: data.name || currentUser.displayName || 'Cliente'
+                                            });
+                                        }
+                                    });
+                                }
                                 setRole('client');
                             }
                             setLoading(false);
