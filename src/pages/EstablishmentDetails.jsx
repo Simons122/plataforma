@@ -190,53 +190,18 @@ export default function EstablishmentDetails() {
                 }}>
                     {/* Header Banner with Gradient Overlay */}
                     <div style={{
-                        height: '200px',
+                        height: '180px',
                         background: professional.logoUrl
-                            ? `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%), url(${professional.logoUrl}) center/cover`
+                            ? `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%), url(${professional.logoUrl}) center/cover`
                             : 'linear-gradient(135deg, var(--accent-primary) 0%, #60a5fa 50%, #818cf8 100%)',
                         position: 'relative'
                     }}>
-                        {/* Decorative sparkles */}
-                        <div style={{ position: 'absolute', top: '20px', left: '30px', color: 'rgba(255,255,255,0.3)' }}>
-                            <Sparkles size={24} />
-                        </div>
-                        <div style={{ position: 'absolute', bottom: '40px', right: '60px', color: 'rgba(255,255,255,0.2)' }}>
-                            <Sparkles size={32} />
-                        </div>
-
-                        {/* Favorite Button */}
-                        {user && (
-                            <button
-                                onClick={toggleFavorite}
-                                className="fav-btn"
-                                style={{
-                                    position: 'absolute',
-                                    top: '1.25rem',
-                                    right: '1.25rem',
-                                    background: 'rgba(255,255,255,0.15)',
-                                    backdropFilter: 'blur(12px)',
-                                    border: '1px solid rgba(255,255,255,0.2)',
-                                    borderRadius: '14px',
-                                    width: '50px',
-                                    height: '50px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    color: isFavorite ? '#ef4444' : 'white',
-                                    transition: 'all 0.3s'
-                                }}
-                            >
-                                <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
-                            </button>
-                        )}
-
-                        {/* Open/Closed Badge */}
+                        {/* Open/Closed Badge - Top Left */}
                         <div style={{
                             position: 'absolute',
-                            bottom: '1.25rem',
-                            left: '1.25rem',
-                            background: isOpenToday ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)',
+                            top: '1rem',
+                            left: '1rem',
+                            background: isOpenToday ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)',
                             backdropFilter: 'blur(8px)',
                             padding: '0.5rem 1rem',
                             borderRadius: '10px',
@@ -245,25 +210,54 @@ export default function EstablishmentDetails() {
                             gap: '0.5rem',
                             color: 'white',
                             fontSize: '0.8125rem',
-                            fontWeight: 600
+                            fontWeight: 600,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                         }}>
                             {isOpenToday ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-                            {isOpenToday ? `Aberto hoje • ${todaySchedule.start} - ${todaySchedule.end}` : 'Fechado hoje'}
+                            {isOpenToday ? `Aberto • ${todaySchedule.start} - ${todaySchedule.end}` : 'Fechado hoje'}
                         </div>
+
+                        {/* Favorite Button - Top Right */}
+                        {user && (
+                            <button
+                                onClick={toggleFavorite}
+                                className="fav-btn"
+                                style={{
+                                    position: 'absolute',
+                                    top: '1rem',
+                                    right: '1rem',
+                                    background: 'rgba(255,255,255,0.15)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '12px',
+                                    width: '44px',
+                                    height: '44px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    color: isFavorite ? '#ef4444' : 'white',
+                                    transition: 'all 0.3s',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                }}
+                            >
+                                <Heart size={22} fill={isFavorite ? "currentColor" : "none"} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Profile Content */}
-                    <div style={{ padding: '0 2rem 2rem', marginTop: '-60px', position: 'relative' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ padding: '1.5rem 2rem 2rem', position: 'relative' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                             {/* Logo */}
                             <div style={{
-                                width: '130px',
-                                height: '130px',
-                                borderRadius: '28px',
-                                border: '4px solid var(--bg-card)',
+                                width: '90px',
+                                height: '90px',
+                                borderRadius: '20px',
+                                border: '3px solid var(--border-default)',
                                 background: 'var(--bg-card)',
                                 overflow: 'hidden',
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                                boxShadow: 'var(--shadow-md)',
                                 flexShrink: 0
                             }}>
                                 {professional.logoUrl ? (
@@ -273,7 +267,7 @@ export default function EstablishmentDetails() {
                                         width: '100%', height: '100%',
                                         background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: 'white', fontWeight: 700, fontSize: '3.5rem'
+                                        color: 'white', fontWeight: 700, fontSize: '2.5rem'
                                     }}>
                                         {(professional.businessName || professional.name || '?').charAt(0)}
                                     </div>
@@ -281,16 +275,16 @@ export default function EstablishmentDetails() {
                             </div>
 
                             {/* Name & Info */}
-                            <div style={{ flex: 1, minWidth: '200px', paddingBottom: '0.5rem' }}>
-                                <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem', lineHeight: 1.2 }}>
+                            <div style={{ flex: 1, minWidth: '200px' }}>
+                                <h1 style={{ fontSize: '1.625rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem', lineHeight: 1.3 }}>
                                     {professional.businessName || professional.name}
                                 </h1>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem', alignItems: 'center' }}>
                                     <span style={{
-                                        padding: '0.5rem 1rem',
+                                        padding: '0.375rem 0.875rem',
                                         background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05))',
-                                        borderRadius: '10px',
-                                        fontSize: '0.875rem',
+                                        borderRadius: '8px',
+                                        fontSize: '0.8125rem',
                                         fontWeight: 600,
                                         color: 'var(--accent-primary)',
                                         border: '1px solid rgba(99, 102, 241, 0.2)'
@@ -298,7 +292,7 @@ export default function EstablishmentDetails() {
                                         {professional.profession || 'Serviços'}
                                     </span>
                                     {fullAddress && (
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                                             <MapPin size={14} />
                                             {professional.city || fullAddress.split(',')[0]}
                                         </span>
