@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { User2, Mail, Building2, Save, Loader2, Camera, X, Briefcase, Phone } from 'lucide-react';
+import { User2, Mail, Building2, Save, Loader2, Camera, X, Briefcase, Phone, MapPin, Instagram, Facebook, Globe } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 
@@ -15,7 +15,15 @@ export default function ProfilePage() {
         businessName: '',
         phone: '',
         logoUrl: '',
-        profession: ''
+        profession: '',
+        // Morada
+        address: '',
+        postalCode: '',
+        city: '',
+        // Redes Sociais
+        instagram: '',
+        facebook: '',
+        website: ''
     });
     const [savedBusinessName, setSavedBusinessName] = useState('');
     const toast = useToast();
@@ -185,7 +193,15 @@ export default function ProfilePage() {
                     phone: profile.phone || '',
                     profession: profile.profession || '',
                     logoUrl: profile.logoUrl || '',
-                    slug: newSlug
+                    slug: newSlug,
+                    // Morada
+                    address: profile.address || '',
+                    postalCode: profile.postalCode || '',
+                    city: profile.city || '',
+                    // Redes Sociais
+                    instagram: profile.instagram || '',
+                    facebook: profile.facebook || '',
+                    website: profile.website || ''
                 });
                 setSavedBusinessName(profile.businessName);
                 toast.success('Perfil atualizado com sucesso!');
@@ -427,6 +443,138 @@ export default function ProfilePage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Morada - Only for Owners */}
+                    {!profile.isStaff && (
+                        <div style={{
+                            background: 'var(--bg-card)',
+                            padding: '1.5rem',
+                            borderRadius: '16px',
+                            border: '1px solid var(--border-default)',
+                            boxShadow: 'var(--shadow-sm)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.25rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                <MapPin size={18} strokeWidth={1.75} style={{ color: 'var(--accent-primary)' }} />
+                                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Morada do Estabelecimento</span>
+                            </div>
+
+                            <div>
+                                <label className="label" style={{ marginBottom: '0.5rem' }}>
+                                    Rua / Endereço
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={profile.address || ''}
+                                    onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                                    placeholder="Ex: Rua das Flores, 123"
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                                <div>
+                                    <label className="label" style={{ marginBottom: '0.5rem' }}>
+                                        Código Postal
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        value={profile.postalCode || ''}
+                                        onChange={(e) => setProfile({ ...profile, postalCode: e.target.value })}
+                                        placeholder="1000-001"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label" style={{ marginBottom: '0.5rem' }}>
+                                        Cidade
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        value={profile.city || ''}
+                                        onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                                        placeholder="Ex: Lisboa"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Redes Sociais - Only for Owners */}
+                    {!profile.isStaff && (
+                        <div style={{
+                            background: 'var(--bg-card)',
+                            padding: '1.5rem',
+                            borderRadius: '16px',
+                            border: '1px solid var(--border-default)',
+                            boxShadow: 'var(--shadow-sm)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.25rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                <Globe size={18} strokeWidth={1.75} style={{ color: 'var(--accent-primary)' }} />
+                                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Redes Sociais</span>
+                            </div>
+
+                            <div>
+                                <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Instagram size={16} strokeWidth={1.75} /> Instagram
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{
+                                        position: 'absolute',
+                                        left: '1rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        color: 'var(--text-muted)',
+                                        fontSize: '0.875rem'
+                                    }}>@</span>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        value={profile.instagram || ''}
+                                        onChange={(e) => setProfile({ ...profile, instagram: e.target.value.replace('@', '') })}
+                                        placeholder="o_teu_usuario"
+                                        style={{ paddingLeft: '2rem' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Facebook size={16} strokeWidth={1.75} /> Facebook
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={profile.facebook || ''}
+                                    onChange={(e) => setProfile({ ...profile, facebook: e.target.value })}
+                                    placeholder="https://facebook.com/a-tua-pagina"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Globe size={16} strokeWidth={1.75} /> Website
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={profile.website || ''}
+                                    onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                                    placeholder="https://o-teu-site.pt"
+                                />
+                            </div>
+
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                Estas informações serão exibidas na sua página pública de marcações.
+                            </p>
+                        </div>
+                    )}
 
                     <button
                         type="submit"
