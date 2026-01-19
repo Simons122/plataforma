@@ -328,32 +328,32 @@ export default function EstablishmentDetails() {
                 </div>
 
                 {/* Info Cards Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
 
                     {/* Schedule Card */}
                     {schedule && (
                         <div className="info-card" style={{
                             background: 'var(--bg-card)',
-                            borderRadius: '24px',
+                            borderRadius: '20px',
                             border: '1px solid var(--border-default)',
-                            padding: '1.75rem',
+                            padding: '1.5rem',
                             boxShadow: 'var(--shadow-sm)'
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                                 <div style={{
-                                    padding: '0.75rem',
+                                    padding: '0.625rem',
                                     background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05))',
-                                    borderRadius: '14px',
+                                    borderRadius: '12px',
                                     color: 'var(--accent-success)'
                                 }}>
-                                    <Clock size={22} />
+                                    <Clock size={20} />
                                 </div>
                                 <div>
-                                    <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.125rem' }}>Horário</h3>
-                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Funcionamento semanal</p>
+                                    <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>Horário</h3>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Funcionamento semanal</p>
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                 {DAYS.map(day => {
                                     const daySchedule = schedule[day.id];
                                     const isOpen = daySchedule?.enabled;
@@ -363,29 +363,29 @@ export default function EstablishmentDetails() {
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
-                                            padding: '0.625rem 0.875rem',
+                                            padding: '0.5rem 0.75rem',
                                             background: isToday ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                            borderRadius: '10px',
+                                            borderRadius: '8px',
                                             border: isToday ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent'
                                         }}>
                                             <span style={{
                                                 color: isOpen ? 'var(--text-primary)' : 'var(--text-muted)',
                                                 fontWeight: isToday ? 600 : 500,
-                                                fontSize: '0.875rem',
+                                                fontSize: '0.8125rem',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '0.5rem'
                                             }}>
-                                                {isToday && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-primary)' }} />}
+                                                {isToday && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-primary)' }} />}
                                                 {day.short}
                                             </span>
                                             {isOpen ? (
                                                 <span style={{
                                                     color: 'var(--accent-success)',
                                                     fontWeight: 600,
-                                                    fontSize: '0.8125rem',
+                                                    fontSize: '0.75rem',
                                                     background: 'rgba(34, 197, 94, 0.1)',
-                                                    padding: '0.25rem 0.625rem',
+                                                    padding: '0.1875rem 0.5rem',
                                                     borderRadius: '6px'
                                                 }}>
                                                     {daySchedule.start} - {daySchedule.end}
@@ -393,7 +393,7 @@ export default function EstablishmentDetails() {
                                             ) : (
                                                 <span style={{
                                                     color: 'var(--text-muted)',
-                                                    fontSize: '0.8125rem'
+                                                    fontSize: '0.75rem'
                                                 }}>
                                                     Fechado
                                                 </span>
@@ -405,136 +405,132 @@ export default function EstablishmentDetails() {
                         </div>
                     )}
 
-                    {/* Right Column: Address + Social */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {/* Address Card */}
-                        {fullAddress && (
-                            <div className="info-card" style={{
-                                background: 'var(--bg-card)',
-                                borderRadius: '24px',
-                                border: '1px solid var(--border-default)',
-                                padding: '1.75rem',
-                                boxShadow: 'var(--shadow-sm)'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-                                    <div style={{
-                                        padding: '0.75rem',
-                                        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05))',
-                                        borderRadius: '14px',
-                                        color: '#ef4444'
-                                    }}>
-                                        <MapPin size={22} />
-                                    </div>
-                                    <div>
-                                        <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.125rem' }}>Morada</h3>
-                                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Localização</p>
-                                    </div>
+                    {/* Address Card */}
+                    {fullAddress && (
+                        <div className="info-card" style={{
+                            background: 'var(--bg-card)',
+                            borderRadius: '20px',
+                            border: '1px solid var(--border-default)',
+                            padding: '1.5rem',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                <div style={{
+                                    padding: '0.625rem',
+                                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05))',
+                                    borderRadius: '12px',
+                                    color: 'var(--accent-primary)'
+                                }}>
+                                    <MapPin size={20} />
                                 </div>
-                                <div style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: '0.9375rem', marginBottom: '1rem' }}>
-                                    {professional.address && <span style={{ display: 'block' }}>{professional.address}</span>}
-                                    {(professional.postalCode || professional.city) && (
-                                        <span style={{ display: 'block', color: 'var(--text-muted)' }}>
-                                            {professional.postalCode}{professional.postalCode && professional.city ? ' ' : ''}{professional.city}
-                                        </span>
-                                    )}
+                                <div>
+                                    <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>Morada</h3>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Localização</p>
                                 </div>
-                                <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="maps-link"
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        color: 'var(--accent-primary)',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 600,
-                                        textDecoration: 'none',
-                                        padding: '0.5rem 0.875rem',
-                                        background: 'rgba(99, 102, 241, 0.08)',
-                                        borderRadius: '10px',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    <MapPin size={16} />
-                                    Ver no Google Maps
-                                    <ExternalLink size={14} />
-                                </a>
                             </div>
-                        )}
+                            <div style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.875rem', marginBottom: '1rem' }}>
+                                {professional.address && <span style={{ display: 'block' }}>{professional.address}</span>}
+                                {(professional.postalCode || professional.city) && (
+                                    <span style={{ display: 'block', color: 'var(--text-muted)' }}>
+                                        {professional.postalCode}{professional.postalCode && professional.city ? ' ' : ''}{professional.city}
+                                    </span>
+                                )}
+                            </div>
+                            <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="maps-link"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    color: 'var(--accent-primary)',
+                                    fontSize: '0.8125rem',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    padding: '0.5rem 0.75rem',
+                                    background: 'rgba(99, 102, 241, 0.08)',
+                                    borderRadius: '8px',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Ver no Google Maps
+                                <ExternalLink size={14} />
+                            </a>
+                        </div>
+                    )}
 
-                        {/* Social Card */}
-                        {(professional.phone || professional.instagram || professional.facebook || professional.website) && (
-                            <div className="info-card" style={{
-                                background: 'var(--bg-card)',
-                                borderRadius: '24px',
-                                border: '1px solid var(--border-default)',
-                                padding: '1.75rem',
-                                boxShadow: 'var(--shadow-sm)'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.25rem' }}>
-                                    <div style={{
-                                        padding: '0.75rem',
-                                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05))',
-                                        borderRadius: '14px',
-                                        color: '#3b82f6'
-                                    }}>
-                                        <Globe size={22} />
-                                    </div>
-                                    <div>
-                                        <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.125rem' }}>Contacto</h3>
-                                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Redes sociais</p>
-                                    </div>
+                    {/* Social Card */}
+                    {(professional.phone || professional.instagram || professional.facebook || professional.website) && (
+                        <div className="info-card" style={{
+                            background: 'var(--bg-card)',
+                            borderRadius: '20px',
+                            border: '1px solid var(--border-default)',
+                            padding: '1.5rem',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                <div style={{
+                                    padding: '0.625rem',
+                                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05))',
+                                    borderRadius: '12px',
+                                    color: '#3b82f6'
+                                }}>
+                                    <Globe size={20} />
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    {professional.phone && (
-                                        <a href={`tel:${professional.phone}`} className="social-link" style={{
-                                            display: 'flex', alignItems: 'center', gap: '0.875rem',
-                                            padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '12px',
-                                            color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
-                                        }}>
-                                            <Phone size={18} style={{ color: 'var(--accent-success)' }} />
-                                            <span style={{ flex: 1 }}>{professional.phone}</span>
-                                        </a>
-                                    )}
-                                    {professional.instagram && (
-                                        <a href={`https://instagram.com/${professional.instagram}`} target="_blank" rel="noopener noreferrer" className="social-link" style={{
-                                            display: 'flex', alignItems: 'center', gap: '0.875rem',
-                                            padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '12px',
-                                            color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
-                                        }}>
-                                            <Instagram size={18} style={{ color: '#E4405F' }} />
-                                            <span style={{ flex: 1 }}>@{professional.instagram}</span>
-                                            <ExternalLink size={14} style={{ opacity: 0.5 }} />
-                                        </a>
-                                    )}
-                                    {professional.facebook && (
-                                        <a href={professional.facebook.startsWith('http') ? professional.facebook : `https://${professional.facebook}`} target="_blank" rel="noopener noreferrer" className="social-link" style={{
-                                            display: 'flex', alignItems: 'center', gap: '0.875rem',
-                                            padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '12px',
-                                            color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
-                                        }}>
-                                            <Facebook size={18} style={{ color: '#1877F2' }} />
-                                            <span style={{ flex: 1 }}>Facebook</span>
-                                            <ExternalLink size={14} style={{ opacity: 0.5 }} />
-                                        </a>
-                                    )}
-                                    {professional.website && (
-                                        <a href={professional.website.startsWith('http') ? professional.website : `https://${professional.website}`} target="_blank" rel="noopener noreferrer" className="social-link" style={{
-                                            display: 'flex', alignItems: 'center', gap: '0.875rem',
-                                            padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '12px',
-                                            color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
-                                        }}>
-                                            <Globe size={18} style={{ color: 'var(--accent-primary)' }} />
-                                            <span style={{ flex: 1 }}>{professional.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
-                                            <ExternalLink size={14} style={{ opacity: 0.5 }} />
-                                        </a>
-                                    )}
+                                <div>
+                                    <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>Contacto</h3>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Redes sociais</p>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                                {professional.phone && (
+                                    <a href={`tel:${professional.phone}`} className="social-link" style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                        padding: '0.625rem', background: 'var(--bg-secondary)', borderRadius: '10px',
+                                        color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
+                                    }}>
+                                        <Phone size={16} style={{ color: 'var(--accent-success)' }} />
+                                        <span style={{ flex: 1, fontSize: '0.875rem' }}>{professional.phone}</span>
+                                    </a>
+                                )}
+                                {professional.instagram && (
+                                    <a href={`https://instagram.com/${professional.instagram}`} target="_blank" rel="noopener noreferrer" className="social-link" style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                        padding: '0.625rem', background: 'var(--bg-secondary)', borderRadius: '10px',
+                                        color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
+                                    }}>
+                                        <Instagram size={16} style={{ color: '#E4405F' }} />
+                                        <span style={{ flex: 1, fontSize: '0.875rem' }}>@{professional.instagram}</span>
+                                        <ExternalLink size={12} style={{ opacity: 0.5 }} />
+                                    </a>
+                                )}
+                                {professional.facebook && (
+                                    <a href={professional.facebook.startsWith('http') ? professional.facebook : `https://${professional.facebook}`} target="_blank" rel="noopener noreferrer" className="social-link" style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                        padding: '0.625rem', background: 'var(--bg-secondary)', borderRadius: '10px',
+                                        color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
+                                    }}>
+                                        <Facebook size={16} style={{ color: '#1877F2' }} />
+                                        <span style={{ flex: 1, fontSize: '0.875rem' }}>Facebook</span>
+                                        <ExternalLink size={12} style={{ opacity: 0.5 }} />
+                                    </a>
+                                )}
+                                {professional.website && (
+                                    <a href={professional.website.startsWith('http') ? professional.website : `https://${professional.website}`} target="_blank" rel="noopener noreferrer" className="social-link" style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                        padding: '0.625rem', background: 'var(--bg-secondary)', borderRadius: '10px',
+                                        color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 0.2s'
+                                    }}>
+                                        <Globe size={16} style={{ color: 'var(--accent-primary)' }} />
+                                        <span style={{ flex: 1, fontSize: '0.875rem' }}>{professional.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                                        <ExternalLink size={12} style={{ opacity: 0.5 }} />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Bottom CTA */}
@@ -621,6 +617,6 @@ export default function EstablishmentDetails() {
                     box-shadow: 0 12px 40px rgba(0,0,0,0.2) !important;
                 }
             `}</style>
-        </LayoutWrapper>
+        </LayoutWrapper >
     );
 }
