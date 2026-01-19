@@ -166,140 +166,148 @@ export default function ClientExplore() {
                     gap: '1.5rem'
                 }}>
                     {filteredPros.map(pro => (
-                        <div key={pro.id} className="pro-card" style={{
-                            background: 'var(--bg-card)',
-                            borderRadius: '24px',
-                            overflow: 'hidden',
-                            border: '1px solid var(--border-default)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            position: 'relative'
-                        }}>
-                            {/* Header Image / Pattern */}
-                            <div style={{
-                                height: '120px',
-                                background: pro.logoUrl
-                                    ? `linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--bg-card) 100%), url(${pro.logoUrl}) center/cover`
-                                    : 'linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated))',
+                        <Link
+                            key={pro.id}
+                            to={`/establishment/${pro.slug}`}
+                            style={{ textDecoration: 'none' }}
+                        >
+                            <div className="pro-card" style={{
+                                background: 'var(--bg-card)',
+                                borderRadius: '24px',
+                                overflow: 'hidden',
+                                border: '1px solid var(--border-default)',
+                                display: 'flex',
+                                flexDirection: 'column',
                                 position: 'relative',
+                                cursor: 'pointer',
+                                height: '100%'
                             }}>
-                                {/* Favorite Button - Top Right */}
-                                {user && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            toggleFavorite(pro.id);
-                                        }}
-                                        className="fav-btn"
-                                        style={{
-                                            position: 'absolute',
-                                            top: '12px',
-                                            right: '12px',
-                                            background: 'rgba(0,0,0,0.3)',
-                                            backdropFilter: 'blur(4px)',
-                                            border: 'none',
-                                            borderRadius: '50%',
-                                            width: '36px',
-                                            height: '36px',
+                                {/* Header Image / Pattern */}
+                                <div style={{
+                                    height: '120px',
+                                    background: pro.logoUrl
+                                        ? `linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--bg-card) 100%), url(${pro.logoUrl}) center/cover`
+                                        : 'linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated))',
+                                    position: 'relative',
+                                }}>
+                                    {/* Favorite Button - Top Right */}
+                                    {user && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                toggleFavorite(pro.id);
+                                            }}
+                                            className="fav-btn"
+                                            style={{
+                                                position: 'absolute',
+                                                top: '12px',
+                                                right: '12px',
+                                                background: 'rgba(0,0,0,0.3)',
+                                                backdropFilter: 'blur(4px)',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '36px',
+                                                height: '36px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                color: favorites.includes(pro.id) ? 'var(--accent-danger)' : 'white',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            title={favorites.includes(pro.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                        >
+                                            <Heart size={18} fill={favorites.includes(pro.id) ? "currentColor" : "none"} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div style={{ padding: '0 1.5rem 1.5rem', marginTop: '-50px', position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    {/* Logo Wrapper */}
+                                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                        <div style={{
+                                            width: '88px',
+                                            height: '88px',
+                                            borderRadius: '20px',
+                                            border: '4px solid var(--bg-card)',
+                                            background: 'var(--bg-card)',
+                                            overflow: 'hidden',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            color: favorites.includes(pro.id) ? 'var(--accent-danger)' : 'white',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        title={favorites.includes(pro.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                                    >
-                                        <Heart size={18} fill={favorites.includes(pro.id) ? "currentColor" : "none"} />
-                                    </button>
-                                )}
-                            </div>
+                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                        }}>
+                                            {pro.logoUrl ? (
+                                                <img src={pro.logoUrl} alt={pro.businessName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                <div style={{
+                                                    width: '100%', height: '100%',
+                                                    background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    color: 'white', fontWeight: 700, fontSize: '2rem'
+                                                }}>
+                                                    {(pro.businessName || pro.name || '?').charAt(0)}
+                                                </div>
+                                            )}
+                                        </div>
 
-                            <div style={{ padding: '0 1.5rem 1.5rem', marginTop: '-50px', position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                {/* Logo Wrapper */}
-                                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                    <div style={{
-                                        width: '88px',
-                                        height: '88px',
-                                        borderRadius: '20px',
-                                        border: '4px solid var(--bg-card)',
-                                        background: 'var(--bg-card)',
-                                        overflow: 'hidden',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                                    }}>
-                                        {pro.logoUrl ? (
-                                            <img src={pro.logoUrl} alt={pro.businessName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (
-                                            <div style={{
-                                                width: '100%', height: '100%',
-                                                background: 'linear-gradient(135deg, var(--accent-primary), #60a5fa)',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                color: 'white', fontWeight: 700, fontSize: '2rem'
-                                            }}>
-                                                {(pro.businessName || pro.name || '?').charAt(0)}
+                                        {/* Rating or Category Badge could go here */}
+                                        <span style={{
+                                            padding: '4px 10px',
+                                            background: 'var(--bg-secondary)',
+                                            borderRadius: '20px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            color: 'var(--text-secondary)',
+                                            border: '1px solid var(--border-default)'
+                                        }}>
+                                            {pro.profession || t('clientExplore.services', 'Serviços')}
+                                        </span>
+                                    </div>
+
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', lineHeight: 1.2 }}>
+                                            {pro.businessName || pro.name}
+                                        </h3>
+                                        {pro.address && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                                                <MapPin size={14} style={{ flexShrink: 0 }} />
+                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pro.address}</span>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Rating or Category Badge could go here */}
-                                    <span style={{
-                                        padding: '4px 10px',
-                                        background: 'var(--bg-secondary)',
-                                        borderRadius: '20px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
-                                        color: 'var(--text-secondary)',
-                                        border: '1px solid var(--border-default)'
-                                    }}>
-                                        {pro.profession || t('clientExplore.services', 'Serviços')}
-                                    </span>
-                                </div>
-
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', lineHeight: 1.2 }}>
-                                        {pro.businessName || pro.name}
-                                    </h3>
-                                    {pro.address && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                                            <MapPin size={14} style={{ flexShrink: 0 }} />
-                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pro.address}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div style={{ marginTop: 'auto' }}>
-                                    <Link
-                                        to={`/book/${pro.slug}`}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '0.5rem',
-                                            width: '100%',
-                                            padding: '0.875rem',
-                                            background: 'var(--accent-primary)',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '14px',
-                                            fontWeight: 600,
-                                            fontSize: '0.9375rem',
-                                            cursor: 'pointer',
-                                            textDecoration: 'none',
-                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' // Sombra subtil azulada
-                                        }}
-
-                                        className="action-btn"
-                                    >
-                                        {t('clientExplore.book', 'Agendar')}
-                                        <ArrowRight size={18} strokeWidth={2.5} />
-                                    </Link>
+                                    <div style={{ marginTop: 'auto' }}>
+                                        <Link
+                                            to={`/book/${pro.slug}`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem',
+                                                width: '100%',
+                                                padding: '0.875rem',
+                                                background: 'var(--accent-primary)',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '14px',
+                                                fontWeight: 600,
+                                                fontSize: '0.9375rem',
+                                                cursor: 'pointer',
+                                                textDecoration: 'none',
+                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
+                                            }}
+                                            className="action-btn"
+                                        >
+                                            {t('clientExplore.book', 'Agendar')}
+                                            <ArrowRight size={18} strokeWidth={2.5} />
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
 
