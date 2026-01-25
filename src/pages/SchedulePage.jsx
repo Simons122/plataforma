@@ -27,10 +27,10 @@ export default function SchedulePage() {
         <Layout>
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                    {t?.schedule?.title || 'Schedule'}
+                    {t('schedule.title', 'Schedule')}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                    {t?.schedule?.configureDescription || 'Configure the days and times you are available.'}
+                    {t('schedule.configureDescription', 'Configure the days and times you are available.')}
                 </p>
             </div>
             <ScheduleManager
