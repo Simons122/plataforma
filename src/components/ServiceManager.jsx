@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Plus, Trash2, Edit2, Clock, Euro, Briefcase } from 'lucide-react';
+import { useLanguage } from '../i18n';
 
 export default function ServiceManager({ userId }) {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ name: '', duration: 30, price: 0 });
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchServices();
@@ -52,7 +54,7 @@ export default function ServiceManager({ userId }) {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Tem a certeza que quer apagar este serviço?")) return;
+        if (!confirm(t?.services?.confirmDelete || "Are you sure you want to delete this service?")) return;
         await deleteDoc(doc(db, `professionals/${userId}/services`, id));
         fetchServices();
     };
@@ -72,7 +74,7 @@ export default function ServiceManager({ userId }) {
                 marginBottom: '1.5rem'
             }}>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Os Meus Serviços
+                    {t?.services?.myServices || 'My Services'}
                 </h2>
                 <button
                     onClick={() => setIsEditing(!isEditing)}
@@ -99,7 +101,7 @@ export default function ServiceManager({ userId }) {
                         else e.currentTarget.style.background = 'transparent';
                     }}
                 >
-                    {isEditing ? 'Cancelar' : <><Plus size={16} /> Novo Serviço</>}
+                    {isEditing ? (t?.common?.cancel || 'Cancel') : <><Plus size={16} /> {t?.services?.newService || 'New Service'}</>}
                 </button>
             </div>
 
