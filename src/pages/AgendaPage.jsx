@@ -6,7 +6,7 @@ import {
     startOfDay, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval,
     isSameDay, isSameMonth, isToday, getDay
 } from 'date-fns';
-import { pt, enUS } from 'date-fns/locale';
+import { pt, fr, enUS } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, CalendarDays, User2, Phone, Clock4, ListFilter, Plus } from 'lucide-react';
 import Layout from '../components/Layout';
 import ManualBookingModal from '../components/ManualBookingModal';
@@ -27,7 +27,7 @@ export default function AgendaPage() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const { t, language } = useLanguage();
-    const dateLocale = language === 'pt' ? pt : enUS;
+    const dateLocale = language === 'pt' ? pt : (language === 'fr' ? fr : enUS);
 
     const handleCancelBooking = async (booking) => {
         if (!window.confirm(t('clientBookings.confirmCancel', "Tem a certeza que deseja cancelar esta marcação?"))) return;
@@ -274,7 +274,7 @@ export default function AgendaPage() {
                         }}
                     >
                         <Plus size={16} strokeWidth={2.5} />
-                        {t?.booking?.newBooking || 'New Booking'}
+                        {t('booking.newBooking', 'New Booking')}
                     </button>
                 </div>
 
@@ -288,10 +288,10 @@ export default function AgendaPage() {
                         padding: '3px'
                     }}>
                         {[
-                            { id: 'day', label: t?.time?.day || 'Day' },
-                            { id: 'week', label: t?.time?.week || 'Week' },
-                            { id: 'month', label: t?.time?.month || 'Month' },
-                            { id: 'list', label: t?.nav?.list || 'List' }
+                            { id: 'day', label: t('time.day', 'Day') },
+                            { id: 'week', label: t('time.week', 'Week') },
+                            { id: 'month', label: t('time.month', 'Month') },
+                            { id: 'list', label: t('nav.list', 'List') }
                         ].map(v => (
                             <button
                                 key={v.id}

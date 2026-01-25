@@ -49,7 +49,7 @@ export default function ServicesPage() {
                     {t('services.title', 'Services')}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                    {t?.services?.manageDescription || 'Manage the services you offer to your clients.'}
+                    {t('services.manageDescription', 'Manage the services you offer to your clients.')}
                 </p>
             </div>
             <ServiceManager userId={profile.id} />
