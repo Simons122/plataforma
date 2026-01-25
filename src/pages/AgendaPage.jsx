@@ -30,7 +30,7 @@ export default function AgendaPage() {
     const dateLocale = language === 'pt' ? pt : enUS;
 
     const handleCancelBooking = async (booking) => {
-        if (!window.confirm(t?.clientBookings?.confirmCancel || "Tem a certeza que deseja cancelar esta marcação?")) return;
+        if (!window.confirm(t('clientBookings.confirmCancel', "Tem a certeza que deseja cancelar esta marcação?"))) return;
 
         try {
             const currentOwnerId = profile.isStaff ? profile.ownerId : profile.id;
@@ -51,7 +51,7 @@ export default function AgendaPage() {
             setSelectedEvent(null);
         } catch (error) {
             console.error("Erro ao cancelar:", error);
-            alert(t?.errors?.somethingWentWrong || "Erro ao cancelar marcação.");
+            alert(t('errors.somethingWentWrong', "Erro ao cancelar marcação."));
         }
     };
 
@@ -354,7 +354,7 @@ export default function AgendaPage() {
                         onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-primary-hover)'}
                         onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-primary)'}
                     >
-                        {t?.time?.today || 'Today'}
+                        {t('time.today', 'Today')}
                     </button>
                 </div>
             </div>
@@ -368,7 +368,7 @@ export default function AgendaPage() {
                                 {format(selectedDate, language === 'pt' ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d", { locale: dateLocale })}
                             </span>
                             <span className="badge badge-success">
-                                {currentDayBookings.length} {t?.nav?.bookings?.toLowerCase() || 'bookings'}
+                                {currentDayBookings.length} {t('nav.bookings', 'bookings').toLowerCase()}
                             </span>
                         </div>
                     </div>
@@ -478,7 +478,7 @@ export default function AgendaPage() {
                             <div className="calendar-header">
                                 {['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(d => (
                                     <div key={d} className="calendar-header-cell">
-                                        {t?.schedule?.daysShort?.[d] || d}
+                                        {t(`schedule.daysShort.${d}`, d)}
                                     </div>
                                 ))}                            </div>
                             {/* Month Grid */}
@@ -506,7 +506,7 @@ export default function AgendaPage() {
                                             ))}
                                             {dayBookings.length > 3 && (
                                                 <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>
-                                                    +{dayBookings.length - 3} {t?.dashboard?.moreBookings || 'mais'}
+                                                    +{dayBookings.length - 3} {t('dashboard.moreBookings', 'mais')}
                                                 </div>
                                             )}
                                         </div>
@@ -530,7 +530,7 @@ export default function AgendaPage() {
                         <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                             <CalendarDays size={48} strokeWidth={1} style={{ marginBottom: '1rem', opacity: 0.2 }} />
                             <p style={{ fontSize: '0.9375rem' }}>
-                                {t?.dashboard?.noBookingsToday || 'No bookings registered for this day.'}
+                                {t('dashboard.noBookingsToday', 'No bookings registered for this day.')}
                             </p>
                         </div>
                     ) : (

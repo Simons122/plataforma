@@ -46,7 +46,7 @@ export default function ServicesPage() {
         <Layout role={profile.role || 'professional'}>
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                    {t?.services?.title || 'Services'}
+                    {t('services.title', 'Services')}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                     {t?.services?.manageDescription || 'Manage the services you offer to your clients.'}

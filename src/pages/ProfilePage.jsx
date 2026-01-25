@@ -70,7 +70,7 @@ export default function ProfilePage() {
                     }
                 } catch (err) {
                     console.error("Error fetching profile:", err);
-                    toast.error(t?.errors?.profileNotFound || "Erro ao carregar perfil.");
+                    toast.error(t('errors.profileNotFound', "Erro ao carregar perfil."));
                 }
             }
             setLoading(false);
@@ -83,11 +83,11 @@ export default function ProfilePage() {
         if (!file) return;
 
         if (!file.type.startsWith('image/')) {
-            toast.error(t?.profile?.imageRequired || 'Por favor, selecione uma imagem.');
+            toast.error(t('profile.imageRequired', 'Por favor, selecione uma imagem.'));
             return;
         }
         if (file.size > 2 * 1024 * 1024) {
-            toast.error(t?.profile?.imageSize || 'A imagem deve ter no máximo 2MB.');
+            toast.error(t('profile.imageSize', 'A imagem deve ter no máximo 2MB.'));
             return;
         }
 
@@ -301,10 +301,10 @@ export default function ProfilePage() {
 
                         <div style={{ flex: 1, minWidth: '200px' }}>
                             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                                {profile.isStaff ? (t?.profile?.staffProfile || 'O Meu Perfil') : (t?.profile?.proProfile || 'Perfil Profissional')}
+                                {profile.isStaff ? t('profile.staffProfile', 'O Meu Perfil') : t('profile.proProfile', 'Perfil Profissional')}
                             </h1>
                             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                                {profile.isStaff ? (t?.profile?.staffProfileSubtitle || 'Gerencie a sua informação pessoal.') : (t?.profile?.proProfileSubtitle || 'Gerencie as informações do seu estabelecimento.')}
+                                {profile.isStaff ? t('profile.staffProfileSubtitle', 'Gerencie a sua informação pessoal.') : t('profile.proProfileSubtitle', 'Gerencie as informações do seu estabelecimento.')}
                             </p>
                             <label className="upload-btn" style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
@@ -315,7 +315,7 @@ export default function ProfilePage() {
                                 boxShadow: 'var(--shadow-sm)'
                             }}>
                                 <Camera size={18} />
-                                {profile.logoUrl ? (t?.profile?.changePhoto || 'Alterar Imagem') : (t?.profile?.uploadImage || 'Carregar Imagem')}
+                                {profile.logoUrl ? t('profile.changePhoto', 'Alterar Imagem') : t('profile.uploadImage', 'Carregar Imagem')}
                                 <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} disabled={uploading} />
                             </label>
                         </div>
@@ -348,8 +348,8 @@ export default function ProfilePage() {
                                             <Building2 size={20} />
                                         </div>
                                         <div>
-                                            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t?.profile?.businessName || 'Estabelecimento'}</h3>
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t?.profile?.businessNameSubtitle || 'Nome visível para clientes'}</p>
+                                            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t('profile.businessName', 'Estabelecimento')}</h3>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('profile.businessNameSubtitle', 'Nome visível para clientes')}</p>
                                         </div>
                                     </div>
                                     <input
@@ -381,15 +381,15 @@ export default function ProfilePage() {
                                         <User2 size={20} />
                                     </div>
                                     <div>
-                                        <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t?.profile?.personalData || 'Dados Pessoais'}</h3>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t?.profile?.personalDataSubtitle || 'As tuas informações de contacto'}</p>
+                                        <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t('profile.personalData', 'Dados Pessoais')}</h3>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('profile.personalDataSubtitle', 'As tuas informações de contacto')}</p>
                                     </div>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     <div>
                                         <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                            <User2 size={14} /> {t?.profile?.fullName || 'Nome Completo'}
+                                            <User2 size={14} /> {t('profile.fullName', 'Nome Completo')}
                                         </label>
                                         <input
                                             type="text"
@@ -402,7 +402,7 @@ export default function ProfilePage() {
 
                                     <div>
                                         <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                            <Mail size={14} /> {t?.profile?.email || 'Email'}
+                                            <Mail size={14} /> {t('profile.email', 'Email')}
                                         </label>
                                         <input
                                             type="email"
@@ -415,7 +415,7 @@ export default function ProfilePage() {
 
                                     <div>
                                         <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                            <Phone size={14} /> {t?.bookingPage?.phone || 'Telefone'}
+                                            <Phone size={14} /> {t('bookingPage.phone', 'Telefone')}
                                         </label>
                                         <input
                                             type="tel"
@@ -429,14 +429,14 @@ export default function ProfilePage() {
                                     {!profile.isStaff && (
                                         <div>
                                             <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                                <Briefcase size={14} /> {t?.profile?.profession || 'Profissão'}
+                                                <Briefcase size={14} /> {t('profile.profession', 'Profissão')}
                                             </label>
                                             <select
                                                 className="select"
                                                 value={profile.profession || ''}
                                                 onChange={(e) => setProfile({ ...profile, profession: e.target.value })}
                                             >
-                                                <option value="">{t?.profile?.professionPlaceholder || 'Selecione uma profissão'}</option>
+                                                <option value="">{t('profile.professionPlaceholder', 'Selecione uma profissão')}</option>
                                                 <option value="Barbeiro">Barbeiro</option>
                                                 <option value="Personal Trainer">Personal Trainer</option>
                                                 <option value="Tatuador">Tatuador</option>
@@ -446,7 +446,7 @@ export default function ProfilePage() {
                                                 <option value="Esteticista">Esteticista</option>
                                                 <option value="Massagista">Massagista</option>
                                                 <option value="Fotógrafo">Fotógrafo</option>
-                                                <option value="Outro">{t?.profile?.other || 'Outro'}</option>
+                                                <option value="Outro">{t('profile.other', 'Outro')}</option>
                                             </select>
                                         </div>
                                     )}
@@ -476,14 +476,14 @@ export default function ProfilePage() {
                                             <MapPin size={20} />
                                         </div>
                                         <div>
-                                            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t?.profile?.address || 'Morada'}</h3>
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t?.profile?.addressSubtitle || 'Localização do estabelecimento'}</p>
+                                            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t('profile.address', 'Morada')}</h3>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('profile.addressSubtitle', 'Localização do estabelecimento')}</p>
                                         </div>
                                     </div>
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                         <div>
-                                            <label className="label" style={{ marginBottom: '0.5rem', fontSize: '0.8125rem' }}>{t?.profile?.addressLabel || 'Rua / Endereço'}</label>
+                                            <label className="label" style={{ marginBottom: '0.5rem', fontSize: '0.8125rem' }}>{t('profile.addressLabel', 'Rua / Endereço')}</label>
                                             <input
                                                 type="text"
                                                 className="input"
@@ -495,7 +495,7 @@ export default function ProfilePage() {
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '0.75rem' }}>
                                             <div>
-                                                <label className="label" style={{ marginBottom: '0.5rem', fontSize: '0.8125rem' }}>{t?.profile?.zipCode || 'Código Postal'}</label>
+                                                <label className="label" style={{ marginBottom: '0.5rem', fontSize: '0.8125rem' }}>{t('profile.zipCode', 'Código Postal')}</label>
                                                 <input
                                                     type="text"
                                                     className="input"
@@ -505,7 +505,7 @@ export default function ProfilePage() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="label" style={{ marginBottom: '0.5rem', fontSize: '0.8125rem' }}>{t?.profile?.city || 'Cidade'}</label>
+                                                <label className="label" style={{ marginBottom: '0.5rem', fontSize: '0.8125rem' }}>{t('profile.city', 'Cidade')}</label>
                                                 <input
                                                     type="text"
                                                     className="input"
@@ -536,8 +536,8 @@ export default function ProfilePage() {
                                             <Globe size={20} />
                                         </div>
                                         <div>
-                                            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t?.profile?.socials || 'Redes Sociais'}</h3>
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t?.profile?.socialsSubtitle || 'Links para os teus perfis'}</p>
+                                            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{t('profile.socials', 'Redes Sociais')}</h3>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('profile.socialsSubtitle', 'Links para os teus perfis')}</p>
                                         </div>
                                     </div>
 
@@ -577,7 +577,7 @@ export default function ProfilePage() {
 
                                         <div>
                                             <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                                <Globe size={14} style={{ color: 'var(--accent-primary)' }} /> {t?.profile?.website || 'Website'}
+                                                <Globe size={14} style={{ color: 'var(--accent-primary)' }} /> {t('profile.website', 'Website')}
                                             </label>
                                             <input
                                                 type="text"
@@ -601,7 +601,7 @@ export default function ProfilePage() {
                                     }}>
                                         <span style={{ fontSize: '1.25rem' }}>💡</span>
                                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                                            {t?.profile?.publicInfoNote || 'Estas informações serão exibidas na tua página pública, ajudando os clientes a encontrarem-te.'}
+                                            {t('profile.publicInfoNote', 'Estas informações serão exibidas na tua página pública, ajudando os clientes a encontrarem-te.')}
                                         </p>
                                     </div>
                                 </div>
@@ -633,7 +633,7 @@ export default function ProfilePage() {
                         }}
                     >
                         {(saving || uploading) ? <Loader2 size={20} className="spinner" /> : <Save size={20} />}
-                        {saving ? (t?.profile?.saving || 'A guardar...') : (t?.profile?.saveProfile || 'Guardar Alterações')}
+                        {saving ? t('profile.saving', 'A guardar...') : t('profile.saveProfile', 'Guardar Alterações')}
                     </button>
                 </form>
             </div>

@@ -54,7 +54,7 @@ export default function ServiceManager({ userId }) {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm(t?.services?.confirmDelete || "Are you sure you want to delete this service?")) return;
+        if (!confirm(t('services.confirmDelete', "Are you sure you want to delete this service?"))) return;
         await deleteDoc(doc(db, `professionals/${userId}/services`, id));
         fetchServices();
     };
@@ -74,7 +74,7 @@ export default function ServiceManager({ userId }) {
                 marginBottom: '1.5rem'
             }}>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {t?.services?.myServices || 'My Services'}
+                    {t('services.myServices', 'My Services')}
                 </h2>
                 <button
                     onClick={() => setIsEditing(!isEditing)}
@@ -101,7 +101,7 @@ export default function ServiceManager({ userId }) {
                         else e.currentTarget.style.background = 'transparent';
                     }}
                 >
-                    {isEditing ? (t?.common?.cancel || 'Cancel') : <><Plus size={16} /> {t?.services?.newService || 'New Service'}</>}
+                    {isEditing ? t('common.cancel', 'Cancel') : <><Plus size={16} /> {t('services.newService', 'New Service')}</>}
                 </button>
             </div>
 
@@ -123,17 +123,17 @@ export default function ServiceManager({ userId }) {
                         gap: '1rem'
                     }}>
                         <div style={{ flex: 1 }}>
-                            <label className="label">Nome do Serviço</label>
+                            <label className="label">{t('services.serviceName', 'Nome do Serviço')}</label>
                             <input
                                 className="input"
-                                placeholder="Ex: Corte de Cabelo"
+                                placeholder={t('services.exampleService', "Ex: Corte de Cabelo")}
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 required
                             />
                         </div>
                         <div style={{ flex: 1 }}>
-                            <label className="label">Duração (min)</label>
+                            <label className="label">{t('services.duration', 'Duração')} (min)</label>
                             <select
                                 className="select"
                                 value={formData.duration}
@@ -148,7 +148,7 @@ export default function ServiceManager({ userId }) {
                             </select>
                         </div>
                         <div style={{ flex: 1 }}>
-                            <label className="label">Preço (€)</label>
+                            <label className="label">{t('services.price', 'Preço')} (€)</label>
                             <input
                                 type="number"
                                 step="0.5"
@@ -176,7 +176,7 @@ export default function ServiceManager({ userId }) {
                             onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-primary-hover)'}
                             onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-primary)'}
                         >
-                            Guardar Serviço
+                            {t('services.saveService', 'Guardar Serviço')}
                         </button>
                     </div>
                 </form>
@@ -193,7 +193,7 @@ export default function ServiceManager({ userId }) {
                 {services.length === 0 && !loading && (
                     <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                         <Briefcase size={32} style={{ marginBottom: '0.5rem', opacity: 0.3 }} />
-                        <p style={{ fontSize: '0.875rem' }}>Ainda não criou nenhum serviço.</p>
+                        <p style={{ fontSize: '0.875rem' }}>{t('services.noServices', 'Ainda não criou nenhum serviço.')}</p>
                     </div>
                 )}
 
