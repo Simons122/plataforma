@@ -71,11 +71,11 @@ export default function ClientProfile() {
 
         // Validations
         if (!file.type.startsWith('image/')) {
-            setMessage({ type: 'error', text: language === 'pt' ? 'Por favor, selecione uma imagem.' : 'Please select an image.' });
+            setMessage({ type: 'error', text: t('profile.imageRequired', 'Por favor, selecione uma imagem.') });
             return;
         }
         if (file.size > 2 * 1024 * 1024) {
-            setMessage({ type: 'error', text: language === 'pt' ? 'A imagem deve ter no máximo 2MB.' : 'Image must be under 2MB.' });
+            setMessage({ type: 'error', text: t('profile.imageSize', 'A imagem deve ter no máximo 2MB.') });
             return;
         }
 
@@ -120,10 +120,10 @@ export default function ClientProfile() {
                         await setDoc(docRef, { photoURL: base64, logoUrl: base64 }, { merge: true });
 
                         setFormData(prev => ({ ...prev, photoURL: base64 }));
-                        setMessage({ type: 'success', text: language === 'pt' ? 'Foto de perfil atualizada!' : 'Profile photo updated!' });
+                        setMessage({ type: 'success', text: t('profile.profileUpdated', 'Foto de perfil atualizada!') });
                     } catch (error) {
                         console.error(error);
-                        setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao guardar foto' : 'Error saving photo' });
+                        setMessage({ type: 'error', text: t('errors.somethingWentWrong', 'Erro ao guardar foto') });
                     } finally {
                         setSaving(false);
                     }
@@ -133,7 +133,7 @@ export default function ClientProfile() {
             reader.readAsDataURL(file);
         } catch (error) {
             console.error(error);
-            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao processar imagem' : 'Error processing image' });
+            setMessage({ type: 'error', text: t('errors.somethingWentWrong', 'Erro ao processar imagem') });
             setSaving(false);
         }
     };
@@ -163,10 +163,10 @@ export default function ClientProfile() {
                 email: formData.email // Manter email atualizado
             }, { merge: true });
 
-            setMessage({ type: 'success', text: language === 'pt' ? 'Perfil atualizado com sucesso!' : 'Profile updated successfully!' });
+            setMessage({ type: 'success', text: t('profile.profileUpdated', 'Perfil atualizado com sucesso!') });
         } catch (error) {
             console.error(error);
-            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao atualizar perfil' : 'Error updating profile' });
+            setMessage({ type: 'error', text: t('errors.somethingWentWrong', 'Erro ao atualizar perfil') });
         } finally {
             setSaving(false);
         }
@@ -186,10 +186,10 @@ export default function ClientProfile() {
                 {/* Header - Left aligned like ProfilePage */}
                 <div style={{ marginBottom: '2rem' }}>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                        {language === 'pt' ? 'O Meu Perfil' : 'My Profile'}
+                        {t('profile.staffProfile', 'O Meu Perfil')}
                     </h1>
                     <p style={{ color: 'var(--text-secondary)' }}>
-                        {language === 'pt' ? 'Gerencie as suas informações pessoais.' : 'Manage your personal information.'}
+                        {t('profile.staffProfileSubtitle', 'Gerencie as suas informações pessoais.')}
                     </p>
                 </div>
 
@@ -271,10 +271,10 @@ export default function ClientProfile() {
                                             const { setDoc } = await import('firebase/firestore');
                                             await setDoc(docRef, { photoURL: '' }, { merge: true });
                                             setFormData(prev => ({ ...prev, photoURL: '' }));
-                                            setMessage({ type: 'success', text: language === 'pt' ? 'Foto removida!' : 'Photo removed!' });
+                                            setMessage({ type: 'success', text: t('profile.photoRemoved', 'Foto removida!') });
                                         } catch (error) {
                                             console.error(error);
-                                            setMessage({ type: 'error', text: language === 'pt' ? 'Erro ao remover foto' : 'Error removing photo' });
+                                            setMessage({ type: 'error', text: t('errors.somethingWentWrong', 'Erro ao remover foto') });
                                         } finally {
                                             setSaving(false);
                                         }
@@ -318,8 +318,8 @@ export default function ClientProfile() {
                             }}>
                                 <Camera size={16} />
                                 {formData.photoURL
-                                    ? (language === 'pt' ? 'Alterar Foto' : 'Change Photo')
-                                    : (language === 'pt' ? 'Carregar Foto' : 'Upload Photo')
+                                    ? t('profile.changePhoto', 'Alterar Foto')
+                                    : t('profile.uploadImage', 'Carregar Foto')
                                 }
                                 <input
                                     type="file"
@@ -330,7 +330,7 @@ export default function ClientProfile() {
                                 />
                             </label>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                {language === 'pt' ? 'JPG ou PNG. Máximo 2MB.' : 'JPG or PNG. Max 2MB.'}
+                                {t('profile.imageSize', 'JPG ou PNG. Máximo 2MB.')}
                             </p>
                         </div>
                     </div>
@@ -349,7 +349,7 @@ export default function ClientProfile() {
                         {/* Name */}
                         <div>
                             <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <User size={16} strokeWidth={1.75} /> {language === 'pt' ? 'Nome Completo' : 'Full Name'}
+                                <User size={16} strokeWidth={1.75} /> {t('profile.fullName', 'Nome Completo')}
                             </label>
                             <input
                                 type="text"
@@ -357,7 +357,7 @@ export default function ClientProfile() {
                                 className="input"
                                 value={formData.name}
                                 onChange={handleChange}
-                                placeholder={language === 'pt' ? 'Seu nome' : 'Your name'}
+                                placeholder={t('profile.namePlaceholder', 'Seu nome')}
                                 required
                             />
                         </div>
@@ -365,7 +365,7 @@ export default function ClientProfile() {
                         {/* Email (Read-only) */}
                         <div>
                             <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Mail size={16} /> {language === 'pt' ? 'Email (Não editável)' : 'Email (Not editable)'}
+                                <Mail size={16} /> {t('booking.email', 'Email')}
                             </label>
                             <input
                                 type="email"
@@ -383,7 +383,7 @@ export default function ClientProfile() {
                         {/* Phone */}
                         <div>
                             <label className="label" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Phone size={16} /> {language === 'pt' ? 'Telefone' : 'Phone'}
+                                <Phone size={16} /> {t('booking.phone', 'Telefone')}
                             </label>
                             <input
                                 type="tel"
@@ -391,7 +391,7 @@ export default function ClientProfile() {
                                 className="input"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                placeholder={language === 'pt' ? '(Opcional)' : '(Optional)'}
+                                placeholder={t('common.optional', '(Opcional)')}
                             />
                         </div>
                     </div>
@@ -420,8 +420,8 @@ export default function ClientProfile() {
                     >
                         {saving ? <Loader2 size={18} className="spinner" /> : <Save size={18} />}
                         {saving
-                            ? (language === 'pt' ? 'A guardar...' : 'Saving...')
-                            : (language === 'pt' ? 'Guardar Alterações' : 'Save Changes')
+                            ? t('common.saving', 'A guardar...')
+                            : t('profile.saveProfile', 'Guardar Alterações')
                         }
                     </button>
                 </form>

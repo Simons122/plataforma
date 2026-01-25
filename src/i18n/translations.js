@@ -276,6 +276,8 @@ export const translations = {
             removeImage: 'Remover imagem',
             imageRequired: 'Por favor, selecione uma imagem.',
             imageSize: 'A imagem deve ter no máximo 2MB.',
+            photoRemoved: 'Foto removida!',
+            namePlaceholder: 'Seu nome',
         },
 
         // Notifications
@@ -1215,6 +1217,8 @@ export const translations = {
             removeImage: 'Supprimer l\'image',
             imageRequired: 'Veuillez sélectionner une image.',
             imageSize: 'L\'image ne doit pas dépasser 2Mo.',
+            photoRemoved: 'Photo supprimée !',
+            namePlaceholder: 'Votre nom',
         },
 
         // Notifications
