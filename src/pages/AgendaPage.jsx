@@ -30,9 +30,7 @@ export default function AgendaPage() {
     const dateLocale = language === 'pt' ? pt : enUS;
 
     const handleCancelBooking = async (booking) => {
-        if (!window.confirm(language === 'pt'
-            ? "Tem a certeza que deseja cancelar esta marcação?"
-            : "Are you sure you want to cancel this booking?")) return;
+        if (!window.confirm(t?.clientBookings?.confirmCancel || "Tem a certeza que deseja cancelar esta marcação?")) return;
 
         try {
             const currentOwnerId = profile.isStaff ? profile.ownerId : profile.id;
@@ -53,7 +51,7 @@ export default function AgendaPage() {
             setSelectedEvent(null);
         } catch (error) {
             console.error("Erro ao cancelar:", error);
-            alert(language === 'pt' ? "Erro ao cancelar marcação." : "Error canceling booking.");
+            alert(t?.errors?.somethingWentWrong || "Erro ao cancelar marcação.");
         }
     };
 
@@ -478,12 +476,9 @@ export default function AgendaPage() {
                         <div style={{ minWidth: '700px' }}>
                             {/* Month Header */}
                             <div className="calendar-header">
-                                {(language === 'pt'
-                                    ? ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
-                                    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                                ).map(d => (
+                                {['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(d => (
                                     <div key={d} className="calendar-header-cell">
-                                        {d}
+                                        {t?.schedule?.daysShort?.[d] || d}
                                     </div>
                                 ))}                            </div>
                             {/* Month Grid */}
@@ -511,7 +506,7 @@ export default function AgendaPage() {
                                             ))}
                                             {dayBookings.length > 3 && (
                                                 <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>
-                                                    +{dayBookings.length - 3} {language === 'pt' ? 'mais' : 'more'}
+                                                    +{dayBookings.length - 3} {t?.dashboard?.moreBookings || 'mais'}
                                                 </div>
                                             )}
                                         </div>

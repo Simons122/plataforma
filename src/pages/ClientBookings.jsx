@@ -425,7 +425,7 @@ function BookingCard({ booking, onCancel, isPast, cancelling, t, locale }) {
                     booking.reviewed ? (
                         <span className="badge-pill" style={{ background: 'rgba(251, 191, 36, 0.15)', color: '#f59e0b', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
                             <Star size={10} fill="#f59e0b" strokeWidth={0} />
-                            Avaliada
+                            {t('clientBookings.reviewed', 'Avaliada')}
                         </span>
                     ) : (
                         <span className="badge-pill" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.7rem' }}>{t('clientBookings.completed', 'Concluída')}</span>

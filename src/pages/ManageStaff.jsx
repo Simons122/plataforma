@@ -5,13 +5,12 @@ import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc,
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { httpsCallable } from 'firebase/functions';
+import { useLanguage } from '../i18n';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 import { UserPlus, Trash2, Clock, Edit2, Save, X, Users, Upload, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-
-const DAY_MAP_PT = { mon: 'Segunda', tue: 'Terça', wed: 'Quarta', thu: 'Quinta', fri: 'Sexta', sat: 'Sábado', sun: 'Domingo' };
 
 const Toggle = ({ checked, onChange }) => (
     <button
@@ -57,6 +56,20 @@ export default function ManageStaff() {
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const toast = useToast();
+    const { t } = useLanguage();
+
+    const getDayName = (day) => {
+        const days = {
+            mon: t?.time?.mon || 'Segunda',
+            tue: t?.time?.tue || 'Terça',
+            wed: t?.time?.wed || 'Quarta',
+            thu: t?.time?.thu || 'Quinta',
+            fri: t?.time?.fri || 'Sexta',
+            sat: t?.time?.sat || 'Sábado',
+            sun: t?.time?.sun || 'Domingo'
+        };
+        return days[day] || day;
+    };
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -156,10 +169,6 @@ export default function ManageStaff() {
         setShowAddModal(true);
     };
 
-
-
-
-
     const handleAddStaff = async (e) => {
         e.preventDefault();
         try {
@@ -190,10 +199,6 @@ export default function ManageStaff() {
                     const userCredential = await createUserWithEmailAndPassword(secondaryAuth, newStaff.email, newStaff.password);
                     authUserId = userCredential.user.uid;
                     await signOut(secondaryAuth); // Cleanup
-
-                    // Delete the secondary app instance locally (improves memory, though optional in JS GC)
-                    // (firebase/app deleteApp is available but initializeApp re-use is complex. 
-                    //  Just signing out is usually enough for this flow.)
 
                 } catch (authError) {
                     console.error("Erro ao criar conta de utilizador:", authError);
@@ -245,8 +250,8 @@ export default function ManageStaff() {
             setEditingId(null);
             setShowAddModal(false);
 
-            if (isEditing) toast.success("Profissional atualizado com sucesso!");
-            else toast.success("Profissional adicionado com sucesso!");
+            if (isEditing) toast.success(t?.staff?.updated || "Profissional atualizado com sucesso!");
+            else toast.success(t?.staff?.added || "Profissional adicionado com sucesso!");
 
             fetchStaff();
         } catch (error) {
@@ -255,7 +260,7 @@ export default function ManageStaff() {
                 const [username, domain] = newStaff.email.split('@');
                 const aliasEmail = `${username}+novo@${domain}`;
 
-                if (confirm(`O email original (${newStaff.email}) está "preso" no sistema devido a uma eliminação anterior incompleta.\n\nSOLUÇÃO RÁPIDA: Deseja criar a conta usando um email alternativo: "${aliasEmail}"?\n\n(O funcionário receberá emails na mesma caixa de entrada, mas terá de usar "${aliasEmail}" para fazer login).`)) {
+                if (confirm(t?.auth?.emailInUse || `O email original (${newStaff.email}) está "preso" no sistema. Deseja criar conta com ${aliasEmail}?`)) {
                     try {
                         const userCredential = await createUserWithEmailAndPassword(auth, aliasEmail, newStaff.password);
                         const user = userCredential.user;
@@ -272,13 +277,11 @@ export default function ManageStaff() {
                         };
 
                         const docRef = await addDoc(collection(db, `professionals/${auth.currentUser.uid}/staff`), staffData);
-                        console.log("A criar staff_lookup para UID:", user.uid);
                         await setDoc(doc(db, "staff_lookup", user.uid), {
                             ownerId: auth.currentUser.uid,
                             staffId: docRef.id,
                             email: aliasEmail
                         });
-                        console.log("staff_lookup criado com sucesso!");
 
                         setNewStaff({ name: '', email: '', phone: '', photoUrl: '', password: '' });
                         setPhotoFile(null);
@@ -289,11 +292,11 @@ export default function ManageStaff() {
 
                     } catch (retryError) {
                         console.error("Erro na tentativa automática:", retryError);
-                        toast.error("Falha ao criar conta alternativa: " + retryError.message);
+                        toast.error(t?.errors?.somethingWentWrong || "Falha ao criar conta alternativa.");
                     }
                 }
             } else {
-                toast.error("Erro ao salvar: " + error.message);
+                toast.error(t?.errors?.somethingWentWrong || "Erro ao salvar.");
             }
         } finally {
             setUploadingPhoto(false);
@@ -301,7 +304,7 @@ export default function ManageStaff() {
     };
 
     const handleDeleteStaff = async (staffMember) => {
-        if (!confirm("Tem certeza que deseja remover este profissional? Esta ação é irreversível.")) return;
+        if (!confirm(t?.staff?.confirmDelete || "Tem certeza que deseja remover este profissional? Esta ação é irreversível.")) return;
 
         try {
             const user = auth.currentUser;
@@ -316,19 +319,17 @@ export default function ManageStaff() {
                 } catch (funcError) {
                     console.error("Erro na Cloud Function:", funcError);
                     toast.warning("Atenção: O login não foi apagado (Erro no Servidor).");
-                    alert("Aviso Técnico: A 'Cloud Function' de limpeza falhou ou não existe.\n\nO registo visual será apagado, mas o EMAIL deste funcionário continuará registado no sistema de Login.\n\nPara reutilizar este email, terá de o apagar manualmente na consola do Firebase Authentication.");
-                    // Não parar, tentar apagar localmente mesmo assim
                 }
             }
 
             // 2. Apagar Documento do Profissional
             await deleteDoc(doc(db, `professionals/${user.uid}/staff`, staffMember.id));
 
-            toast.success("Profissional removido com sucesso!");
+            toast.success(t?.staff?.deleted || "Profissional removido com sucesso!");
             fetchStaff();
         } catch (error) {
             console.error("Erro ao remover profissional:", error);
-            toast.error("Erro ao remover profissional.");
+            toast.error(t?.errors?.somethingWentWrong || "Erro ao remover profissional.");
         }
     };
 
@@ -358,7 +359,7 @@ export default function ManageStaff() {
                         const estEnd = establishmentSchedule[day].end;
 
                         if (schedule.start < estStart || schedule.end > estEnd) {
-                            alert(`O horário de ${DAY_MAP_PT[day]} deve estar dentro do horário do estabelecimento (${estStart} - ${estEnd})`);
+                            alert(`O horário de ${getDayName(day)} deve estar dentro do horário do estabelecimento (${estStart} - ${estEnd})`);
                             return;
                         }
                     }
@@ -370,11 +371,11 @@ export default function ManageStaff() {
 
             setEditingSchedule(null);
             setStaffSchedule(null);
-            toast.success("Horários atualizados!");
+            toast.success(t?.staff?.scheduleUpdated || "Horários atualizados!");
             fetchStaff();
         } catch (error) {
             console.error("Erro ao salvar horário:", error);
-            toast.error("Erro ao salvar horário!");
+            toast.error(t?.errors?.somethingWentWrong || "Erro ao salvar horário!");
         }
     };
 
@@ -401,10 +402,10 @@ export default function ManageStaff() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            Gerir Profissionais
+                            {t?.staff?.title || 'Gerir Profissionais'}
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                            Adicione e gerencie os profissionais do seu estabelecimento
+                            {t?.staff?.subtitle || 'Adicione e gerencie os profissionais do seu estabelecimento'}
                         </p>
                     </div>
                     <button
@@ -427,12 +428,11 @@ export default function ManageStaff() {
                         className="hover:bg-[var(--accent-primary-hover)]"
                     >
                         <UserPlus size={18} />
-                        Adicionar Profissional
+                        {t?.staff?.addStaff || 'Adicionar Profissional'}
                     </button>
                 </div>
             </div>
 
-            {/* Staff Grid */}
             {/* Staff Grid */}
             <div style={{
                 display: 'grid',
@@ -501,7 +501,7 @@ export default function ManageStaff() {
                                     flex: 2
                                 }}
                             >
-                                <Clock size={16} /> Horários
+                                <Clock size={16} /> {t?.staff?.schedule || 'Horários'}
                             </button>
                             <button
                                 onClick={() => handleEditStaff(member)}
@@ -553,10 +553,10 @@ export default function ManageStaff() {
                     }}>
                         <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            Ainda não tem profissionais
+                            {t?.staff?.noStaffYet || 'Ainda não tem profissionais'}
                         </h3>
                         <p style={{ maxWidth: '400px', margin: '0 auto', marginBottom: '1.5rem' }}>
-                            Adicione membros à sua equipa para que os clientes possam marcar serviços com eles.
+                            {t?.staff?.noStaffMessage || 'Adicione membros à sua equipa para que os clientes possam marcar serviços com eles.'}
                         </p>
                         <button
                             onClick={() => {
@@ -574,7 +574,7 @@ export default function ManageStaff() {
                                 cursor: 'pointer'
                             }}
                         >
-                            + Adicionar o primeiro profissional
+                            + {t?.staff?.addFirstStaff || 'Adicionar o primeiro profissional'}
                         </button>
                     </div>
                 )}
@@ -607,11 +607,11 @@ export default function ManageStaff() {
                             margin: 'auto'
                         }} onClick={e => e.stopPropagation()}>
                             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
-                                {isEditing ? 'Editar Profissional' : 'Adicionar Profissional'}
+                                {isEditing ? (t?.staff?.editStaff || 'Editar Profissional') : (t?.staff?.addStaff || 'Adicionar Profissional')}
                             </h2>
                             <form onSubmit={handleAddStaff} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 <div>
-                                    <label className="label">Nome Completo *</label>
+                                    <label className="label">{t?.staff?.fullName || 'Nome Completo'} *</label>
                                     <input
                                         className="input"
                                         placeholder="Nome do profissional"
@@ -621,7 +621,7 @@ export default function ManageStaff() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">Email *</label>
+                                    <label className="label">{t?.staff?.email || 'Email'} *</label>
                                     <input
                                         type="email"
                                         className="input"
@@ -632,7 +632,7 @@ export default function ManageStaff() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">Telemóvel</label>
+                                    <label className="label">{t?.staff?.phone || 'Telemóvel'}</label>
                                     <input
                                         className="input"
                                         placeholder="9xx xxx xxx"
@@ -643,7 +643,7 @@ export default function ManageStaff() {
 
                                 {!isEditing && (
                                     <div>
-                                        <label className="label">Senha para Login *</label>
+                                        <label className="label">{t?.staff?.password || 'Senha para Login'} *</label>
                                         <input
                                             type="password"
                                             className="input"
@@ -654,14 +654,14 @@ export default function ManageStaff() {
                                             minLength={6}
                                         />
                                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                            Esta senha será usada pelo funcionário para entrar na plataforma.
+                                            {t?.staff?.passwordHint || 'Esta senha será usada pelo funcionário para entrar na plataforma.'}
                                         </p>
                                     </div>
                                 )}
 
                                 {/* Photo Upload */}
                                 <div>
-                                    <label className="label">Foto do Profissional</label>
+                                    <label className="label">{t?.staff?.photo || 'Foto do Profissional'}</label>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                         {(photoFile || newStaff.photoUrl) && (
                                             <div style={{
@@ -696,7 +696,7 @@ export default function ManageStaff() {
                                                 }}
                                             >
                                                 <Upload size={18} />
-                                                {newStaff.photoUrl || photoFile ? 'Alterar Foto' : 'Escolher Foto'}
+                                                {newStaff.photoUrl || photoFile ? (t?.staff?.changePhoto || 'Alterar Foto') : (t?.staff?.choosePhoto || 'Escolher Foto')}
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -724,7 +724,7 @@ export default function ManageStaff() {
                                                         alignSelf: 'flex-start'
                                                     }}
                                                 >
-                                                    Remover foto
+                                                    {t?.staff?.removePhoto || 'Remover foto'}
                                                 </button>
                                             )}
                                         </div>
@@ -746,7 +746,7 @@ export default function ManageStaff() {
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        Cancelar
+                                        {t?.staff?.cancel || 'Cancelar'}
                                     </button>
                                     <button
                                         type="submit"
@@ -763,7 +763,7 @@ export default function ManageStaff() {
                                             boxShadow: uploadingPhoto ? 'none' : 'var(--shadow-md)'
                                         }}
                                     >
-                                        {uploadingPhoto ? 'Enviando...' : (isEditing ? 'Guardar Alterações' : 'Adicionar')}
+                                        {uploadingPhoto ? (t?.staff?.sending || 'Enviando...') : (isEditing ? (t?.staff?.saveChanges || 'Guardar Alterações') : (t?.staff?.add || 'Adicionar'))}
                                     </button>
                                 </div>
                             </form>

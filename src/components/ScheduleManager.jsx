@@ -4,15 +4,7 @@ import { db } from '../lib/firebase';
 import { Clock, Save, Check } from 'lucide-react';
 import { useToast } from './Toast';
 
-const DAYS = [
-    { id: 'mon', label: 'Segunda' },
-    { id: 'tue', label: 'Terça' },
-    { id: 'wed', label: 'Quarta' },
-    { id: 'thu', label: 'Quinta' },
-    { id: 'fri', label: 'Sexta' },
-    { id: 'sat', label: 'Sábado' },
-    { id: 'sun', label: 'Domingo' }
-];
+import { useLanguage } from '../i18n';
 
 const DEFAULT_SCHEDULE = {
     mon: { enabled: true, start: '09:00', end: '18:00' },
@@ -25,11 +17,22 @@ const DEFAULT_SCHEDULE = {
 };
 
 export default function ScheduleManager({ userId, isStaff, ownerId }) {
+    const { t } = useLanguage();
     const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const toast = useToast();
+
+    const days = [
+        { id: 'mon', label: t?.schedule?.daysShort?.mon || 'Segunda' },
+        { id: 'tue', label: t?.schedule?.daysShort?.tue || 'Terça' },
+        { id: 'wed', label: t?.schedule?.daysShort?.wed || 'Quarta' },
+        { id: 'thu', label: t?.schedule?.daysShort?.thu || 'Quinta' },
+        { id: 'fri', label: t?.schedule?.daysShort?.fri || 'Sexta' },
+        { id: 'sat', label: t?.schedule?.daysShort?.sat || 'Sábado' },
+        { id: 'sun', label: t?.schedule?.daysShort?.sun || 'Domingo' }
+    ];
 
     // Determine path based on role
     const settingsPath = isStaff
@@ -75,11 +78,11 @@ export default function ScheduleManager({ userId, isStaff, ownerId }) {
         try {
             await setDoc(doc(db, settingsPath, 'schedule'), schedule);
             setSaved(true);
-            toast.success('Horário guardado com sucesso!');
+            toast.success(t?.schedule?.scheduleSaved || 'Horário guardado com sucesso!');
             setTimeout(() => setSaved(false), 2000);
         } catch (e) {
             console.error('Error saving schedule:', e);
-            toast.error('Erro ao guardar horário. Verifique as permissões.');
+            toast.error(t?.schedule?.saveError || 'Erro ao guardar horário. Verifique as permissões.');
         } finally {
             setSaving(false);
         }
@@ -126,9 +129,9 @@ export default function ScheduleManager({ userId, isStaff, ownerId }) {
                         <Clock size={20} />
                     </div>
                     <div>
-                        <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)' }}>Horário de Funcionamento</h2>
+                        <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{t?.schedule?.title || 'Horário de Funcionamento'}</h2>
                         <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                            Configure os dias e horas que trabalha
+                            {t?.schedule?.configureSubtitle || 'Configure os dias e horas que trabalha'}
                         </p>
                     </div>
                 </div>
@@ -157,13 +160,13 @@ export default function ScheduleManager({ userId, isStaff, ownerId }) {
                     }}
                 >
                     {saved ? <Check size={16} /> : <Save size={16} />}
-                    {saving ? 'A guardar...' : saved ? 'Guardado!' : 'Guardar'}
+                    {saving ? (t?.schedule?.saving || 'A guardar...') : saved ? (t?.schedule?.saved || 'Guardado!') : (t?.schedule?.save || 'Guardar')}
                 </button>
             </div>
 
             {/* Schedule Grid */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {DAYS.map(day => (
+                {days.map(day => (
                     <div
                         key={day.id}
                         style={{
@@ -231,7 +234,7 @@ export default function ScheduleManager({ userId, isStaff, ownerId }) {
                                         minWidth: '100px'
                                     }}
                                 />
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>até</span>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{t?.schedule?.until || t?.schedule?.to || 'até'}</span>
                                 <input
                                     type="time"
                                     value={schedule[day.id].end}
@@ -247,7 +250,7 @@ export default function ScheduleManager({ userId, isStaff, ownerId }) {
                         )}
 
                         {!schedule[day.id].enabled && (
-                            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Folga</span>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{t?.schedule?.dayOff || t?.schedule?.closed || 'Folga'}</span>
                         )}
                     </div>
                 ))}
@@ -268,9 +271,7 @@ export default function ScheduleManager({ userId, isStaff, ownerId }) {
             }}>
                 <span style={{ fontSize: '1.25rem' }}>💡</span>
                 <p>
-                    Os horários que definir aqui serão usados para calcular automaticamente
-                    os slots disponíveis para os clientes marcarem. Os slots são gerados com base
-                    na duração de cada serviço e no seu horário de funcionamento.
+                    {t?.schedule?.scheduleInfo || 'Os horários que definir aqui serão usados para calcular automaticamente os slots disponíveis para os clientes marcarem. Os slots são gerados com base na duração de cada serviço e no seu horário de funcionamento.'}
                 </p>
             </div>
         </div>

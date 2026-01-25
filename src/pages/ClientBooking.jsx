@@ -243,7 +243,7 @@ export default function ClientBooking() {
             // 2. Enviar email
             try {
                 const bookingDate = new Date(selectedTime);
-                const formattedDate = format(bookingDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: pt });
+                const formattedDate = format(bookingDate, language === 'pt' ? "EEEE, d 'de' MMMM 'de' yyyy" : "EEEE, MMMM d, yyyy", { locale: dateLocale });
                 const formattedTime = format(bookingDate, 'HH:mm');
                 const apiUrl = import.meta.env.PROD ? '/api/send-booking-email' : 'http://localhost:3001/api/send-booking-email';
 
@@ -591,7 +591,7 @@ export default function ClientBooking() {
                                     <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-default)', marginBottom: '1.75rem' }}>
                                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('bookingPage.summary', 'Resumo da Marcação:')}</p>
                                         <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>{selectedService.name}</p>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}><Calendar size={14} style={{ color: 'var(--accent-primary)' }} /><p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>{format(selectedTime, "EEEE, d 'de' MMMM", { locale: dateLocale })} {t('common.at', 'às')} {format(selectedTime, 'HH:mm')}</p></div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}><Calendar size={14} style={{ color: 'var(--accent-primary)' }} /><p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>{format(selectedTime, language === 'pt' ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d", { locale: dateLocale })} {t('common.at', 'às')} {format(selectedTime, 'HH:mm')}</p></div>
                                     </div>
                                     <form onSubmit={handleBooking} style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
                                         <div><label className="label" style={{ marginBottom: '0.5rem' }}>{t('bookingPage.fullName', 'Nome Completo')}</label><input type="text" required placeholder={t('bookingPage.yourName', 'Seu nome')} value={clientData.name} onChange={e => setClientData({ ...clientData, name: e.target.value })} className="input" /></div>
