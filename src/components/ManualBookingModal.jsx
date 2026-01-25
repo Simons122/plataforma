@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { useToast } from './Toast';
+import { useLanguage } from '../i18n';
 
 export default function ManualBookingModal({ isOpen, onClose, professionalId, onBookingAdded, isStaff, ownerId }) {
     const [loading, setLoading] = useState(false);
@@ -16,6 +17,7 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
         time: '10:00'
     });
     const toast = useToast();
+    const { t } = useLanguage();
 
     useEffect(() => {
         if (isOpen && (professionalId || (isStaff && ownerId))) {
@@ -27,27 +29,24 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
         try {
             // Services belong to the Owner, regardless of who is booking
             const targetId = isStaff ? ownerId : professionalId;
-            console.log("Refetching services for:", targetId, "isStaff:", isStaff);
 
             if (!targetId) {
-                console.warn("fetchServices skipped: No targetId");
                 return;
             }
 
             const snap = await getDocs(collection(db, `professionals/${targetId}/services`));
             const fetchedServices = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            console.log("Services found:", fetchedServices.length);
             setServices(fetchedServices);
         } catch (error) {
             console.error("Error fetching services:", error);
-            toast.error("Erro ao carregar serviços. Tente novamente.");
+            toast.error(t('errors.somethingWentWrong', "Erro ao carregar serviços. Tente novamente."));
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.serviceId) {
-            toast.error('Selecione um serviço');
+            toast.error(t('booking.chooseService', 'Selecione um serviço'));
             return;
         }
 
@@ -73,7 +72,7 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                 source: 'manual'
             });
 
-            toast.success('Marcação efetuada com sucesso!');
+            toast.success(t('booking.bookingConfirmed', 'Marcação efetuada com sucesso!'));
             onBookingAdded();
             onClose();
             setFormData({
@@ -85,7 +84,7 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
             });
         } catch (error) {
             console.error(error);
-            toast.error('Erro ao criar marcação');
+            toast.error(t('errors.somethingWentWrong', 'Erro ao criar marcação'));
         } finally {
             setLoading(false);
         }
@@ -105,7 +104,9 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                     justifyContent: 'space-between',
                     background: 'var(--bg-secondary)'
                 }}>
-                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)' }}>Nova Marcação Manual</h2>
+                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {t('booking.newBooking', 'Nova Marcação Manual')}
+                    </h2>
                     <button
                         onClick={onClose}
                         style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}
@@ -119,7 +120,8 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                     {/* Cliente */}
                     <div>
                         <label className="label">
-                            <User size={14} style={{ display: 'inline', marginRight: '0.5rem' }} /> Nome do Cliente
+                            <User size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                            {t('booking.fullName', 'Nome do Cliente')}
                         </label>
                         <input
                             type="text"
@@ -134,7 +136,8 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                     {/* Telefone */}
                     <div>
                         <label className="label">
-                            <Phone size={14} style={{ display: 'inline', marginRight: '0.5rem' }} /> Telefone (Opcional)
+                            <Phone size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                            {t('booking.phone', 'Telefone')} ({t('common.optional', 'Opcional')})
                         </label>
                         <input
                             type="tel"
@@ -148,7 +151,8 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                     {/* Serviço */}
                     <div>
                         <label className="label">
-                            <Briefcase size={14} style={{ display: 'inline', marginRight: '0.5rem' }} /> Serviço
+                            <Briefcase size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                            {t('services.serviceName', 'Serviço')}
                         </label>
                         <select
                             required
@@ -156,7 +160,7 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                             onChange={e => setFormData({ ...formData, serviceId: e.target.value })}
                             className="select"
                         >
-                            <option value="">Selecione um serviço</option>
+                            <option value="">{t('booking.chooseService', 'Selecione um serviço')}</option>
                             {services.map(s => (
                                 <option key={s.id} value={s.id}>{s.name} ({s.price}€)</option>
                             ))}
@@ -167,7 +171,8 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div>
                             <label className="label">
-                                <Calendar size={14} style={{ display: 'inline', marginRight: '0.5rem' }} /> Data
+                                <Calendar size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                                {t('booking.date', 'Data')}
                             </label>
                             <input
                                 type="date"
@@ -179,7 +184,8 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                         </div>
                         <div>
                             <label className="label">
-                                <Clock size={14} style={{ display: 'inline', marginRight: '0.5rem' }} /> Hora
+                                <Clock size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                                {t('booking.time', 'Hora')}
                             </label>
                             <input
                                 type="time"
@@ -214,7 +220,7 @@ export default function ManualBookingModal({ isOpen, onClose, professionalId, on
                         onMouseOver={(e) => !loading && (e.currentTarget.style.background = 'var(--accent-primary-hover)')}
                         onMouseOut={(e) => !loading && (e.currentTarget.style.background = 'var(--accent-primary)')}
                     >
-                        {loading ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar Marcação'}
+                        {loading ? <Loader2 size={18} className="animate-spin" /> : t('booking.confirmBooking', 'Confirmar Marcação')}
                     </button>
                 </form>
             </div>

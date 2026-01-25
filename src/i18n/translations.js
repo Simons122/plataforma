@@ -135,6 +135,8 @@ export const translations = {
             addedToFavorites: 'adicionado aos favoritos!',
             removedFromFavorites: 'removido dos favoritos.',
             newBooking: 'Nova Marcação',
+            date: 'Data',
+            time: 'Hora',
         },
 
         // Services
@@ -1073,6 +1075,8 @@ export const translations = {
             addedToFavorites: 'ajouté aux favoris !',
             removedFromFavorites: 'retiré des favoris.',
             newBooking: 'Nouvelle réservation',
+            date: 'Date',
+            time: 'Heure',
         },
 
         // Services
