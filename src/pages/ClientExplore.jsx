@@ -215,7 +215,7 @@ export default function ClientExplore() {
                                                 color: favorites.includes(pro.id) ? 'var(--accent-danger)' : 'white',
                                                 transition: 'all 0.2s'
                                             }}
-                                            title={favorites.includes(pro.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                            title={favorites.includes(pro.id) ? t('clientFavorites.removeFromFav', "Remover dos favoritos") : t('clientExplore.addToFav', "Adicionar aos favoritos")}
                                         >
                                             <Heart size={18} fill={favorites.includes(pro.id) ? "currentColor" : "none"} />
                                         </button>

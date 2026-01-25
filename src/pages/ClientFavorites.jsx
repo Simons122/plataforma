@@ -194,7 +194,7 @@ export default function ClientFavorites() {
                                             color: 'var(--accent-danger)',
                                             transition: 'all 0.2s'
                                         }}
-                                        title="Remover dos favoritos"
+                                        title={t('clientFavorites.removeFromFav', "Remover dos favoritos")}
                                     >
                                         <Heart size={18} fill="currentColor" />
                                     </button>

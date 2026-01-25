@@ -87,13 +87,10 @@ export default function ReviewsPage() {
                     marginBottom: '0.5rem',
                     color: 'var(--text-primary)'
                 }}>
-                    {t?.reviews?.title || 'Reviews'}
+                    {t('reviews.title', 'Reviews')}
                 </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>
-                    {language === 'pt'
-                        ? 'Veja o feedback dos seus clientes'
-                        : 'View feedback from your clients'
-                    }
+                    {t('reviews.subtitle', 'View feedback from your clients')}
                 </p>
             </div>
 
@@ -131,7 +128,7 @@ export default function ReviewsPage() {
                         </div>
                         <div>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                {t?.reviews?.averageRating || 'Average Rating'}
+                                {t('reviews.averageRating', 'Average Rating')}
                             </p>
                             <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                                 {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '—'}
@@ -142,7 +139,7 @@ export default function ReviewsPage() {
                         <StarRating rating={stats.averageRating} size={24} readOnly />
                     </div>
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                        {stats.totalReviews} {t?.reviews?.totalReviews || 'reviews'}
+                        {stats.totalReviews} {t('reviews.totalReviews', 'reviews')}
                     </p>
                 </div>
 
@@ -172,7 +169,7 @@ export default function ReviewsPage() {
                             <TrendingUp size={20} style={{ color: 'var(--accent-primary)' }} />
                         </div>
                         <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {language === 'pt' ? 'Distribuição de Notas' : 'Rating Distribution'}
+                            {t('reviews.ratingDistribution', 'Rating Distribution')}
                         </p>
                     </div>
                     <RatingDistribution
@@ -197,10 +194,10 @@ export default function ReviewsPage() {
                     justifyContent: 'space-between'
                 }}>
                     <h3 style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {t?.reviews?.recentReviews || 'Recent Reviews'}
+                        {t('reviews.recentReviews', 'Recent Reviews')}
                     </h3>
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                        {reviews.length} {language === 'pt' ? 'avaliações' : 'reviews'}
+                        {reviews.length} {t('reviews.totalReviews', 'reviews')}
                     </span>
                 </div>
 
@@ -223,16 +220,13 @@ export default function ReviewsPage() {
                             color: 'var(--text-primary)',
                             marginBottom: '0.5rem'
                         }}>
-                            {t?.reviews?.noReviews || 'No reviews yet'}
+                            {t('reviews.noReviews', 'No reviews yet')}
                         </p>
                         <p style={{
                             fontSize: '0.875rem',
                             color: 'var(--text-muted)'
                         }}>
-                            {language === 'pt'
-                                ? 'As avaliações dos seus clientes aparecerão aqui'
-                                : 'Your client reviews will appear here'
-                            }
+                            {t('reviews.noReviewsMessage', 'Your client reviews will appear here')}
                         </p>
                     </div>
                 ) : (
@@ -319,7 +313,7 @@ export default function ReviewsPage() {
                                                 fontWeight: 600,
                                                 color: 'var(--accent-primary)'
                                             }}>
-                                                {language === 'pt' ? 'Sua resposta' : 'Your response'}
+                                                {t('reviews.yourResponse', 'Your response')}
                                             </span>
                                         </div>
                                         <p style={{
