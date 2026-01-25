@@ -10,7 +10,7 @@ import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 import { UserPlus, Trash2, Clock, Edit2, Save, X, Users, Upload, Check } from 'lucide-react';
 import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { pt, fr, enUS } from 'date-fns/locale';
 
 const Toggle = ({ checked, onChange }) => (
     <button
@@ -60,13 +60,13 @@ export default function ManageStaff() {
 
     const getDayName = (day) => {
         const days = {
-            mon: t?.time?.mon || 'Segunda',
-            tue: t?.time?.tue || 'Terça',
-            wed: t?.time?.wed || 'Quarta',
-            thu: t?.time?.thu || 'Quinta',
-            fri: t?.time?.fri || 'Sexta',
-            sat: t?.time?.sat || 'Sábado',
-            sun: t?.time?.sun || 'Domingo'
+            mon: t('schedule.days.mon', 'Segunda'),
+            tue: t('schedule.days.tue', 'Terça'),
+            wed: t('schedule.days.wed', 'Quarta'),
+            thu: t('schedule.days.thu', 'Quinta'),
+            fri: t('schedule.days.fri', 'Sexta'),
+            sat: t('schedule.days.sat', 'Sábado'),
+            sun: t('schedule.days.sun', 'Domingo')
         };
         return days[day] || day;
     };
@@ -402,10 +402,10 @@ export default function ManageStaff() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            {t?.staff?.title || 'Gerir Profissionais'}
+                            {t('staff.title', 'Gerir Profissionais')}
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                            {t?.staff?.subtitle || 'Adicione e gerencie os profissionais do seu estabelecimento'}
+                            {t('staff.subtitle', 'Adicione e gerencie os profissionais do seu estabelecimento')}
                         </p>
                     </div>
                     <button
@@ -428,7 +428,7 @@ export default function ManageStaff() {
                         className="hover:bg-[var(--accent-primary-hover)]"
                     >
                         <UserPlus size={18} />
-                        {t?.staff?.addStaff || 'Adicionar Profissional'}
+                        {t('staff.addStaff', 'Adicionar Profissional')}
                     </button>
                 </div>
             </div>
@@ -501,7 +501,7 @@ export default function ManageStaff() {
                                     flex: 2
                                 }}
                             >
-                                <Clock size={16} /> {t?.staff?.schedule || 'Horários'}
+                                <Clock size={16} /> {t('staff.schedule', 'Horários')}
                             </button>
                             <button
                                 onClick={() => handleEditStaff(member)}
@@ -553,10 +553,10 @@ export default function ManageStaff() {
                     }}>
                         <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            {t?.staff?.noStaffYet || 'Ainda não tem profissionais'}
+                            {t('staff.noStaffYet', 'Ainda não tem profissionais')}
                         </h3>
                         <p style={{ maxWidth: '400px', margin: '0 auto', marginBottom: '1.5rem' }}>
-                            {t?.staff?.noStaffMessage || 'Adicione membros à sua equipa para que os clientes possam marcar serviços com eles.'}
+                            {t('staff.noStaffMessage', 'Adicione membros à sua equipa para que os clientes possam marcar serviços com eles.')}
                         </p>
                         <button
                             onClick={() => {
@@ -574,7 +574,7 @@ export default function ManageStaff() {
                                 cursor: 'pointer'
                             }}
                         >
-                            + {t?.staff?.addFirstStaff || 'Adicionar o primeiro profissional'}
+                            + {t('staff.addFirstStaff', 'Adicionar o primeiro profissional')}
                         </button>
                     </div>
                 )}
@@ -607,11 +607,11 @@ export default function ManageStaff() {
                             margin: 'auto'
                         }} onClick={e => e.stopPropagation()}>
                             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
-                                {isEditing ? (t?.staff?.editStaff || 'Editar Profissional') : (t?.staff?.addStaff || 'Adicionar Profissional')}
+                                {isEditing ? t('staff.editStaff', 'Editar Profissional') : t('staff.addStaff', 'Adicionar Profissional')}
                             </h2>
                             <form onSubmit={handleAddStaff} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 <div>
-                                    <label className="label">{t?.staff?.fullName || 'Nome Completo'} *</label>
+                                    <label className="label">{t('staff.fullName', 'Nome Completo')} *</label>
                                     <input
                                         className="input"
                                         placeholder="Nome do profissional"
@@ -621,7 +621,7 @@ export default function ManageStaff() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">{t?.staff?.email || 'Email'} *</label>
+                                    <label className="label">{t('staff.email', 'Email')} *</label>
                                     <input
                                         type="email"
                                         className="input"
@@ -632,7 +632,7 @@ export default function ManageStaff() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">{t?.staff?.phone || 'Telemóvel'}</label>
+                                    <label className="label">{t('staff.phone', 'Telemóvel')}</label>
                                     <input
                                         className="input"
                                         placeholder="9xx xxx xxx"
@@ -643,7 +643,7 @@ export default function ManageStaff() {
 
                                 {!isEditing && (
                                     <div>
-                                        <label className="label">{t?.staff?.password || 'Senha para Login'} *</label>
+                                        <label className="label">{t('staff.password', 'Senha para Login')} *</label>
                                         <input
                                             type="password"
                                             className="input"
@@ -654,14 +654,14 @@ export default function ManageStaff() {
                                             minLength={6}
                                         />
                                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                            {t?.staff?.passwordHint || 'Esta senha será usada pelo funcionário para entrar na plataforma.'}
+                                            {t('staff.passwordHint', 'Esta senha será usada pelo funcionário para entrar na plataforma.')}
                                         </p>
                                     </div>
                                 )}
 
                                 {/* Photo Upload */}
                                 <div>
-                                    <label className="label">{t?.staff?.photo || 'Foto do Profissional'}</label>
+                                    <label className="label">{t('staff.photo', 'Foto do Profissional')}</label>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                         {(photoFile || newStaff.photoUrl) && (
                                             <div style={{
@@ -696,7 +696,7 @@ export default function ManageStaff() {
                                                 }}
                                             >
                                                 <Upload size={18} />
-                                                {newStaff.photoUrl || photoFile ? (t?.staff?.changePhoto || 'Alterar Foto') : (t?.staff?.choosePhoto || 'Escolher Foto')}
+                                                {newStaff.photoUrl || photoFile ? t('staff.changePhoto', 'Alterar Foto') : t('staff.choosePhoto', 'Escolher Foto')}
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -724,7 +724,7 @@ export default function ManageStaff() {
                                                         alignSelf: 'flex-start'
                                                     }}
                                                 >
-                                                    {t?.staff?.removePhoto || 'Remover foto'}
+                                                    {t('staff.removePhoto', 'Remover foto')}
                                                 </button>
                                             )}
                                         </div>
@@ -746,7 +746,7 @@ export default function ManageStaff() {
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        {t?.staff?.cancel || 'Cancelar'}
+                                        {t('staff.cancel', 'Cancelar')}
                                     </button>
                                     <button
                                         type="submit"
@@ -763,7 +763,7 @@ export default function ManageStaff() {
                                             boxShadow: uploadingPhoto ? 'none' : 'var(--shadow-md)'
                                         }}
                                     >
-                                        {uploadingPhoto ? (t?.staff?.sending || 'Enviando...') : (isEditing ? (t?.staff?.saveChanges || 'Guardar Alterações') : (t?.staff?.add || 'Adicionar'))}
+                                        {uploadingPhoto ? t('staff.sending', 'Enviando...') : (isEditing ? t('staff.saveChanges', 'Guardar Alterações') : t('staff.add', 'Adicionar'))}
                                     </button>
                                 </div>
                             </form>
