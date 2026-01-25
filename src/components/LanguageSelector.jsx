@@ -15,6 +15,7 @@ export default function LanguageSelector({ minimal = false }) {
     const languages = [
         { code: 'pt', name: 'Português', shortName: 'PT' },
         { code: 'en', name: 'English', shortName: 'EN' },
+        { code: 'fr', name: 'Français', shortName: 'FR' },
     ];
 
     const currentLang = languages.find(l => l.code === language);
@@ -232,7 +233,7 @@ export default function LanguageSelector({ minimal = false }) {
                         margin: 0,
                         marginTop: '2px'
                     }}>
-                        {language === 'pt' ? 'Clique para mudar' : 'Click to change'}
+                        {language === 'pt' ? 'Clique para mudar' : language === 'fr' ? 'Cliquez pour changer' : 'Click to change'}
                     </p>
                 </div>
             </button>
@@ -264,7 +265,7 @@ export default function LanguageSelector({ minimal = false }) {
                             letterSpacing: '0.08em',
                             margin: 0
                         }}>
-                            {language === 'pt' ? '🌍 Selecionar Idioma' : '🌍 Select Language'}
+                            {language === 'pt' ? '🌍 Selecionar Idioma' : language === 'fr' ? '🌍 Sélectionner la langue' : '🌍 Select Language'}
                         </p>
                     </div>
 

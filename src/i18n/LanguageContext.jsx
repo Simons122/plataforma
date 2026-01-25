@@ -13,6 +13,8 @@ const detectBrowserLanguage = () => {
     const browserLang = navigator.language || navigator.userLanguage;
     // Prioriza português para pt, pt-PT, pt-BR
     if (browserLang.startsWith('pt')) return 'pt';
+    // Francês para fr, fr-FR, fr-CA, etc.
+    if (browserLang.startsWith('fr')) return 'fr';
     // Default para inglês
     return 'en';
 };
@@ -20,7 +22,7 @@ const detectBrowserLanguage = () => {
 // Obter idioma guardado ou detectar do browser
 const getInitialLanguage = () => {
     const saved = localStorage.getItem('app_language');
-    if (saved && ['pt', 'en'].includes(saved)) {
+    if (saved && ['pt', 'en', 'fr'].includes(saved)) {
         return saved;
     }
     return detectBrowserLanguage();
@@ -38,14 +40,18 @@ export function LanguageProvider({ children }) {
         document.documentElement.lang = language;
     }, [language]);
 
-    // Função para alternar idioma
+    // Função para alternar idioma (ciclo: pt -> en -> fr -> pt)
     const toggleLanguage = useCallback(() => {
-        setLanguage(prev => prev === 'pt' ? 'en' : 'pt');
+        setLanguage(prev => {
+            if (prev === 'pt') return 'en';
+            if (prev === 'en') return 'fr';
+            return 'pt';
+        });
     }, []);
 
     // Função para definir idioma específico
     const setLang = useCallback((lang) => {
-        if (['pt', 'en'].includes(lang)) {
+        if (['pt', 'en', 'fr'].includes(lang)) {
             setLanguage(lang);
         }
     }, []);
@@ -85,6 +91,7 @@ export function LanguageProvider({ children }) {
         translate,       // Manter para compatibilidade
         isPortuguese: language === 'pt',
         isEnglish: language === 'en',
+        isFrench: language === 'fr',
     };
 
     return (
