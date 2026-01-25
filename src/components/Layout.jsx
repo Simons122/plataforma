@@ -314,7 +314,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                         }}
                     >
                         <LogOut size={18} />
-                        {t?.nav?.logout || 'Logout'}
+                        {t('nav.logout', 'Logout')}
                     </button>
                 </div>
             </aside>
@@ -489,7 +489,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                         }}
                     >
                         {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                        {theme === 'dark' ? (t?.common?.lightMode || 'Light Mode') : (t?.common?.darkMode || 'Dark Mode')}
+                        {theme === 'dark' ? t('common.lightMode', 'Light Mode') : t('common.darkMode', 'Dark Mode')}
                     </button>
                     <button
                         onClick={handleLogout}
@@ -517,7 +517,7 @@ export default function Layout({ children, role = 'professional', restricted = f
                         }}
                     >
                         <LogOut size={16} />
-                        {t?.nav?.logout || 'Logout'}
+                        {t('nav.logout', 'Logout')}
                     </button>
                 </div>
             </aside>
