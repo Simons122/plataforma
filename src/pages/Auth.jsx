@@ -75,17 +75,17 @@ export default function Auth() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectToPricing = searchParams.get('redirect') === 'pricing';
-    const { translations: tr } = useLanguage();
+    const { translations: tr, language } = useLanguage();
     const a = tr?.auth || {};
     const lp = tr?.landingPage || {};
 
     // Labels de força da password traduzidos
     const pwLabels = {
-        pw_veryWeak:   tr?.language === 'fr' ? 'Très faible' : tr?.language === 'en' ? 'Very weak' : 'Muito fraca',
-        pw_weak:       tr?.language === 'fr' ? 'Faible' : tr?.language === 'en' ? 'Weak' : 'Fraca',
-        pw_medium:     tr?.language === 'fr' ? 'Moyen' : tr?.language === 'en' ? 'Medium' : 'Média',
-        pw_strong:     tr?.language === 'fr' ? 'Fort' : tr?.language === 'en' ? 'Strong' : 'Forte',
-        pw_veryStrong: tr?.language === 'fr' ? 'Très fort' : tr?.language === 'en' ? 'Very strong' : 'Muito forte',
+        pw_veryWeak:   language === 'fr' ? 'Très faible' : language === 'en' ? 'Very weak'   : 'Muito fraca',
+        pw_weak:       language === 'fr' ? 'Faible'      : language === 'en' ? 'Weak'         : 'Fraca',
+        pw_medium:     language === 'fr' ? 'Moyen'       : language === 'en' ? 'Medium'       : 'Média',
+        pw_strong:     language === 'fr' ? 'Fort'        : language === 'en' ? 'Strong'       : 'Forte',
+        pw_veryStrong: language === 'fr' ? 'Très fort'   : language === 'en' ? 'Very strong'  : 'Muito forte',
     };
 
     useEffect(() => {
@@ -226,28 +226,28 @@ export default function Auth() {
             ? (a.noAccount ? a.noAccount + ' ' : 'Não tem conta profissional? ')
             : (a.alreadyHaveAccount ? a.alreadyHaveAccount + ' ' : 'Já tem uma conta? '),
         toggleBtn:      isLogin ? (a.register || 'Registe-se agora') : (a.login || 'Inicie sessão'),
-        googleBtn:      tr?.language === 'fr' ? 'Continuer avec Google'
-                       : tr?.language === 'en' ? 'Continue with Google'
+        googleBtn:      language === 'fr' ? 'Continuer avec Google'
+                       : language === 'en' ? 'Continue with Google'
                        : 'Continuar com Google',
-        orDivider:      tr?.language === 'fr' ? 'ou' : tr?.language === 'en' ? 'or' : 'ou',
-        clientQuestion: tr?.language === 'fr' ? 'Vous êtes client et voulez prendre rendez-vous ?'
-                       : tr?.language === 'en' ? 'Are you a client looking to book?'
+        orDivider:      language === 'fr' ? 'ou' : language === 'en' ? 'or' : 'ou',
+        clientQuestion: language === 'fr' ? 'Vous êtes client et voulez prendre rendez-vous ?'
+                       : language === 'en' ? 'Are you a client looking to book?'
                        : 'É cliente e quer fazer uma marcação?',
-        exploreBtn:     tr?.language === 'fr' ? '🔍 Explorer les professionnels'
-                       : tr?.language === 'en' ? '🔍 Explore Professionals'
+        exploreBtn:     language === 'fr' ? '🔍 Explorer les professionnels'
+                       : language === 'en' ? '🔍 Explore Professionals'
                        : '🔍 Explorar Profissionais',
         passwordField:  'Password',
-        planFeatures:   tr?.language === 'fr' ? 'Réservations illimitées • Confirmations automatiques • Tableau de bord complet'
-                       : tr?.language === 'en' ? 'Unlimited bookings • Automatic confirmations • Full dashboard'
+        planFeatures:   language === 'fr' ? 'Réservations illimitées • Confirmations automatiques • Tableau de bord complet'
+                       : language === 'en' ? 'Unlimited bookings • Automatic confirmations • Full dashboard'
                        : 'Marcações ilimitadas • Confirmações automáticas • Painel completo',
         pricePeriod:    lp.pricePeriod || '/mês',
-        pwChars:        tr?.language === 'fr' ? '8+ caractères' : tr?.language === 'en' ? '8+ chars' : '8+ caracteres',
-        pwLower:        tr?.language === 'fr' ? 'Minuscules (a-z)' : tr?.language === 'en' ? 'Lowercase (a-z)' : 'Minúsculas (a-z)',
-        pwUpper:        tr?.language === 'fr' ? 'Majuscules (A-Z)' : tr?.language === 'en' ? 'Uppercase (A-Z)' : 'Maiúsculas (A-Z)',
-        pwNumbers:      tr?.language === 'fr' ? 'Chiffres (0-9)' : tr?.language === 'en' ? 'Numbers (0-9)' : 'Números (0-9)',
-        pwSpecial:      tr?.language === 'fr' ? 'Caractères spéciaux (!@#$%...)' : tr?.language === 'en' ? 'Special chars (!@#$%...)' : 'Caracteres especiais (!@#$%...)',
-        showPw:         tr?.language === 'fr' ? 'Afficher le mot de passe' : tr?.language === 'en' ? 'Show password' : 'Mostrar password',
-        hidePw:         tr?.language === 'fr' ? 'Masquer le mot de passe' : tr?.language === 'en' ? 'Hide password' : 'Esconder password',
+        pwChars:        language === 'fr' ? '8+ caractères' : language === 'en' ? '8+ chars' : '8+ caracteres',
+        pwLower:        language === 'fr' ? 'Minuscules (a-z)' : language === 'en' ? 'Lowercase (a-z)' : 'Minúsculas (a-z)',
+        pwUpper:        language === 'fr' ? 'Majuscules (A-Z)' : language === 'en' ? 'Uppercase (A-Z)' : 'Maiúsculas (A-Z)',
+        pwNumbers:      language === 'fr' ? 'Chiffres (0-9)'   : language === 'en' ? 'Numbers (0-9)'   : 'Números (0-9)',
+        pwSpecial:      language === 'fr' ? 'Caractères spéciaux (!@#$%...)' : language === 'en' ? 'Special chars (!@#$%...)' : 'Caracteres especiais (!@#$%...)',
+        showPw:         language === 'fr' ? 'Afficher le mot de passe' : language === 'en' ? 'Show password' : 'Mostrar password',
+        hidePw:         language === 'fr' ? 'Masquer le mot de passe'  : language === 'en' ? 'Hide password' : 'Esconder password',
         processing:     lp.processing || 'A processar...',
     };
 
