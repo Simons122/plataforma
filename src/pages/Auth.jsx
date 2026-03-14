@@ -42,20 +42,20 @@ const calcPasswordStrength = (password) => {
     if (checks.special)   score += 2;
     const pct = Math.min(100, (score / 9) * 100);
     let label, color;
-    if (pct < 25)      { label = 'pw_veryWeak';   color = '#ef4444'; }
-    else if (pct < 50) { label = 'pw_weak';        color = '#f97316'; }
-    else if (pct < 75) { label = 'pw_medium';      color = '#eab308'; }
-    else if (pct < 90) { label = 'pw_strong';      color = '#22c55e'; }
-    else               { label = 'pw_veryStrong';  color = '#10b981'; }
+    if (pct < 25)      { label = 'pw_veryWeak';  color = '#ef4444'; }
+    else if (pct < 50) { label = 'pw_weak';       color = '#f97316'; }
+    else if (pct < 75) { label = 'pw_medium';     color = '#eab308'; }
+    else if (pct < 90) { label = 'pw_strong';     color = '#22c55e'; }
+    else               { label = 'pw_veryStrong'; color = '#10b981'; }
     return { score: pct, label, color, checks };
 };
 
 export default function Auth() {
-    const [isLogin, setIsLogin]         = useState(true);
-    const [loading, setLoading]         = useState(false);
-    const [error, setError]             = useState('');
+    const [isLogin, setIsLogin]           = useState(true);
+    const [loading, setLoading]           = useState(false);
+    const [error, setError]               = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const navigate = useNavigate();
+    const navigate      = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectToPricing = searchParams.get('redirect') === 'pricing';
     const { translations: tr, language } = useLanguage();
@@ -63,11 +63,11 @@ export default function Auth() {
     const lp = tr?.landingPage || {};
 
     const pwLabels = {
-        pw_veryWeak:   language === 'fr' ? 'Très faible' : language === 'en' ? 'Very weak'   : 'Muito fraca',
-        pw_weak:       language === 'fr' ? 'Faible'      : language === 'en' ? 'Weak'         : 'Fraca',
-        pw_medium:     language === 'fr' ? 'Moyen'       : language === 'en' ? 'Medium'       : 'Média',
-        pw_strong:     language === 'fr' ? 'Fort'        : language === 'en' ? 'Strong'       : 'Forte',
-        pw_veryStrong: language === 'fr' ? 'Très fort'   : language === 'en' ? 'Very strong'  : 'Muito forte',
+        pw_veryWeak:   language === 'fr' ? 'Très faible' : language === 'en' ? 'Very weak'  : 'Muito fraca',
+        pw_weak:       language === 'fr' ? 'Faible'      : language === 'en' ? 'Weak'        : 'Fraca',
+        pw_medium:     language === 'fr' ? 'Moyen'       : language === 'en' ? 'Medium'      : 'Média',
+        pw_strong:     language === 'fr' ? 'Fort'        : language === 'en' ? 'Strong'      : 'Forte',
+        pw_veryStrong: language === 'fr' ? 'Très fort'   : language === 'en' ? 'Very strong' : 'Muito forte',
     };
 
     useEffect(() => { if (redirectToPricing) setIsLogin(false); }, [redirectToPricing]);
@@ -76,6 +76,7 @@ export default function Auth() {
     const passwordStrength = useMemo(() => calcPasswordStrength(formData.password), [formData.password]);
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+    /* ── Firebase handlers ── */
     const handleGoogleLogin = async () => {
         try {
             setLoading(true); setError('');
@@ -85,25 +86,24 @@ export default function Auth() {
             const docRef   = doc(db, 'professionals', user.uid);
             const docSnap  = await getDoc(docRef);
             if (!docSnap.exists()) {
-                const trialEndsAt = new Date();
-                trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+                const t = new Date(); t.setDate(t.getDate() + 5);
                 await setDoc(docRef, {
                     name: user.displayName || 'Utilizador Google', email: user.email,
                     profession: 'Por definir', paymentStatus: 'trial',
-                    trialEndsAt: trialEndsAt.toISOString(), createdAt: new Date().toISOString(),
+                    trialEndsAt: t.toISOString(), createdAt: new Date().toISOString(),
                     role: 'professional', slug: slugify(user.displayName || 'utilizador-google')
                 });
                 if (redirectToPricing) {
                     const r = await createCheckoutSession({ userId: user.uid, userEmail: user.email, userName: user.displayName || 'Utilizador Google' });
                     if (!r.success) navigate('/pricing');
-                } else { navigate('/pricing'); }
+                } else navigate('/pricing');
             } else if (docSnap.data().role === 'admin') {
                 navigate('/admin/dashboard');
             } else {
                 if (redirectToPricing) {
                     const r = await createCheckoutSession({ userId: user.uid, userEmail: user.email, userName: user.displayName });
                     if (!r.success) navigate('/pricing');
-                } else { navigate('/dashboard'); }
+                } else navigate('/dashboard');
             }
         } catch (err) { console.error(err); setError(err.message); }
         finally { setLoading(false); }
@@ -117,68 +117,88 @@ export default function Auth() {
                 const ds = await getDoc(doc(db, 'professionals', uc.user.uid));
                 navigate(ds.exists() && ds.data().role === 'admin' ? '/admin/dashboard' : '/dashboard');
             } else {
-                const uc   = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-                const user = uc.user;
-                await updateProfile(user, { displayName: formData.name });
-                const trialEndsAt = new Date();
-                trialEndsAt.setDate(trialEndsAt.getDate() + 5);
-                await setDoc(doc(db, 'professionals', user.uid), {
+                const uc = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+                await updateProfile(uc.user, { displayName: formData.name });
+                const t = new Date(); t.setDate(t.getDate() + 5);
+                await setDoc(doc(db, 'professionals', uc.user.uid), {
                     name: formData.name, email: formData.email, profession: formData.profession,
-                    paymentStatus: 'trial', trialEndsAt: trialEndsAt.toISOString(),
+                    paymentStatus: 'trial', trialEndsAt: t.toISOString(),
                     createdAt: new Date().toISOString(), role: 'professional', slug: slugify(formData.name)
                 });
-                const r = await createCheckoutSession({ userId: user.uid, userEmail: user.email, userName: formData.name });
+                const r = await createCheckoutSession({ userId: uc.user.uid, userEmail: uc.user.email, userName: formData.name });
                 if (!r.success) navigate('/pricing');
             }
         } catch (err) { console.error(err); setError(err.message.replace('Firebase: ', '')); }
         finally { setLoading(false); }
     };
 
+    /* ── Translations ── */
     const txt = {
-        welcome:        isLogin ? (a.welcomeBack || (language === 'fr' ? 'Bon retour !' : language === 'en' ? 'Welcome back!' : 'Bem-vindo de volta'))
-                                : (a.welcomeMessage || (language === 'fr' ? 'Inscrivez-vous pour commencer' : language === 'en' ? 'Create your account' : 'Crie a sua conta profissional')),
-        namePlaceholder: a.fullName || (language === 'fr' ? 'Nom complet' : language === 'en' ? 'Full Name' : 'Nome Completo'),
-        submitBtn:      isLogin ? (a.login || (language === 'fr' ? 'Connexion' : language === 'en' ? 'Login' : 'Entrar'))
-                                : (a.createAccount || (language === 'fr' ? 'Créer un compte' : language === 'en' ? 'Create Account' : 'Criar Conta Profissional')),
-        toggleQuestion: isLogin
-            ? (a.noAccount ? a.noAccount + ' ' : (language === 'fr' ? "Vous n'avez pas de compte ? " : language === 'en' ? "Don't have an account? " : 'Não tem conta profissional? '))
-            : (a.alreadyHaveAccount ? a.alreadyHaveAccount + ' ' : (language === 'fr' ? 'Vous avez déjà un compte ? ' : language === 'en' ? 'Already have an account? ' : 'Já tem uma conta? ')),
-        toggleBtn:  isLogin ? (a.register || (language === 'fr' ? "S'inscrire" : language === 'en' ? 'Register' : 'Registe-se agora'))
-                            : (a.login    || (language === 'fr' ? 'Se connecter' : language === 'en' ? 'Log in' : 'Inicie sessão')),
-        googleBtn:      language === 'fr' ? 'Continuer avec Google'   : language === 'en' ? 'Continue with Google'   : 'Continuar com Google',
-        orDivider:      language === 'fr' ? 'ou'                      : language === 'en' ? 'or'                     : 'ou',
-        clientQuestion: language === 'fr' ? 'Vous êtes client et voulez prendre rendez-vous ?' : language === 'en' ? 'Are you a client looking to book?' : 'É cliente e quer fazer uma marcação?',
-        exploreBtn:     language === 'fr' ? '🔍 Explorer les professionnels' : language === 'en' ? '🔍 Explore Professionals' : '🔍 Explorar Profissionais',
-        pricePeriod:    lp.pricePeriod || (language === 'fr' ? '/mois' : language === 'en' ? '/mo' : '/mês'),
-        planFeatures:   language === 'fr' ? 'Réservations illimitées • Confirmations automatiques • Tableau de bord complet'
-                      : language === 'en' ? 'Unlimited bookings • Automatic confirmations • Full dashboard'
-                      : 'Marcações ilimitadas • Confirmações automáticas • Painel completo',
-        backBtn:        language === 'fr' ? 'Retour' : language === 'en' ? 'Back' : 'Voltar',
-        leftTitle:      language === 'fr' ? 'Gérez vos réservations en toute simplicité' : language === 'en' ? 'Manage your bookings with ease' : 'Gere as tuas marcações com simplicidade',
-        leftSubtitle:   language === 'fr' ? 'Booklyo automatise vos réservations, envoie des confirmations et vous fait gagner du temps.'
-                      : language === 'en' ? 'Booklyo automates your bookings, sends confirmations and saves you time.'
-                      : 'O Booklyo automatiza as tuas marcações, envia confirmações e poupa-te tempo.',
-        noCommitment:   language === 'fr' ? 'Accès complet • Sans engagement • Annulez quand vous voulez'
-                      : language === 'en' ? 'Full access • No commitment • Cancel anytime'
-                      : 'Acesso completo • Sem compromisso • Cancela quando quiseres',
-        pwChars:  language === 'fr' ? '8+ caractères'         : language === 'en' ? '8+ chars'        : '8+ caracteres',
-        pwLower:  language === 'fr' ? 'Minuscules (a-z)'      : language === 'en' ? 'Lowercase (a-z)' : 'Minúsculas (a-z)',
-        pwUpper:  language === 'fr' ? 'Majuscules (A-Z)'      : language === 'en' ? 'Uppercase (A-Z)' : 'Maiúsculas (A-Z)',
-        pwNumbers:language === 'fr' ? 'Chiffres (0-9)'        : language === 'en' ? 'Numbers (0-9)'   : 'Números (0-9)',
-        pwSpecial:language === 'fr' ? 'Caractères spéciaux (!@#$%...)' : language === 'en' ? 'Special chars (!@#$%...)' : 'Caracteres especiais (!@#$%...)',
-        showPw:   language === 'fr' ? 'Afficher le mot de passe' : language === 'en' ? 'Show password' : 'Mostrar password',
-        hidePw:   language === 'fr' ? 'Masquer le mot de passe'  : language === 'en' ? 'Hide password' : 'Esconder password',
+        welcome:     isLogin
+            ? (a.welcomeBack  || (language === 'fr' ? 'Bon retour !'            : language === 'en' ? 'Welcome back!'        : 'Bem-vindo de volta!'))
+            : (a.welcomeMsg   || (language === 'fr' ? 'Créez votre compte'      : language === 'en' ? 'Create your account'  : 'Crie a sua conta profissional')),
+        namePH:      a.fullName || (language === 'fr' ? 'Nom complet' : language === 'en' ? 'Full Name' : 'Nome Completo'),
+        submitBtn:   isLogin
+            ? (a.login        || (language === 'fr' ? 'Connexion'     : language === 'en' ? 'Login'         : 'Entrar'))
+            : (a.createAccount|| (language === 'fr' ? 'Créer un compte': language === 'en' ? 'Create Account': 'Criar Conta Profissional')),
+        toggleQ:  isLogin
+            ? (language === 'fr' ? "Vous n'avez pas de compte ? " : language === 'en' ? "Don't have an account? " : 'Não tem conta profissional? ')
+            : (language === 'fr' ? 'Vous avez déjà un compte ? '  : language === 'en' ? 'Already have an account? ' : 'Já tem uma conta? '),
+        toggleBtn: isLogin
+            ? (language === 'fr' ? "S'inscrire"   : language === 'en' ? 'Register' : 'Registe-se agora')
+            : (language === 'fr' ? 'Se connecter' : language === 'en' ? 'Log in'   : 'Inicie sessão'),
+        googleBtn:     language === 'fr' ? 'Continuer avec Google'  : language === 'en' ? 'Continue with Google'   : 'Continuar com Google',
+        orDivider:     language === 'fr' ? 'ou'   : language === 'en' ? 'or'   : 'ou',
+        clientQ:       language === 'fr' ? 'Vous êtes client et voulez prendre rendez-vous ?' : language === 'en' ? 'Are you a client looking to book?' : 'É cliente e quer fazer uma marcação?',
+        exploreBtn:    language === 'fr' ? '🔍 Explorer les professionnels' : language === 'en' ? '🔍 Explore Professionals' : '🔍 Explorar Profissionais',
+        backBtn:       language === 'fr' ? 'Retour' : language === 'en' ? 'Back' : 'Voltar',
+        pricePeriod:   lp.pricePeriod || (language === 'fr' ? '/mois' : language === 'en' ? '/mo' : '/mês'),
+        planFeatures:  language === 'fr' ? 'Réservations illimitées • Confirmations automatiques • Tableau de bord complet'
+                     : language === 'en' ? 'Unlimited bookings • Automatic confirmations • Full dashboard'
+                     : 'Marcações ilimitadas • Confirmações automáticas • Painel completo',
+        noCommitment:  language === 'fr' ? 'Accès complet • Sans engagement • Annulez quand vous voulez'
+                     : language === 'en' ? 'Full access • No commitment • Cancel anytime'
+                     : 'Acesso completo • Sem compromisso • Cancela quando quiseres',
+        // LEFT PANEL — login
+        loginLeftTitle:    language === 'fr' ? 'Content de vous revoir !'            : language === 'en' ? 'Welcome back!'                         : 'Bem-vindo de volta!',
+        loginLeftSubtitle: language === 'fr' ? 'Connectez-vous pour accéder à votre tableau de bord et gérer vos réservations.'
+                         : language === 'en' ? 'Log in to access your dashboard and manage your bookings.'
+                         : 'Inicia sessão para aceder ao teu painel e gerir as tuas marcações.',
+        // LEFT PANEL — register
+        regLeftTitle:    language === 'fr' ? 'Gérez vos réservations en toute simplicité' : language === 'en' ? 'Manage your bookings with ease' : 'Gere as tuas marcações com simplicidade',
+        regLeftSubtitle: language === 'fr' ? 'Booklyo automatise vos réservations, envoie des confirmations et vous fait gagner du temps.'
+                       : language === 'en' ? 'Booklyo automates your bookings, sends confirmations and saves you time.'
+                       : 'O Booklyo automatiza as tuas marcações, envia confirmações e poupa-te tempo.',
+        pwChars:   language === 'fr' ? '8+ caractères'                  : language === 'en' ? '8+ chars'               : '8+ caracteres',
+        pwLower:   language === 'fr' ? 'Minuscules (a-z)'               : language === 'en' ? 'Lowercase (a-z)'        : 'Minúsculas (a-z)',
+        pwUpper:   language === 'fr' ? 'Majuscules (A-Z)'               : language === 'en' ? 'Uppercase (A-Z)'        : 'Maiúsculas (A-Z)',
+        pwNumbers: language === 'fr' ? 'Chiffres (0-9)'                 : language === 'en' ? 'Numbers (0-9)'          : 'Números (0-9)',
+        pwSpecial: language === 'fr' ? 'Caractères spéciaux (!@#$%...)' : language === 'en' ? 'Special chars (!@#$%...)': 'Caracteres especiais (!@#$%...)',
+        showPw:    language === 'fr' ? 'Afficher le mot de passe'       : language === 'en' ? 'Show password'          : 'Mostrar password',
+        hidePw:    language === 'fr' ? 'Masquer le mot de passe'        : language === 'en' ? 'Hide password'          : 'Esconder password',
     };
 
-    // left panel feature bullets
-    const leftFeatures = [
-        { icon: Calendar,       text: language === 'fr' ? 'Réservations illimitées'    : language === 'en' ? 'Unlimited bookings'         : 'Marcações ilimitadas' },
-        { icon: Mail,           text: language === 'fr' ? 'Confirmations automatiques' : language === 'en' ? 'Automatic confirmations'     : 'Confirmações automáticas' },
-        { icon: MessageCircle,  text: language === 'fr' ? 'Notifications WhatsApp'     : language === 'en' ? 'WhatsApp notifications'      : 'Notificações WhatsApp' },
-        { icon: Shield,         text: language === 'fr' ? 'Paiement sécurisé Stripe'   : language === 'en' ? 'Secure Stripe payment'       : 'Pagamento seguro Stripe' },
+    /* ── Left-panel bullet lists ── */
+    const loginBullets = [
+        { icon: Calendar,      text: language === 'fr' ? 'Toutes vos réservations au même endroit' : language === 'en' ? 'All your bookings in one place'  : 'Todas as tuas marcações num só lugar' },
+        { icon: Shield,        text: language === 'fr' ? 'Vos données sont sécurisées'             : language === 'en' ? 'Your data is safe and secure'     : 'Os teus dados estão seguros' },
+        { icon: MessageCircle, text: language === 'fr' ? 'Notifications en temps réel'             : language === 'en' ? 'Real-time notifications'          : 'Notificações em tempo real' },
+    ];
+    const registerBullets = [
+        { icon: Calendar,      text: language === 'fr' ? 'Réservations illimitées'    : language === 'en' ? 'Unlimited bookings'      : 'Marcações ilimitadas' },
+        { icon: Mail,          text: language === 'fr' ? 'Confirmations automatiques' : language === 'en' ? 'Automatic confirmations'  : 'Confirmações automáticas' },
+        { icon: MessageCircle, text: language === 'fr' ? 'Notifications WhatsApp'     : language === 'en' ? 'WhatsApp notifications'   : 'Notificações WhatsApp' },
+        { icon: Shield,        text: language === 'fr' ? 'Paiement sécurisé Stripe'   : language === 'en' ? 'Secure Stripe payment'    : 'Pagamento seguro Stripe' },
     ];
 
-    const s = { // shorthand inline style helpers
+    /* ── Colours differ between login (indigo) and register (blue) ── */
+    const accentBg     = isLogin ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'linear-gradient(135deg,#3b82f6,#06b6d4)';
+    const accentShadow = isLogin ? '0 8px 24px rgba(99,102,241,.35)'          : '0 8px 24px rgba(59,130,246,.35)';
+    const bulletBg     = isLogin ? 'rgba(99,102,241,.1)'                      : 'rgba(59,130,246,.1)';
+    const bulletBorder = isLogin ? 'rgba(99,102,241,.2)'                      : 'rgba(59,130,246,.2)';
+    const bulletColor  = isLogin ? '#a78bfa'                                  : '#60a5fa';
+
+    const s = {
         input: { position: 'relative' },
         iconL: { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' },
     };
@@ -186,11 +206,11 @@ export default function Auth() {
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
 
-            {/* ── Sticky top bar with back button ── */}
+            {/* ── Sticky top bar ── */}
             <nav style={{
                 display: 'flex', alignItems: 'center', padding: '0.75rem 1.5rem',
                 borderBottom: '1px solid var(--border-default)', background: 'var(--bg-card)',
-                position: 'sticky', top: 0, zIndex: 50, gap: '1rem',
+                position: 'sticky', top: 0, zIndex: 50,
             }}>
                 <button onClick={() => navigate('/')} style={{
                     display: 'flex', alignItems: 'center', gap: '0.4rem',
@@ -207,63 +227,67 @@ export default function Auth() {
                     <img src="/logo.png" alt="Booklyo" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
                     <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>Booklyo</span>
                 </div>
-                <div style={{ width: '80px' }} /> {/* balance spacer */}
+                <div style={{ width: '80px' }} />
             </nav>
 
-            {/* ── 2-col main area ── */}
+            {/* ── 2-col body ── */}
             <div style={{ flex: 1, display: 'flex', overflow: 'auto' }}>
 
-                {/* LEFT — branding panel (desktop only via CSS) */}
-                <div
-                    className="auth-left-panel"
-                    style={{
-                        display: 'none', flex: 1, flexDirection: 'column', justifyContent: 'center',
-                        padding: '3rem 4rem',
-                        background: 'linear-gradient(135deg,rgba(59,130,246,.07) 0%,rgba(6,182,212,.04) 100%)',
-                        borderRight: '1px solid var(--border-default)',
-                    }}
-                >
+                {/* LEFT PANEL (desktop only) */}
+                <div className="auth-left-panel" style={{
+                    display: 'none', flex: 1, flexDirection: 'column', justifyContent: 'center',
+                    padding: '3rem 4rem',
+                    background: 'linear-gradient(135deg,rgba(59,130,246,.07) 0%,rgba(6,182,212,.04) 100%)',
+                    borderRight: '1px solid var(--border-default)',
+                }}>
                     <div style={{ maxWidth: '400px' }}>
+                        {/* Coloured icon — changes when switching to/from login */}
                         <div style={{
                             width: '60px', height: '60px', borderRadius: '16px', marginBottom: '2rem',
-                            background: 'linear-gradient(135deg,#3b82f6,#06b6d4)',
+                            background: accentBg, boxShadow: accentShadow, transition: 'all 0.4s ease',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 8px 24px rgba(59,130,246,.35)',
                         }}>
-                            <Crown size={30} style={{ color: 'white' }} />
+                            {isLogin ? <User size={30} style={{ color: 'white' }} /> : <Crown size={30} style={{ color: 'white' }} />}
                         </div>
+
                         <h2 style={{ fontSize: '1.875rem', fontWeight: 800, lineHeight: 1.2, marginBottom: '1rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                            {txt.leftTitle}
+                            {isLogin ? txt.loginLeftTitle : txt.regLeftTitle}
                         </h2>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', lineHeight: 1.65, marginBottom: '2rem' }}>
-                            {txt.leftSubtitle}
+                            {isLogin ? txt.loginLeftSubtitle : txt.regLeftSubtitle}
                         </p>
-                        {leftFeatures.map(({ icon: Icon, text }) => (
+
+                        {/* Bullet points — different per mode */}
+                        {(isLogin ? loginBullets : registerBullets).map(({ icon: Icon, text }) => (
                             <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.875rem' }}>
                                 <div style={{
                                     width: '34px', height: '34px', borderRadius: '9px', flexShrink: 0,
-                                    background: 'rgba(59,130,246,.1)', border: '1px solid rgba(59,130,246,.2)',
+                                    background: bulletBg, border: `1px solid ${bulletBorder}`,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}>
-                                    <Icon size={16} style={{ color: '#60a5fa' }} />
+                                    <Icon size={16} style={{ color: bulletColor }} />
                                 </div>
                                 <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '0.9rem' }}>{text}</span>
                             </div>
                         ))}
-                        <div style={{ marginTop: '2rem', padding: '1.125rem', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-default)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                                <Crown size={15} style={{ color: '#fbbf24' }} />
-                                <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>Booklyo Pro</span>
-                                <span style={{ marginLeft: 'auto', fontWeight: 800, color: '#3b82f6', fontSize: '1.05rem' }}>
-                                    15€<span style={{ fontWeight: 500, fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{txt.pricePeriod}</span>
-                                </span>
+
+                        {/* Pricing card — ONLY on register */}
+                        {!isLogin && (
+                            <div style={{ marginTop: '2rem', padding: '1.125rem', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-default)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                                    <Crown size={15} style={{ color: '#fbbf24' }} />
+                                    <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>Booklyo Pro</span>
+                                    <span style={{ marginLeft: 'auto', fontWeight: 800, color: '#3b82f6', fontSize: '1.05rem' }}>
+                                        15€<span style={{ fontWeight: 500, fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{txt.pricePeriod}</span>
+                                    </span>
+                                </div>
+                                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>{txt.noCommitment}</p>
                             </div>
-                            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>{txt.noCommitment}</p>
-                        </div>
+                        )}
                     </div>
                 </div>
 
-                {/* RIGHT — scrollable form panel */}
+                {/* RIGHT PANEL — scrollable form */}
                 <div style={{
                     flex: 1, overflowY: 'auto',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -276,14 +300,14 @@ export default function Auth() {
                         boxShadow: 'var(--shadow-lg)',
                     }} className="animate-fade-in">
 
-                        {/* Form title */}
+                        {/* Title */}
                         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                             <p style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.01em', margin: 0 }}>
                                 {txt.welcome}
                             </p>
                         </div>
 
-                        {/* Error banner */}
+                        {/* Error */}
                         {error && (
                             <div style={{
                                 padding: '0.75rem 1rem', marginBottom: '1.125rem',
@@ -292,7 +316,7 @@ export default function Auth() {
                             }}>{error}</div>
                         )}
 
-                        {/* Plan card (register from pricing only) */}
+                        {/* Mini plan card inside form (register from pricing) */}
                         {redirectToPricing && !isLogin && (
                             <div style={{
                                 padding: '0.8rem 1rem', marginBottom: '1.125rem',
@@ -317,7 +341,7 @@ export default function Auth() {
                             {!isLogin && (
                                 <div style={s.input}>
                                     <User style={s.iconL} size={17} />
-                                    <input name="name" placeholder={txt.namePlaceholder} className="input" style={{ paddingLeft: '2.75rem' }} value={formData.name} onChange={handleChange} required />
+                                    <input name="name" placeholder={txt.namePH} className="input" style={{ paddingLeft: '2.75rem' }} value={formData.name} onChange={handleChange} required />
                                 </div>
                             )}
                             <div style={s.input}>
@@ -344,7 +368,7 @@ export default function Auth() {
                                 >{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
                             </div>
 
-                            {/* Password strength */}
+                            {/* Password strength (register only) */}
                             {!isLogin && formData.password && (
                                 <div style={{ marginTop: '-0.2rem' }}>
                                     <div style={{ width: '100%', height: '5px', background: 'var(--bg-secondary)', borderRadius: '999px', overflow: 'hidden', marginBottom: '0.35rem' }}>
@@ -412,9 +436,9 @@ export default function Auth() {
                             {txt.googleBtn}
                         </button>
 
-                        {/* Toggle login/register */}
+                        {/* Toggle login ↔ register */}
                         <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.875rem' }}>
-                            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{txt.toggleQuestion}</span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{txt.toggleQ}</span>
                             <button onClick={() => setIsLogin(!isLogin)} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer', padding: '0 4px', transition: 'color 0.2s' }}>
                                 {txt.toggleBtn}
                             </button>
@@ -422,7 +446,7 @@ export default function Auth() {
 
                         {/* Client area link */}
                         <div style={{ marginTop: '1.1rem', paddingTop: '1.1rem', borderTop: '1px solid var(--border-default)', textAlign: 'center' }}>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.65rem', fontWeight: 500 }}>{txt.clientQuestion}</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.65rem', fontWeight: 500 }}>{txt.clientQ}</p>
                             <button onClick={() => navigate('/client/explore')} style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
                                 padding: '0.55rem 1.1rem', fontSize: '0.85rem', fontWeight: 600,
@@ -438,7 +462,6 @@ export default function Auth() {
                 </div>
             </div>
 
-            {/* Responsive: show left panel on wide screens */}
             <style>{`
                 @media (min-width: 900px) {
                     .auth-left-panel { display: flex !important; }
