@@ -266,7 +266,7 @@ export default function Auth() {
                 {/* RIGHT — scrollable form panel */}
                 <div style={{
                     flex: 1, overflowY: 'auto',
-                    display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '2rem 1.25rem',
                 }}>
                     <div style={{
