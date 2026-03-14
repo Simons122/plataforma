@@ -23,18 +23,23 @@ import {
     Menu,
     X,
     LogIn,
-    User
+    User,
+    Globe
 } from 'lucide-react';
 import { createCheckoutSession, BOOKLYO_PRO_PLAN, getSubscriptionStatus, getTrialDaysRemaining } from '../lib/stripe';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function PricingPage() {
     const navigate = useNavigate();
+    const { language, setLanguage, translations: tr } = useLanguage();
+    const lp = tr?.landingPage || {};
     const [user, setUser] = useState(null);
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [processingPayment, setProcessingPayment] = useState(false);
     const [error, setError] = useState('');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [langMenuOpen, setLangMenuOpen] = useState(false);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -104,46 +109,46 @@ export default function PricingPage() {
     const trialDays = userData?.trialEndsAt ? getTrialDaysRemaining(userData.trialEndsAt) : 0;
 
     const features = [
-        { icon: Calendar, text: 'Marcações ilimitadas', highlight: true },
-        { icon: Mail, text: 'Confirmações automáticas por email' },
-        { icon: MessageCircle, text: 'Notificações por WhatsApp' },
-        { icon: Settings, text: 'Gestão de serviços e horários' },
-        { icon: LayoutDashboard, text: 'Painel profissional completo' },
-        { icon: Headphones, text: 'Suporte básico incluído' },
-        { icon: RefreshCw, text: 'Atualizações gratuitas' },
-        { icon: Users, text: 'Gestão de clientes' }
+        { icon: Calendar, text: lp.feat1 || 'Marcações ilimitadas', highlight: true },
+        { icon: Mail, text: lp.feat2 || 'Confirmações automáticas por email' },
+        { icon: MessageCircle, text: lp.feat3 || 'Notificações por WhatsApp' },
+        { icon: Settings, text: lp.feat4 || 'Gestão de serviços e horários' },
+        { icon: LayoutDashboard, text: lp.feat5 || 'Painel profissional completo' },
+        { icon: Headphones, text: lp.feat6 || 'Suporte básico incluído' },
+        { icon: RefreshCw, text: lp.feat7 || 'Atualizações gratuitas' },
+        { icon: Users, text: lp.feat8 || 'Gestão de clientes' }
     ];
 
     const benefits = [
         {
             icon: Clock,
-            title: 'Poupa Tempo',
-            description: 'Automatiza as marcações e deixa de perder tempo com chamadas e mensagens.'
+            title: lp.ben1Title || 'Poupa Tempo',
+            description: lp.ben1Desc || 'Automatiza as marcações e deixa de perder tempo com chamadas e mensagens.'
         },
         {
             icon: TrendingUp,
-            title: 'Cresce o Negócio',
-            description: 'Organiza a tua agenda e recebe mais clientes com menos esforço.'
+            title: lp.ben2Title || 'Cresce o Negócio',
+            description: lp.ben2Desc || 'Organiza a tua agenda e recebe mais clientes com menos esforço.'
         },
         {
             icon: Shield,
-            title: 'Profissional',
-            description: 'Transmite uma imagem profissional com confirmações automáticas.'
+            title: lp.ben3Title || 'Profissional',
+            description: lp.ben3Desc || 'Transmite uma imagem profissional com confirmações automáticas.'
         },
         {
             icon: Zap,
-            title: '100% Online',
-            description: 'Funciona em qualquer dispositivo, sem instalar nada.'
+            title: lp.ben4Title || '100% Online',
+            description: lp.ben4Desc || 'Funciona em qualquer dispositivo, sem instalar nada.'
         },
         {
             icon: Calendar,
-            title: 'Agenda Inteligente',
-            description: 'Visualiza todas as marcações num calendário simples e intuitivo.'
+            title: lp.ben5Title || 'Agenda Inteligente',
+            description: lp.ben5Desc || 'Visualiza todas as marcações num calendário simples e intuitivo.'
         },
         {
             icon: Users,
-            title: 'Gestão de Clientes',
-            description: 'Mantém o histórico de todos os clientes e marcações num só lugar.'
+            title: lp.ben6Title || 'Gestão de Clientes',
+            description: lp.ben6Desc || 'Mantém o histórico de todos os clientes e marcações num só lugar.'
         }
     ];
 
@@ -152,7 +157,7 @@ export default function PricingPage() {
             <div className="pricing-page">
                 <div className="pricing-loading">
                     <Loader2 className="spinner" size={40} />
-                    <p>A carregar...</p>
+                    <p>{lp.loading || 'A carregar...'}</p>
                 </div>
             </div>
         );
@@ -170,31 +175,56 @@ export default function PricingPage() {
 
                     {/* Desktop Navigation */}
                     <div className="navbar-links">
-                        <a href="#features">Funcionalidades</a>
-                        <a href="#benefits">Benefícios</a>
-                        <a href="#pricing">Preço</a>
+                        <a href="#features">{lp.navFeatures || 'Funcionalidades'}</a>
+                        <a href="#benefits">{lp.navBenefits || 'Benefícios'}</a>
+                        <a href="#pricing">{lp.navPrice || 'Preço'}</a>
                     </div>
 
                     <div className="navbar-actions">
+                        {/* Language Selector */}
+                        <div className="lang-selector">
+                            <button
+                                className="navbar-btn text lang-toggle"
+                                onClick={() => setLangMenuOpen(!langMenuOpen)}
+                                title="Idioma / Language / Langue"
+                            >
+                                <Globe size={16} />
+                                <span>{language.toUpperCase()}</span>
+                            </button>
+                            {langMenuOpen && (
+                                <div className="lang-dropdown">
+                                    {['pt', 'en', 'fr'].map(lang => (
+                                        <button
+                                            key={lang}
+                                            className={`lang-option ${language === lang ? 'active' : ''}`}
+                                            onClick={() => { setLanguage(lang); setLangMenuOpen(false); }}
+                                        >
+                                            {lang === 'pt' ? '🇵🇹 PT' : lang === 'en' ? '🇬🇧 EN' : '🇫🇷 FR'}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         {user ? (
                             <>
                                 <button className="navbar-btn secondary" onClick={() => navigate('/dashboard')}>
                                     <LayoutDashboard size={18} />
-                                    <span>Dashboard</span>
+                                    <span>{lp.navDashboard || 'Painel'}</span>
                                 </button>
                                 <button className="navbar-btn text" onClick={handleLogout}>
-                                    Sair
+                                    {lp.navLogout || 'Sair'}
                                 </button>
                             </>
                         ) : (
                             <>
                                 <button className="navbar-btn text" onClick={() => navigate('/auth')}>
                                     <LogIn size={18} />
-                                    <span>Entrar</span>
+                                    <span>{lp.navLogin || 'Entrar'}</span>
                                 </button>
                                 <button className="navbar-btn primary" onClick={() => navigate('/auth')}>
                                     <User size={18} />
-                                    <span>Criar Conta</span>
+                                    <span>{lp.navCreateAccount || 'Criar Conta'}</span>
                                 </button>
                             </>
                         )}
@@ -209,26 +239,38 @@ export default function PricingPage() {
                 {/* Mobile Menu */}
                 {mobileMenuOpen && (
                     <div className="mobile-menu">
-                        <a href="#features" onClick={() => setMobileMenuOpen(false)}>Funcionalidades</a>
-                        <a href="#benefits" onClick={() => setMobileMenuOpen(false)}>Benefícios</a>
-                        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Preço</a>
+                        <a href="#features" onClick={() => setMobileMenuOpen(false)}>{lp.navFeatures || 'Funcionalidades'}</a>
+                        <a href="#benefits" onClick={() => setMobileMenuOpen(false)}>{lp.navBenefits || 'Benefícios'}</a>
+                        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>{lp.navPrice || 'Preço'}</a>
+                        <div className="mobile-menu-divider"></div>
+                        <div className="mobile-lang-row">
+                            {['pt', 'en', 'fr'].map(lang => (
+                                <button
+                                    key={lang}
+                                    className={`lang-option ${language === lang ? 'active' : ''}`}
+                                    onClick={() => { setLanguage(lang); }}
+                                >
+                                    {lang === 'pt' ? '🇵🇹 PT' : lang === 'en' ? '🇬🇧 EN' : '🇫🇷 FR'}
+                                </button>
+                            ))}
+                        </div>
                         <div className="mobile-menu-divider"></div>
                         {user ? (
                             <>
                                 <button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }}>
-                                    Dashboard
+                                    {lp.navDashboard || 'Dashboard'}
                                 </button>
                                 <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
-                                    Sair
+                                    {lp.navLogout || 'Sair'}
                                 </button>
                             </>
                         ) : (
                             <>
                                 <button onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }}>
-                                    Entrar
+                                    {lp.navLogin || 'Entrar'}
                                 </button>
                                 <button className="primary" onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }}>
-                                    Criar Conta
+                                    {lp.navCreateAccount || 'Criar Conta'}
                                 </button>
                             </>
                         )}
@@ -241,15 +283,14 @@ export default function PricingPage() {
                 <div className="pricing-hero-content">
                     <div className="pricing-badge">
                         <Sparkles size={16} />
-                        <span>Plano Único • Tudo Incluído</span>
+                        <span>{lp.badgeText || 'Plano Único • Tudo Incluído'}</span>
                     </div>
                     <h1>
-                        O teu sistema de marcações
-                        <span className="gradient-text"> completo e profissional</span>
+                        {lp.heroTitle || 'O teu sistema de marcações'}
+                        <span className="gradient-text">{lp.heroTitleHighlight || ' completo e profissional'}</span>
                     </h1>
                     <p className="pricing-subtitle">
-                        Automatiza as tuas marcações, envia confirmações por email e WhatsApp,
-                        e gere o teu negócio de forma simples e eficiente.
+                        {lp.heroSubtitle || 'Automatiza as tuas marcações, envia confirmações por email e WhatsApp, e gere o teu negócio de forma simples e eficiente.'}
                     </p>
                 </div>
 
@@ -259,14 +300,14 @@ export default function PricingPage() {
                         <div className="pricing-card-header">
                             <div className="plan-badge">
                                 <Crown size={18} />
-                                <span>Booklyo Pro</span>
+                                <span>{lp.planBadge || 'Booklyo Pro'}</span>
                             </div>
                             <div className="price-container">
                                 <span className="price-amount">15€</span>
-                                <span className="price-period">/mês</span>
+                                <span className="price-period">{lp.pricePeriod || '/mês'}</span>
                             </div>
                             <p className="price-description">
-                                Tudo o que precisas para gerir as tuas marcações online
+                                {lp.priceDescription || 'Tudo o que precisas para gerir as tuas marcações online'}
                             </p>
                         </div>
 
@@ -288,7 +329,7 @@ export default function PricingPage() {
                             {subscriptionStatus === 'active' ? (
                                 <button className="cta-button active" disabled>
                                     <Check size={20} />
-                                    <span>Subscrição Ativa</span>
+                                    <span>{lp.activeSubscription || 'Subscrição Ativa'}</span>
                                 </button>
                             ) : (
                                 <>
@@ -300,23 +341,23 @@ export default function PricingPage() {
                                         {processingPayment ? (
                                             <>
                                                 <Loader2 className="spinner" size={20} />
-                                                <span>A processar...</span>
+                                                <span>{lp.processing || 'A processar...'}</span>
                                             </>
                                         ) : (
                                             <>
-                                                <span>{user ? 'Subscrever Agora' : 'Começar Agora'}</span>
+                                                <span>{user ? (lp.subscribeNow || 'Subscrever Agora') : (lp.startNow || 'Começar Agora')}</span>
                                                 <ArrowRight size={20} />
                                             </>
                                         )}
                                     </button>
                                     {!user && (
                                         <p className="cta-note">
-                                            Cria uma conta e começa a receber marcações hoje
+                                            {lp.ctaNote || 'Cria uma conta e começa a receber marcações hoje'}
                                         </p>
                                     )}
                                     {subscriptionStatus === 'expired' && (
                                         <p className="expired-badge">
-                                            ⚠️ Subscrição expirada - Renova para continuar
+                                            {lp.expiredBadge || '⚠️ Subscrição expirada - Renova para continuar'}
                                         </p>
                                     )}
                                 </>
@@ -330,11 +371,11 @@ export default function PricingPage() {
                         <div className="pricing-card-footer">
                             <div className="guarantee">
                                 <Shield size={16} />
-                                <span>Pagamento seguro via Stripe</span>
+                                <span>{lp.securePayment || 'Pagamento seguro via Stripe'}</span>
                             </div>
                             <div className="guarantee">
                                 <RefreshCw size={16} />
-                                <span>Cancela quando quiseres</span>
+                                <span>{lp.cancelAnytime || 'Cancelas quando quiseres'}</span>
                             </div>
                         </div>
                     </div>
@@ -347,7 +388,7 @@ export default function PricingPage() {
             {/* Benefits Section */}
             <section className="pricing-benefits" id="benefits">
                 <div className="section-container">
-                    <h2>Porquê escolher o Booklyo?</h2>
+                    <h2>{lp.benefitsTitle || 'Porquê escolher o Booklyo?'}</h2>
                     <div className="benefits-grid">
                         {benefits.map((benefit, index) => (
                             <div key={index} className="benefit-card">
@@ -365,8 +406,8 @@ export default function PricingPage() {
             {/* Video Demo Section */}
             <section className="pricing-video" id="demo">
                 <div className="section-container">
-                    <h2>Vê como funciona</h2>
-                    <p className="video-subtitle">Descobre em poucos minutos como o Booklyo pode transformar o teu negócio</p>
+                    <h2>{lp.videoTitle || 'Vê como funciona'}</h2>
+                    <p className="video-subtitle">{lp.videoSubtitle || 'Descobre em poucos minutos como o Booklyo pode transformar o teu negócio'}</p>
                     <div className="video-wrapper">
                         <div className="video-placeholder">
                             <div className="play-button">
@@ -374,7 +415,7 @@ export default function PricingPage() {
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
                             </div>
-                            <p>Vídeo de demonstração em breve</p>
+                            <p>{lp.videoPlaceholder || 'Vídeo de demonstração em breve'}</p>
                         </div>
                     </div>
                 </div>
@@ -384,8 +425,8 @@ export default function PricingPage() {
             <section className="pricing-final-cta">
                 <div className="section-container">
                     <div className="final-cta-content">
-                        <h2>Pronto para automatizar as tuas marcações?</h2>
-                        <p>Por apenas 15€/mês tens acesso a tudo. Sem surpresas.</p>
+                        <h2>{lp.finalCtaTitle || 'Pronto para automatizar as tuas marcações?'}</h2>
+                        <p>{lp.finalCtaSubtitle || 'Por apenas 15€/mês tens acesso a tudo. Sem surpresas.'}</p>
                         <button
                             className="cta-button large"
                             onClick={handleSubscribe}
@@ -394,16 +435,16 @@ export default function PricingPage() {
                             {subscriptionStatus === 'active' ? (
                                 <>
                                     <Check size={24} />
-                                    <span>Já tens o Booklyo Pro</span>
+                                    <span>{lp.alreadyHavePro || 'Já tens o Booklyo Pro'}</span>
                                 </>
                             ) : processingPayment ? (
                                 <>
                                     <Loader2 className="spinner" size={24} />
-                                    <span>A processar...</span>
+                                    <span>{lp.processing || 'A processar...'}</span>
                                 </>
                             ) : (
                                 <>
-                                    <span>Subscrever Agora</span>
+                                    <span>{lp.subscribeNow || 'Subscrever Agora'}</span>
                                     <ArrowRight size={24} />
                                 </>
                             )}
@@ -415,10 +456,10 @@ export default function PricingPage() {
             {/* Footer */}
             <footer className="pricing-footer">
                 <div className="section-container">
-                    <p>© 2026 Booklyo. Todos os direitos reservados.</p>
+                    <p>{lp.footerRights || '© 2026 Booklyo. Todos os direitos reservados.'}</p>
                     <div className="footer-links">
-                        <a href="/terms">Termos de Serviço</a>
-                        <a href="/privacy">Política de Privacidade</a>
+                        <a href="/terms">{lp.footerTerms || 'Termos de Serviço'}</a>
+                        <a href="/privacy">{lp.footerPrivacy || 'Política de Privacidade'}</a>
                     </div>
                 </div>
             </footer>
@@ -567,6 +608,76 @@ export default function PricingPage() {
                 .navbar-btn.primary:hover {
                     transform: translateY(-1px);
                     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+                }
+
+                /* Language Selector */
+                .lang-selector {
+                    position: relative;
+                }
+
+                .lang-toggle {
+                    gap: 0.35rem;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    letter-spacing: 0.05em;
+                    padding: 0.5rem 0.75rem;
+                }
+
+                .lang-dropdown {
+                    position: absolute;
+                    top: calc(100% + 0.5rem);
+                    right: 0;
+                    background: rgba(15, 23, 42, 0.97);
+                    border: 1px solid rgba(59, 130, 246, 0.25);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                    min-width: 110px;
+                    z-index: 100;
+                    animation: fadeInDown 0.15s ease;
+                }
+
+                @keyframes fadeInDown {
+                    from { opacity: 0; transform: translateY(-6px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+
+                .lang-option {
+                    display: block;
+                    width: 100%;
+                    padding: 0.6rem 1rem;
+                    background: transparent;
+                    border: none;
+                    color: #94a3b8;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    text-align: left;
+                    transition: all 0.15s ease;
+                }
+
+                .lang-option:hover {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: #ffffff;
+                }
+
+                .lang-option.active {
+                    color: #60a5fa;
+                    background: rgba(59, 130, 246, 0.12);
+                    font-weight: 700;
+                }
+
+                .mobile-lang-row {
+                    display: flex;
+                    gap: 0.5rem;
+                    padding: 0.25rem 0;
+                }
+
+                .mobile-lang-row .lang-option {
+                    flex: 1;
+                    text-align: center;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.08);
                 }
 
                 .mobile-menu-toggle {

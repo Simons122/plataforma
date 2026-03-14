@@ -471,6 +471,72 @@ export const translations = {
             book: 'Agendar',
             services: 'Serviços',
         },
+        landingPage: {
+            // Navbar
+            navFeatures: 'Funcionalidades',
+            navBenefits: 'Benefícios',
+            navPrice: 'Preço',
+            navDashboard: 'Painel',
+            navLogout: 'Sair',
+            navLogin: 'Entrar',
+            navCreateAccount: 'Criar Conta',
+            // Hero
+            badgeText: 'Plano Único • Tudo Incluído',
+            heroTitle: 'O teu sistema de marcações',
+            heroTitleHighlight: ' completo e profissional',
+            heroSubtitle: 'Automatiza as tuas marcações, envia confirmações por email e WhatsApp, e gere o teu negócio de forma simples e eficiente.',
+            // Pricing Card
+            planBadge: 'Booklyo Pro',
+            pricePeriod: '/mês',
+            priceDescription: 'Tudo o que precisas para gerir as tuas marcações online',
+            // Features
+            feat1: 'Marcações ilimitadas',
+            feat2: 'Confirmações automáticas por email',
+            feat3: 'Notificações por WhatsApp',
+            feat4: 'Gestão de serviços e horários',
+            feat5: 'Painel profissional completo',
+            feat6: 'Suporte básico incluído',
+            feat7: 'Atualizações gratuitas',
+            feat8: 'Gestão de clientes',
+            // CTA
+            subscribeNow: 'Subscrever Agora',
+            startNow: 'Começar Agora',
+            processing: 'A processar...',
+            activeSubscription: 'Subscrição Ativa',
+            ctaNote: 'Cria uma conta e começa a receber marcações hoje',
+            expiredBadge: '⚠️ Subscrição expirada - Renova para continuar',
+            // Footer Card
+            securePayment: 'Pagamento seguro via Stripe',
+            cancelAnytime: 'Cancelas quando quiseres',
+            // Benefits
+            benefitsTitle: 'Porquê escolher o Booklyo?',
+            ben1Title: 'Poupa Tempo',
+            ben1Desc: 'Automatiza as marcações e deixa de perder tempo com chamadas e mensagens.',
+            ben2Title: 'Cresce o Negócio',
+            ben2Desc: 'Organiza a tua agenda e recebe mais clientes com menos esforço.',
+            ben3Title: 'Profissional',
+            ben3Desc: 'Transmite uma imagem profissional com confirmações automáticas.',
+            ben4Title: '100% Online',
+            ben4Desc: 'Funciona em qualquer dispositivo, sem instalar nada.',
+            ben5Title: 'Agenda Inteligente',
+            ben5Desc: 'Visualiza todas as marcações num calendário simples e intuitivo.',
+            ben6Title: 'Gestão de Clientes',
+            ben6Desc: 'Mantém o histórico de todos os clientes e marcações num só lugar.',
+            // Video Section
+            videoTitle: 'Vê como funciona',
+            videoSubtitle: 'Descobre em poucos minutos como o Booklyo pode transformar o teu negócio',
+            videoPlaceholder: 'Vídeo de demonstração em breve',
+            // Final CTA
+            finalCtaTitle: 'Pronto para automatizar as tuas marcações?',
+            finalCtaSubtitle: 'Por apenas 15€/mês tens acesso a tudo. Sem surpresas.',
+            alreadyHavePro: 'Já tens o Booklyo Pro',
+            // Loading
+            loading: 'A carregar...',
+            // Footer
+            footerRights: '© 2026 Booklyo. Todos os direitos reservados.',
+            footerTerms: 'Termos de Serviço',
+            footerPrivacy: 'Política de Privacidade',
+        },
     },
 
     en: {
@@ -943,6 +1009,72 @@ export const translations = {
             goToExplore: 'Go to Explore',
             book: 'Book Now',
             services: 'Services',
+        },
+        landingPage: {
+            // Navbar
+            navFeatures: 'Features',
+            navBenefits: 'Benefits',
+            navPrice: 'Pricing',
+            navDashboard: 'Dashboard',
+            navLogout: 'Logout',
+            navLogin: 'Login',
+            navCreateAccount: 'Create Account',
+            // Hero
+            badgeText: 'Single Plan • Everything Included',
+            heroTitle: 'Your complete booking system',
+            heroTitleHighlight: ' professional and effortless',
+            heroSubtitle: 'Automate your bookings, send confirmations by email and WhatsApp, and manage your business simply and efficiently.',
+            // Pricing Card
+            planBadge: 'Booklyo Pro',
+            pricePeriod: '/month',
+            priceDescription: 'Everything you need to manage your bookings online',
+            // Features
+            feat1: 'Unlimited bookings',
+            feat2: 'Automatic email confirmations',
+            feat3: 'WhatsApp notifications',
+            feat4: 'Service & schedule management',
+            feat5: 'Full professional dashboard',
+            feat6: 'Basic support included',
+            feat7: 'Free updates',
+            feat8: 'Client management',
+            // CTA
+            subscribeNow: 'Subscribe Now',
+            startNow: 'Get Started',
+            processing: 'Processing...',
+            activeSubscription: 'Active Subscription',
+            ctaNote: 'Create an account and start receiving bookings today',
+            expiredBadge: '⚠️ Subscription expired - Renew to continue',
+            // Footer Card
+            securePayment: 'Secure payment via Stripe',
+            cancelAnytime: 'Cancel anytime',
+            // Benefits
+            benefitsTitle: 'Why choose Booklyo?',
+            ben1Title: 'Save Time',
+            ben1Desc: 'Automate bookings and stop wasting time on calls and messages.',
+            ben2Title: 'Grow Your Business',
+            ben2Desc: 'Organise your schedule and receive more clients with less effort.',
+            ben3Title: 'Professional',
+            ben3Desc: 'Project a professional image with automatic confirmations.',
+            ben4Title: '100% Online',
+            ben4Desc: 'Works on any device, no installation needed.',
+            ben5Title: 'Smart Calendar',
+            ben5Desc: 'View all bookings in a simple and intuitive calendar.',
+            ben6Title: 'Client Management',
+            ben6Desc: 'Keep all client history and bookings in one place.',
+            // Video Section
+            videoTitle: 'See how it works',
+            videoSubtitle: 'Discover in a few minutes how Booklyo can transform your business',
+            videoPlaceholder: 'Demo video coming soon',
+            // Final CTA
+            finalCtaTitle: 'Ready to automate your bookings?',
+            finalCtaSubtitle: 'For just €15/month you get access to everything. No surprises.',
+            alreadyHavePro: 'You already have Booklyo Pro',
+            // Loading
+            loading: 'Loading...',
+            // Footer
+            footerRights: '© 2026 Booklyo. All rights reserved.',
+            footerTerms: 'Terms of Service',
+            footerPrivacy: 'Privacy Policy',
         },
     },
 
@@ -1419,6 +1551,72 @@ export const translations = {
             goToExplore: 'Aller à Explorer',
             book: 'Réserver',
             services: 'Services',
+        },
+        landingPage: {
+            // Navbar
+            navFeatures: 'Fonctionnalités',
+            navBenefits: 'Avantages',
+            navPrice: 'Tarifs',
+            navDashboard: 'Tableau de bord',
+            navLogout: 'Déconnexion',
+            navLogin: 'Connexion',
+            navCreateAccount: 'Créer un compte',
+            // Hero
+            badgeText: 'Plan unique • Tout inclus',
+            heroTitle: 'Votre système de réservation',
+            heroTitleHighlight: ' complet et professionnel',
+            heroSubtitle: 'Automatisez vos réservations, envoyez des confirmations par email et WhatsApp, et gérez votre activité simplement et efficacement.',
+            // Pricing Card
+            planBadge: 'Booklyo Pro',
+            pricePeriod: '/mois',
+            priceDescription: 'Tout ce dont vous avez besoin pour gérer vos réservations en ligne',
+            // Features
+            feat1: 'Réservations illimitées',
+            feat2: 'Confirmations automatiques par email',
+            feat3: 'Notifications WhatsApp',
+            feat4: 'Gestion des services et horaires',
+            feat5: 'Tableau de bord professionnel complet',
+            feat6: 'Support de base inclus',
+            feat7: 'Mises à jour gratuites',
+            feat8: 'Gestion des clients',
+            // CTA
+            subscribeNow: "S'abonner maintenant",
+            startNow: 'Commencer',
+            processing: 'Traitement en cours...',
+            activeSubscription: 'Abonnement actif',
+            ctaNote: "Créez un compte et commencez à recevoir des réservations aujourd'hui",
+            expiredBadge: '⚠️ Abonnement expiré - Renouvelez pour continuer',
+            // Footer Card
+            securePayment: 'Paiement sécurisé via Stripe',
+            cancelAnytime: 'Annulez à tout moment',
+            // Benefits
+            benefitsTitle: 'Pourquoi choisir Booklyo ?',
+            ben1Title: 'Gagnez du temps',
+            ben1Desc: 'Automatisez les réservations et arrêtez de perdre du temps avec les appels et messages.',
+            ben2Title: 'Développez votre activité',
+            ben2Desc: 'Organisez votre agenda et recevez plus de clients avec moins d\'effort.',
+            ben3Title: 'Professionnel',
+            ben3Desc: 'Projetez une image professionnelle avec des confirmations automatiques.',
+            ben4Title: '100% En ligne',
+            ben4Desc: 'Fonctionne sur n\'importe quel appareil, sans installation.',
+            ben5Title: 'Agenda Intelligent',
+            ben5Desc: 'Visualisez toutes vos réservations dans un calendrier simple et intuitif.',
+            ben6Title: 'Gestion des clients',
+            ben6Desc: 'Gardez tout l\'historique de vos clients et réservations en un seul endroit.',
+            // Video Section
+            videoTitle: 'Voir comment ça marche',
+            videoSubtitle: 'Découvrez en quelques minutes comment Booklyo peut transformer votre activité',
+            videoPlaceholder: 'Vidéo de démonstration bientôt disponible',
+            // Final CTA
+            finalCtaTitle: 'Prêt à automatiser vos réservations ?',
+            finalCtaSubtitle: 'Pour seulement 15€/mois, accédez à tout. Sans surprises.',
+            alreadyHavePro: 'Vous avez déjà Booklyo Pro',
+            // Loading
+            loading: 'Chargement...',
+            // Footer
+            footerRights: '© 2026 Booklyo. Tous droits réservés.',
+            footerTerms: 'Conditions d\'utilisation',
+            footerPrivacy: 'Politique de confidentialité',
         },
     },
 };
