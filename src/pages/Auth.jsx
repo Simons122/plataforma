@@ -11,6 +11,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { User, Mail, Lock, Briefcase, ArrowRight, Loader2, Check, X, Eye, EyeOff, Crown } from 'lucide-react';
 import { createCheckoutSession } from '../lib/stripe';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const PROFESSIONS = [
     "Barbeiro",
@@ -25,16 +26,15 @@ const slugify = (text) => {
     return text
         .toString()
         .toLowerCase()
-        .normalize('NFD') // Split accents
-        .replace(/[\u0300-\u036f]/g, '') // Remove accents
-        .replace(/\s+/g, '-') // Replace spaces with -
-        .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-        .replace(/\-\-+/g, '-') // Replace multiple - with single -
-        .replace(/^-+/, '') // Trim - from start
-        .replace(/-+$/, ''); // Trim - from end
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
 };
 
-// Função para calcular a força da palavra-passe
 const calculatePasswordStrength = (password) => {
     if (!password) return { score: 0, label: '', color: '#ef4444' };
 
@@ -44,41 +44,25 @@ const calculatePasswordStrength = (password) => {
         lowercase: /[a-z]/.test(password),
         uppercase: /[A-Z]/.test(password),
         numbers: /[0-9]/.test(password),
-        special: /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]/.test(password)
+        special: /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/`~]/.test(password)
     };
 
-    // Pontuação base pelo comprimento
     if (password.length >= 6) score += 1;
     if (password.length >= 8) score += 1;
     if (password.length >= 12) score += 1;
-
-    // Pontuação pela complexidade
     if (checks.lowercase) score += 1;
     if (checks.uppercase) score += 1;
     if (checks.numbers) score += 1;
     if (checks.special) score += 2;
 
-    // Normalizar para 0-100%
     const percentage = Math.min(100, (score / 9) * 100);
 
-    // Determinar nível e cor
     let label, color;
-    if (percentage < 25) {
-        label = 'Muito fraca';
-        color = '#ef4444'; // Vermelho
-    } else if (percentage < 50) {
-        label = 'Fraca';
-        color = '#f97316'; // Laranja
-    } else if (percentage < 75) {
-        label = 'Média';
-        color = '#eab308'; // Amarelo
-    } else if (percentage < 90) {
-        label = 'Forte';
-        color = '#22c55e'; // Verde claro
-    } else {
-        label = 'Muito forte';
-        color = '#10b981'; // Verde
-    }
+    if (percentage < 25) { label = 'pw_veryWeak'; color = '#ef4444'; }
+    else if (percentage < 50) { label = 'pw_weak'; color = '#f97316'; }
+    else if (percentage < 75) { label = 'pw_medium'; color = '#eab308'; }
+    else if (percentage < 90) { label = 'pw_strong'; color = '#22c55e'; }
+    else { label = 'pw_veryStrong'; color = '#10b981'; }
 
     return { score: percentage, label, color, checks };
 };
@@ -91,12 +75,21 @@ export default function Auth() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectToPricing = searchParams.get('redirect') === 'pricing';
+    const { translations: tr } = useLanguage();
+    const a = tr?.auth || {};
+    const lp = tr?.landingPage || {};
 
-    // Switch to registration mode when coming from pricing
+    // Labels de força da password traduzidos
+    const pwLabels = {
+        pw_veryWeak:   tr?.language === 'fr' ? 'Très faible' : tr?.language === 'en' ? 'Very weak' : 'Muito fraca',
+        pw_weak:       tr?.language === 'fr' ? 'Faible' : tr?.language === 'en' ? 'Weak' : 'Fraca',
+        pw_medium:     tr?.language === 'fr' ? 'Moyen' : tr?.language === 'en' ? 'Medium' : 'Média',
+        pw_strong:     tr?.language === 'fr' ? 'Fort' : tr?.language === 'en' ? 'Strong' : 'Forte',
+        pw_veryStrong: tr?.language === 'fr' ? 'Très fort' : tr?.language === 'en' ? 'Very strong' : 'Muito forte',
+    };
+
     useEffect(() => {
-        if (redirectToPricing) {
-            setIsLogin(false);
-        }
+        if (redirectToPricing) setIsLogin(false);
     }, [redirectToPricing]);
 
     const [formData, setFormData] = useState({
@@ -106,8 +99,6 @@ export default function Auth() {
         profession: PROFESSIONS[0]
     });
 
-
-    // Calcular força da palavra-passe em tempo real
     const passwordStrength = useMemo(() =>
         calculatePasswordStrength(formData.password),
         [formData.password]
@@ -129,7 +120,6 @@ export default function Auth() {
             const docSnap = await getDoc(docRef);
 
             if (!docSnap.exists()) {
-                // Calculate trial end date (5 days from now)
                 const trialEndsAt = new Date();
                 trialEndsAt.setDate(trialEndsAt.getDate() + 5);
 
@@ -143,32 +133,26 @@ export default function Auth() {
                     role: 'professional',
                     slug: slugify(user.displayName || "utilizador-google")
                 });
-                // Check if coming from pricing - go to Stripe
                 if (redirectToPricing) {
                     const result = await createCheckoutSession({
                         userId: user.uid,
                         userEmail: user.email,
                         userName: user.displayName || 'Utilizador Google'
                     });
-                    if (!result.success) {
-                        navigate('/pricing');
-                    }
+                    if (!result.success) navigate('/pricing');
                 } else {
                     navigate('/pricing');
                 }
             } else if (docSnap.data().role === 'admin') {
                 navigate('/admin/dashboard');
             } else {
-                // Existing user - check if coming from pricing
                 if (redirectToPricing) {
                     const result = await createCheckoutSession({
                         userId: user.uid,
                         userEmail: user.email,
                         userName: user.displayName
                     });
-                    if (!result.success) {
-                        navigate('/pricing');
-                    }
+                    if (!result.success) navigate('/pricing');
                 } else {
                     navigate('/dashboard');
                 }
@@ -201,11 +185,8 @@ export default function Auth() {
                 const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
                 const user = userCredential.user;
 
-                await updateProfile(user, {
-                    displayName: formData.name
-                });
+                await updateProfile(user, { displayName: formData.name });
 
-                // Calculate trial end date (5 days from now)
                 const trialEndsAt = new Date();
                 trialEndsAt.setDate(trialEndsAt.getDate() + 5);
 
@@ -220,17 +201,13 @@ export default function Auth() {
                     slug: slugify(formData.name)
                 });
 
-                // After registration, redirect to Stripe checkout
                 const result = await createCheckoutSession({
                     userId: user.uid,
                     userEmail: user.email,
                     userName: formData.name
                 });
 
-                if (!result.success) {
-                    // If Stripe fails, go to pricing page
-                    navigate('/pricing');
-                }
+                if (!result.success) navigate('/pricing');
             }
         } catch (err) {
             console.error(err);
@@ -238,6 +215,40 @@ export default function Auth() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Textos traduzidos
+    const txt = {
+        welcome:        isLogin ? (a.welcomeBack || 'Bem-vindo de volta') : (a.welcomeMessage || 'Crie a sua conta profissional'),
+        namePlaceholder: a.fullName || 'Nome Completo',
+        submitBtn:      isLogin ? (a.login || 'Entrar') : (a.createAccount || 'Criar Conta Profissional'),
+        toggleQuestion: isLogin
+            ? (a.noAccount ? a.noAccount + ' ' : 'Não tem conta profissional? ')
+            : (a.alreadyHaveAccount ? a.alreadyHaveAccount + ' ' : 'Já tem uma conta? '),
+        toggleBtn:      isLogin ? (a.register || 'Registe-se agora') : (a.login || 'Inicie sessão'),
+        googleBtn:      tr?.language === 'fr' ? 'Continuer avec Google'
+                       : tr?.language === 'en' ? 'Continue with Google'
+                       : 'Continuar com Google',
+        orDivider:      tr?.language === 'fr' ? 'ou' : tr?.language === 'en' ? 'or' : 'ou',
+        clientQuestion: tr?.language === 'fr' ? 'Vous êtes client et voulez prendre rendez-vous ?'
+                       : tr?.language === 'en' ? 'Are you a client looking to book?'
+                       : 'É cliente e quer fazer uma marcação?',
+        exploreBtn:     tr?.language === 'fr' ? '🔍 Explorer les professionnels'
+                       : tr?.language === 'en' ? '🔍 Explore Professionals'
+                       : '🔍 Explorar Profissionais',
+        passwordField:  'Password',
+        planFeatures:   tr?.language === 'fr' ? 'Réservations illimitées • Confirmations automatiques • Tableau de bord complet'
+                       : tr?.language === 'en' ? 'Unlimited bookings • Automatic confirmations • Full dashboard'
+                       : 'Marcações ilimitadas • Confirmações automáticas • Painel completo',
+        pricePeriod:    lp.pricePeriod || '/mês',
+        pwChars:        tr?.language === 'fr' ? '8+ caractères' : tr?.language === 'en' ? '8+ chars' : '8+ caracteres',
+        pwLower:        tr?.language === 'fr' ? 'Minuscules (a-z)' : tr?.language === 'en' ? 'Lowercase (a-z)' : 'Minúsculas (a-z)',
+        pwUpper:        tr?.language === 'fr' ? 'Majuscules (A-Z)' : tr?.language === 'en' ? 'Uppercase (A-Z)' : 'Maiúsculas (A-Z)',
+        pwNumbers:      tr?.language === 'fr' ? 'Chiffres (0-9)' : tr?.language === 'en' ? 'Numbers (0-9)' : 'Números (0-9)',
+        pwSpecial:      tr?.language === 'fr' ? 'Caractères spéciaux (!@#$%...)' : tr?.language === 'en' ? 'Special chars (!@#$%...)' : 'Caracteres especiais (!@#$%...)',
+        showPw:         tr?.language === 'fr' ? 'Afficher le mot de passe' : tr?.language === 'en' ? 'Show password' : 'Mostrar password',
+        hidePw:         tr?.language === 'fr' ? 'Masquer le mot de passe' : tr?.language === 'en' ? 'Hide password' : 'Esconder password',
+        processing:     lp.processing || 'A processar...',
     };
 
     return (
@@ -281,7 +292,7 @@ export default function Auth() {
                         Booklyo
                     </h1>
                     <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                        {isLogin ? "Bem-vindo de volta" : "Crie a sua conta profissional"}
+                        {txt.welcome}
                     </p>
                 </div>
 
@@ -302,7 +313,7 @@ export default function Auth() {
                     </div>
                 )}
 
-                {/* Selected Plan Card - Shows when coming from pricing */}
+                {/* Selected Plan Card */}
                 {redirectToPricing && !isLogin && (
                     <div style={{
                         padding: '1rem 1.25rem',
@@ -317,34 +328,18 @@ export default function Auth() {
                             justifyContent: 'space-between',
                             marginBottom: '0.5rem'
                         }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Crown size={18} style={{ color: '#fbbf24' }} />
-                                <span style={{
-                                    fontWeight: 700,
-                                    color: 'var(--text-primary)',
-                                    fontSize: '0.95rem'
-                                }}>
+                                <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                                     Booklyo Pro
                                 </span>
                             </div>
-                            <span style={{
-                                fontWeight: 800,
-                                color: '#3b82f6',
-                                fontSize: '1.1rem'
-                            }}>
-                                15€<span style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/mês</span>
+                            <span style={{ fontWeight: 800, color: '#3b82f6', fontSize: '1.1rem' }}>
+                                15€<span style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{txt.pricePeriod}</span>
                             </span>
                         </div>
-                        <p style={{
-                            fontSize: '0.8rem',
-                            color: 'var(--text-secondary)',
-                            margin: 0
-                        }}>
-                            Marcações ilimitadas • Confirmações automáticas • Painel completo
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                            {txt.planFeatures}
                         </p>
                     </div>
                 )}
@@ -356,7 +351,7 @@ export default function Auth() {
                             <User style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
                             <input
                                 name="name"
-                                placeholder="Nome Completo"
+                                placeholder={txt.namePlaceholder}
                                 className="input"
                                 style={{ paddingLeft: '2.75rem' }}
                                 value={formData.name}
@@ -402,7 +397,7 @@ export default function Auth() {
                         <input
                             name="password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="Password"
+                            placeholder={txt.passwordField}
                             className="input"
                             style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem' }}
                             value={formData.password}
@@ -413,131 +408,59 @@ export default function Auth() {
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             style={{
-                                position: 'absolute',
-                                right: '12px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                background: 'none',
-                                border: 'none',
-                                padding: '4px',
-                                cursor: 'pointer',
-                                color: 'var(--text-muted)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                                background: 'none', border: 'none', padding: '4px', cursor: 'pointer',
+                                color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 transition: 'color 0.2s ease'
                             }}
                             onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                             onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                            aria-label={showPassword ? "Esconder password" : "Mostrar password"}
+                            aria-label={showPassword ? txt.hidePw : txt.showPw}
                         >
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>
 
-                    {/* Indicador de Força da Password - apenas no registo */}
+                    {/* Password strength indicator */}
                     {!isLogin && formData.password && (
-                        <div style={{
-                            marginTop: '-0.5rem',
-                            animation: 'fadeIn 0.3s ease'
-                        }}>
-                            {/* Barra de progresso */}
+                        <div style={{ marginTop: '-0.5rem', animation: 'fadeIn 0.3s ease' }}>
                             <div style={{
-                                width: '100%',
-                                height: '6px',
-                                background: 'var(--bg-secondary)',
-                                borderRadius: '999px',
-                                overflow: 'hidden',
-                                marginBottom: '0.5rem'
+                                width: '100%', height: '6px', background: 'var(--bg-secondary)',
+                                borderRadius: '999px', overflow: 'hidden', marginBottom: '0.5rem'
                             }}>
                                 <div style={{
-                                    width: `${passwordStrength.score}%`,
-                                    height: '100%',
-                                    background: passwordStrength.color,
-                                    borderRadius: '999px',
-                                    transition: 'all 0.3s ease'
+                                    width: `${passwordStrength.score}%`, height: '100%',
+                                    background: passwordStrength.color, borderRadius: '999px', transition: 'all 0.3s ease'
                                 }} />
                             </div>
-
-                            {/* Label da força */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '0.75rem'
-                            }}>
-                                <span style={{
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    color: passwordStrength.color,
-                                    transition: 'color 0.3s ease'
-                                }}>
-                                    {passwordStrength.label}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: passwordStrength.color, transition: 'color 0.3s ease' }}>
+                                    {pwLabels[passwordStrength.label] || passwordStrength.label}
                                 </span>
-                                <span style={{
-                                    fontSize: '0.75rem',
-                                    color: 'var(--text-muted)'
-                                }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                     {Math.round(passwordStrength.score)}%
                                 </span>
                             </div>
-
-                            {/* Requisitos da password */}
                             <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(2, 1fr)',
-                                gap: '0.375rem',
-                                padding: '0.75rem',
-                                background: 'var(--bg-secondary)',
-                                borderRadius: '10px',
-                                fontSize: '0.75rem'
+                                display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.375rem',
+                                padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '10px', fontSize: '0.75rem'
                             }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.375rem',
-                                    color: passwordStrength.checks?.length ? '#22c55e' : 'var(--text-muted)'
-                                }}>
-                                    {passwordStrength.checks?.length ? <Check size={12} /> : <X size={12} />}
-                                    8+ caracteres
-                                </div>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.375rem',
-                                    color: passwordStrength.checks?.lowercase ? '#22c55e' : 'var(--text-muted)'
-                                }}>
-                                    {passwordStrength.checks?.lowercase ? <Check size={12} /> : <X size={12} />}
-                                    Minúsculas (a-z)
-                                </div>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.375rem',
-                                    color: passwordStrength.checks?.uppercase ? '#22c55e' : 'var(--text-muted)'
-                                }}>
-                                    {passwordStrength.checks?.uppercase ? <Check size={12} /> : <X size={12} />}
-                                    Maiúsculas (A-Z)
-                                </div>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.375rem',
-                                    color: passwordStrength.checks?.numbers ? '#22c55e' : 'var(--text-muted)'
-                                }}>
-                                    {passwordStrength.checks?.numbers ? <Check size={12} /> : <X size={12} />}
-                                    Números (0-9)
-                                </div>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.375rem',
-                                    gridColumn: 'span 2',
-                                    color: passwordStrength.checks?.special ? '#22c55e' : 'var(--text-muted)'
-                                }}>
-                                    {passwordStrength.checks?.special ? <Check size={12} /> : <X size={12} />}
-                                    Caracteres especiais (!@#$%...)
-                                </div>
+                                {[
+                                    { key: 'length',   label: txt.pwChars },
+                                    { key: 'lowercase',label: txt.pwLower },
+                                    { key: 'uppercase',label: txt.pwUpper },
+                                    { key: 'numbers',  label: txt.pwNumbers },
+                                    { key: 'special',  label: txt.pwSpecial, span: true },
+                                ].map(({ key, label, span }) => (
+                                    <div key={key} style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.375rem',
+                                        color: passwordStrength.checks?.[key] ? '#22c55e' : 'var(--text-muted)',
+                                        ...(span ? { gridColumn: 'span 2' } : {})
+                                    }}>
+                                        {passwordStrength.checks?.[key] ? <Check size={12} /> : <X size={12} />}
+                                        {label}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
@@ -546,21 +469,10 @@ export default function Auth() {
                         type="submit"
                         disabled={loading}
                         style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.625rem',
-                            width: '100%',
-                            padding: '0.875rem',
-                            marginTop: '0.5rem',
-                            fontSize: '1rem',
-                            fontWeight: 700,
-                            color: 'white',
-                            background: 'var(--accent-primary)',
-                            border: 'none',
-                            borderRadius: '12px',
-                            cursor: loading ? 'wait' : 'pointer',
-                            transition: 'all 0.2s ease',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem',
+                            width: '100%', padding: '0.875rem', marginTop: '0.5rem', fontSize: '1rem',
+                            fontWeight: 700, color: 'white', background: 'var(--accent-primary)', border: 'none',
+                            borderRadius: '12px', cursor: loading ? 'wait' : 'pointer', transition: 'all 0.2s ease',
                             boxShadow: 'var(--shadow-md)'
                         }}
                         onMouseOver={(e) => !loading && (e.currentTarget.style.background = 'var(--accent-primary-hover)')}
@@ -568,7 +480,7 @@ export default function Auth() {
                     >
                         {loading ? <Loader2 className="spinner" size={20} /> : (
                             <>
-                                {isLogin ? "Entrar" : "Criar Conta Profissional"}
+                                {txt.submitBtn}
                                 <ArrowRight size={18} />
                             </>
                         )}
@@ -576,14 +488,9 @@ export default function Auth() {
                 </form>
 
                 {/* Divider */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: '1.75rem 0',
-                    gap: '1rem'
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', margin: '1.75rem 0', gap: '1rem' }}>
                     <div style={{ flex: 1, height: '1px', background: 'var(--border-default)' }}></div>
-                    <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>ou</span>
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{txt.orDivider}</span>
                     <div style={{ flex: 1, height: '1px', background: 'var(--border-default)' }}></div>
                 </div>
 
@@ -593,20 +500,11 @@ export default function Auth() {
                     onClick={handleGoogleLogin}
                     disabled={loading}
                     style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.75rem',
-                        width: '100%',
-                        padding: '0.875rem',
-                        fontSize: '0.9375rem',
-                        fontWeight: 600,
-                        color: 'var(--text-primary)',
-                        background: 'transparent',
-                        border: '1px solid var(--border-default)',
-                        borderRadius: '12px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                        width: '100%', padding: '0.875rem', fontSize: '0.9375rem', fontWeight: 600,
+                        color: 'var(--text-primary)', background: 'transparent',
+                        border: '1px solid var(--border-default)', borderRadius: '12px',
+                        cursor: 'pointer', transition: 'all 0.2s ease'
                     }}
                     onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
@@ -617,60 +515,41 @@ export default function Auth() {
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
-                    Continuar com Google
+                    {txt.googleBtn}
                 </button>
 
                 {/* Toggle */}
                 <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.9375rem' }}>
                     <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
-                        {isLogin ? "Não tem conta profissional? " : "Já tem uma conta? "}
+                        {txt.toggleQuestion}
                     </span>
                     <button
                         onClick={() => setIsLogin(!isLogin)}
                         style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--accent-primary)',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            padding: '0 4px',
-                            transition: 'color 0.2s ease'
+                            background: 'none', border: 'none', color: 'var(--accent-primary)',
+                            fontWeight: 700, cursor: 'pointer', padding: '0 4px', transition: 'color 0.2s ease'
                         }}
                     >
-                        {isLogin ? "Registe-se agora" : "Inicie sessão"}
+                        {txt.toggleBtn}
                     </button>
                 </div>
 
                 {/* Client Access Section */}
                 <div style={{
-                    marginTop: '2rem',
-                    paddingTop: '2rem',
-                    borderTop: '1px solid var(--border-default)',
-                    textAlign: 'center'
+                    marginTop: '2rem', paddingTop: '2rem',
+                    borderTop: '1px solid var(--border-default)', textAlign: 'center'
                 }}>
-                    <p style={{
-                        color: 'var(--text-muted)',
-                        fontSize: '0.875rem',
-                        marginBottom: '1rem',
-                        fontWeight: 500
-                    }}>
-                        É cliente e quer fazer uma marcação?
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1rem', fontWeight: 500 }}>
+                        {txt.clientQuestion}
                     </p>
                     <button
                         onClick={() => navigate('/client/explore')}
                         style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.75rem 1.5rem',
-                            fontSize: '0.9375rem',
-                            fontWeight: 600,
-                            color: 'var(--text-primary)',
-                            background: 'var(--bg-secondary)',
-                            border: '1px solid var(--border-default)',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
+                            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                            padding: '0.75rem 1.5rem', fontSize: '0.9375rem', fontWeight: 600,
+                            color: 'var(--text-primary)', background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-default)', borderRadius: '10px',
+                            cursor: 'pointer', transition: 'all 0.2s ease'
                         }}
                         onMouseOver={(e) => {
                             e.currentTarget.style.background = 'var(--accent-primary)';
@@ -683,7 +562,7 @@ export default function Auth() {
                             e.currentTarget.style.borderColor = 'var(--border-default)';
                         }}
                     >
-                        🔍 Explorar Profissionais
+                        {txt.exploreBtn}
                     </button>
                 </div>
             </div>
